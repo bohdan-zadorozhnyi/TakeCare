@@ -29,6 +29,12 @@ CRM for Doctor-Patient Relations
 - Start each commit message with an uppercase letter.
 - Use concise yet descriptive messages (e.g., *"Add user authentication flow"*).
 
+### Django Project Naming Conventions 
+- **Apps**: lowercase, plural (e.g., users, appointments)
+- **Models**: PascalCase (e.g., UserProfile)
+- **Templates**: lowercase with underscores (e.g., user_profile.html)
+- **Static Files**: lowercase with underscores (e.g., user_default_image.png).
+
 ### Jira Usage
 - **Epics** are referred to as **Features** (e.g., “Feature: User Authentication”)
 - **Issues** are broken down as **Stories** under these features
