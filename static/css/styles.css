@@ -1,0 +1,228 @@
+/* General styling */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed', 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+.take {
+    font-weight: bold;
+    color: #5981f3;
+    font-size: 1.5rem;
+}
+.take:hover {
+    text-decoration: none;
+}
+.care {
+    font-weight: bold;
+    color: black;
+    font-size: 1.5rem;
+}
+.care:hover {
+    text-decoration: none;
+}
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background-color: #f7fcff;
+}
+
+/* Horizontal Navigation Bar (Top) */
+header {
+    background-color: #ffffff;
+    border: 1px solid #f7fcff;
+    color: #3a3a3a;
+    padding: 1rem;
+    width: 100%;
+    position: fixed; /* Fix the header to the top */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10; /* Ensure the header stays on top */
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    color: #3a3a3a;
+}
+
+.left-nav {
+    display: flex;
+    align-items: center;
+}
+
+.left-nav a {
+    display: block;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar ul {
+    display: flex;
+    list-style: none;
+}
+
+.navbar li {
+    margin: 0 10px;
+}
+
+.navbar a {
+    color: #3a3a3a;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+/* Main Layout with Vertical Left Bar */
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    margin-top: 4.5rem; /* Add margin to account for the fixed header */
+}
+
+/* Left Navigation Bar (Vertical) */
+.vertical-nav {
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    width: auto;
+    background-color: #ffffff;
+}
+
+.top-nav {
+    flex-grow: 1;
+}
+
+.bottom-nav {
+    margin-top: auto;
+    margin-bottom: 10px;
+    border-top: 2px solid #f7fcff;
+}
+
+.vertical-nav ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.vertical-nav li {
+    padding: 10px 15px;
+}
+
+.vertical-nav li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+}
+
+/* Main Content Area */
+.main-content {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+/* Footer */
+footer {
+    background-color: #ffffff;
+    color: #3a3a3a;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Container that holds both sections */
+.horizontal-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Form Section on the Left */
+.form-container {
+    flex: 1;
+    padding-left: 50px;
+    max-width: 600px;
+}
+
+/* Image Section on the Right */
+.image-container {
+    flex: 1;
+    max-width: 50%;
+}
+
+.image-container img {
+    width: 80%;
+    height: auto; /* Make sure the image scales correctly */
+}
+
+.form-container h1 {
+    text-align: left;
+    margin-bottom: 20px;
+    color: #5981f3;
+}
+.form-container h3 {
+    text-align: left;
+    margin-bottom: 20px;
+    color: #717171;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    color: #717171;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #9e9e9e;
+    box-sizing: border-box;
+}
+.form-control {
+    background-color: #121417;
+    border: 1px solid #717171;
+    color: #717171;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    resize: vertical;
+    height: 6em;
+    margin: 15px 15px 0 0;
+}
+
+input[type="file"].form-control-file {
+    background-color: #121417;
+    border: 1px solid #717171;
+    color: #717171;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.submit-btn {
+    background-color: #5981f3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+
+}
+
+.submit-btn:hover {
+    background-color: #0042ff;
+}
