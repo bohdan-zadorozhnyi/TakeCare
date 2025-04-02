@@ -19,12 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/appointments/', include('appointments.urls')),
-    path('api/accounts/', include('accounts.urls')),
-    path('api/articles/', include('articles.urls')),
-    path('api/issues/', include('issues.urls')),
-    path('api/medical/', include('medical.urls')),
-    path('api/notifications/', include('notifications.urls')),
-    path('api/prescriptions/', include('prescriptions.urls')),
-    path('api/referrals/', include('referrals.urls')),
+    path('api/v1/', include('TakeCare.api')),
 ]
