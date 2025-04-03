@@ -4,19 +4,26 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
+from .forms import CustomUserCreationForm, CustomLoginForm
 
 # Login view
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
+        form = CustomLoginForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            user = authenticate(request, email=email, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.error(request, "Email or Password is incorrect.")
         else:
-            messages.error(request, "Username or Password is incorrect.")
+            messages.error(request, "Please correct the errors below.")
     else:
-        form = AuthenticationForm()
+        form = CustomLoginForm()
+
     return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
@@ -25,11 +32,11 @@ def logout_view(request):
 # Registration view
 def register_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save(commit=False)
             return redirect('login')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
