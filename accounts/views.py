@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from .forms import CustomUserCreationForm, CustomLoginForm
-
+from .forms import CustomLoginForm, SignUpForm
+from TakeCare.backends import EmailAuthBackend
 # Login view
 def login_view(request):
     if request.method == 'POST':
@@ -13,7 +13,9 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(request, email=email, password=password)
+            backend = EmailAuthBackend()
+            user = backend.authenticate(request=request, username=email, password=password)
+            print(f"DEBUG: Found user - {user}")
             if user is not None:
                 login(request, user)
                 return redirect('home')
@@ -32,11 +34,11 @@ def logout_view(request):
 # Registration view
 def register_view(request):
     if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
+            user = form.save(commit=True)
             return redirect('login')
     else:
-        form = CustomUserCreationForm()
+        form = SignUpForm()
     return render(request, 'accounts/register.html', {'form': form})
 

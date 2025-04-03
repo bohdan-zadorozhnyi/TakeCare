@@ -19,92 +19,30 @@
 
         <form method="POST" class="form-form">
             {% csrf_token %}
+            {{ form.non_field_errors }}
 
-            <div class="form-group">
-                <label for="id_email">Email</label>
-                {{ form.email }}
-                {% if form.email.errors %}
-                    <div class="error-message">
-                        {% for error in form.email.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
+            {% for field in form %}
+                <div class="form-group">
+                    <div class="label-wrapper">
+                        {{ field.label_tag }}
+                        {% if field.field.required %}<span class="required">*</span>{% endif %}
                     </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_name">Name</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                    <div class="error-message">
-                        {% for error in form.name.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
+                    <div class="value-wrapper">
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="error-message">
+                                {% for error in field.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
+                </div>
+            {% endfor %}
 
-            <div class="form-group">
-                <label for="id_phone_number">Phone Number</label>
-                {{ form.phone_number }}
-                {% if form.phone_number.errors %}
-                    <div class="error-message">
-                        {% for error in form.phone_number.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+            <div class="submit-wrapper">
+                <button type="submit" class="submit-btn">Register</button>
             </div>
-
-            <div class="form-group">
-                <label for="id_birth_date">Birth Date</label>
-                {{ form.birth_date }}
-                {% if form.birth_date.errors %}
-                    <div class="error-message">
-                        {% for error in form.birth_date.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_gender">Gender</label>
-                {{ form.gender }}
-                {% if form.gender.errors %}
-                    <div class="error-message">
-                        {% for error in form.gender.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_password1">Password</label>
-                {{ form.password1 }}
-            </div>
-
-            <div class="form-group">
-                <label for="id_password2">Confirm Password</label>
-                {{ form.password2 }}
-                {% if form.password1.errors %}
-                    <div class="error-message">
-                        {% for error in form.password1.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-                {% if form.password2.errors %}
-                    <div class="error-message">
-                        {% for error in form.password2.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <button type="submit" class="submit-btn">Register</button>
         </form>
     </div>
 {% endblock %}
