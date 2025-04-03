@@ -9,7 +9,7 @@ CRM for Doctor-Patient Relations
 ### Backend
 - **Python** 
 - **Django** 
-- **SQLite**
+- **PostgreSQL**
 
 ### Frontend
 - **HTML** 
