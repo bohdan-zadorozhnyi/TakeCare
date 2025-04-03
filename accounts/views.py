@@ -1,11 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from .forms import CustomLoginForm, SignUpForm
 from TakeCare.backends import EmailAuthBackend
+
 # Login view
 def login_view(request):
     if request.method == 'POST':
@@ -41,4 +39,3 @@ def register_view(request):
     else:
         form = SignUpForm()
     return render(request, 'accounts/register.html', {'form': form})
-
