@@ -38,6 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'accounts',
+    'appointments',
+    'prescriptions',
+    'referrals',
+    'articles',
+    'notifications',
+    'issues',
+    'medical',
+    'core'
 ]
 
 MIDDLEWARE = [
@@ -77,9 +87,9 @@ WSGI_APPLICATION = 'TakeCare.wsgi.application'
 DATABASES = { 
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_database_name',
-        'USER': 'your_username',
-        'PASSWORD': 'your_password',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': '12345',
         'HOST': 'localhost',
         'PORT': '5432',
     }

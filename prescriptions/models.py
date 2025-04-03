@@ -1,0 +1,16 @@
+from django.db import models
+from accounts.models import User
+import uuid
+
+class Prescription(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    doctor = models.ForeignKey(User, related_name="prescriptions_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
+    patient = models.ForeignKey(User, related_name="prescriptions_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    medication_name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=255)
+    notes = models.TextField()
+    issue_date = models.DateField()
+    expiration_date = models.DateField()
+
+    def __str__(self):
+        return f"Prescription for {self.patient.name}"

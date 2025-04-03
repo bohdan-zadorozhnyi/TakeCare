@@ -2,9 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TakeCare</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TakeCare | 
+    {% block title %}
+    {% endblock %}
+    </title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
+    <!-- Top Navigation Bar -->
+    <header>
+        <nav class="navbar">
+            <div class="left-nav">
+            <a href="{% url 'home' %}">
+                {% include 'logo.html' %}
+            </a>
+            </div>
+            <div class="right-nav">
+                <ul>
+                    {% block right-nav %}
+                    <li><a href="#">Report Issue</a></li>
+                    <li><a href="#">Notifications</a></li>
+                    <li><a href="#">Lang</a></li>
+                    <li><a href="#">Profile</a></li>
+                    {% endblock %}
+                </ul>
+            </div>
+        </nav>
+    </header>
 
+    <!-- Content Wrapper: Vertical Navigation and Main Content -->
+    <div class="content-wrapper">
+        <!-- Left Vertical Navigation Bar -->
+        <nav class="vertical-nav">
+            <div class="top-nav">
+                <ul>
+                    {% block top-nav %}
+                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="#">Appointments</a></li>
+                    <li><a href="#">Chat</a></li>
+                    <li><a href="#">Prescriptions</a></li>
+                    <li><a href="#">Referrals</a></li>
+                    {% endblock %}
+                </ul>
+            </div>
+    
+            <div class="bottom-nav">
+                <ul>
+                    {% block bottom-nav %}
+                        <li><a href="#">View Profile</a></li>
+                        <li><a href={% url 'logout' %}>Logout</a></li>
+                        <li><a href={% url 'about' %}>About</a></li>
+                    {% endblock %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
 </body>
 </html>
