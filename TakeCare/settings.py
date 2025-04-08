@@ -114,6 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "accounts.User"
+
 AUTHENTICATION_BACKENDS = [
     'TakeCare.backends.EmailAuthBackend',
 ]
@@ -140,7 +142,3 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-#SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-

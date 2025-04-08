@@ -44,7 +44,7 @@ class SignUpForm(UserCreationForm):
         user.birth_date = self.cleaned_data["birth_date"]
         user.gender = self.cleaned_data["gender"]
         user.address = self.cleaned_data["address"]
-        user.role = self.cleaned_data["role"]
+        #user.role = self.cleaned_data["role"]
 
         if commit:
             user.save()
