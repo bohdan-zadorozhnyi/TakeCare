@@ -14,7 +14,7 @@ class EmailAuthBackend(BaseBackend):
                 return user
         except User.DoesNotExist:
             return None
-        return None  # Ensure it always returns None if authentication fails
+        return None
 
     def get_user(self, user_id):
         try:

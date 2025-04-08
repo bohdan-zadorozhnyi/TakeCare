@@ -28,7 +28,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('home')
+    return redirect('login')
 # Registration view
 def register_view(request):
     if request.method == "POST":
