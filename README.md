@@ -10,11 +10,108 @@ CRM for Doctor-Patient Relations
 - **Python** 
 - **Django** 
 - **PostgreSQL**
+- **Redis**
 
 ### Frontend
 - **HTML** 
 - **CSS** 
 - **JavaScript**
+
+
+## Prerequisites
+
+### For Docker Setup
+- Docker and Docker Compose
+- Git
+
+### For Local Setup
+- Python 3.12+
+- PostgreSQL 14+
+- Redis 7+
+- Git
+
+## Setup Instructions
+
+### Using Docker (Recommended)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/TakeCare.git
+   cd TakeCare
+   ```
+
+2. Start the services using Docker Compose:
+   ```bash
+   docker compose up -d
+   ```
+
+3. The application will be available at http://localhost:8000
+
+Default superuser credentials:
+- Email: admin@example.com
+- Password: admin123
+
+### Local Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/TakeCare.git
+   cd TakeCare
+   ```
+
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Set up PostgreSQL:
+   - Create a database named 'takecare'
+   - Create a user 'postgres' with password '12345'
+   - Grant all privileges on the database to the user
+
+5. Set up environment variables:
+   ```bash
+   export POSTGRES_DB=takecare
+   export POSTGRES_USER=postgres
+   export POSTGRES_PASSWORD=12345
+   export POSTGRES_HOST=localhost
+   export REDIS_HOST=localhost
+   export DJANGO_DEBUG=True
+   ```
+
+6. Run database migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+7. Create a superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+8. Start the Redis server
+
+9. Run the development server:
+   ```bash
+   python manage.py runserver
+   ```
+
+10. The application will be available at http://localhost:8000
+
+## Key Features
+- Patient-Doctor appointment scheduling
+- Real-time chat between patients and doctors
+- Medical records management
+- Prescription management
+- Referral system
+- Article publishing system
+- Notification system
 
 ## Conventions
 
