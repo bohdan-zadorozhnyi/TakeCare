@@ -155,7 +155,6 @@
 
         <div class="message-input">
             <form id="message-form">
-                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                 <textarea id="message-content" placeholder="Type your message..."></textarea>
                 <button type="submit" class="btn btn-primary">Send</button>
             </form>
@@ -169,19 +168,13 @@
     const messageForm = document.getElementById('message-form');
     const messagesContainer = document.getElementById('messages');
     const errorMessage = document.getElementById('error-message');
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
+    
     function showError(error, type, details = null) {
         const errorDiv = document.getElementById('error-message');
         const titles = {
-            'method_not_allowed': 'Invalid Request',
-            'permission_denied': 'Access Denied',
-            'not_found': 'Not Found',
-            'invalid_json': 'Invalid Request Data',
-            'empty_content': 'Invalid Message',
-            'validation_error': 'Validation Error',
-            'database_error': 'Database Error',
-            'server_error': 'Server Error'
+            'connection_error': 'Connection Error',
+            'message_error': 'Message Error',
+            'empty_content': 'Invalid Message'
         };
 
         errorDiv.querySelector('.error-title').textContent = titles[type] || 'Error';
@@ -200,64 +193,49 @@
         }, 5000);
     }
 
-    messageForm.addEventListener('submit', async (e) => {
+    // WebSocket connection
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/{{ chatroom.id }}/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messageElement = document.createElement('div');
+        const isSender = data.sender_id === '{{ request.user.id }}';
+        messageElement.className = `message ${isSender ? 'sent' : 'received'}`;
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <p>${data.message}</p>
+                <span class="timestamp">${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+        showError(
+            'Chat connection closed. Please refresh the page.',
+            'connection_error'
+        );
+    };
+
+    messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const textarea = document.getElementById('message-content');
-        const content = textarea.value.trim();
+        const messageInputDom = document.getElementById('message-content');
+        const message = messageInputDom.value.trim();
         
-        if (!content) {
+        if (!message) {
             showError('Message content cannot be empty', 'empty_content');
             return;
         }
 
-        try {
-            const response = await fetch('send/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ content })
-            });
+        // Send message using WebSocket
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
 
-            let data;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                throw new Error('Received non-JSON response from server');
-            }
-
-            if (!response.ok) {
-                throw {
-                    message: data.error || 'Failed to send message',
-                    type: data.error_type || 'server_error',
-                    details: data.details
-                };
-            }
-
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message sent';
-            messageElement.innerHTML = `
-                <div class="message-content">
-                    <p>${data.content}</p>
-                    <span class="timestamp">${data.timestamp}</span>
-                </div>
-            `;
-            messagesContainer.appendChild(messageElement);
-            textarea.value = '';
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        } catch (error) {
-            console.error('Error sending message:', error);
-            showError(
-                error.message || 'Failed to send message',
-                error.type || 'server_error',
-                error.details
-            );
-        }
+        messageInputDom.value = '';
     });
 
     // Scroll to bottom on page load
