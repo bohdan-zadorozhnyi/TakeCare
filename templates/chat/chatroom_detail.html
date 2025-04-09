@@ -5,82 +5,6 @@
     {{ block.super }}
 </div>
 
-<script>
-// Highlight the active chat in the sidebar
-document.addEventListener('DOMContentLoaded', function() {
-    const currentChatId = '{{ chatroom.id }}';
-    const chatItems = document.querySelectorAll('.chatroom-item');
-    chatItems.forEach(item => {
-        if (item.querySelector('a').href.includes(currentChatId)) {
-            item.classList.add('active');
-        }
-    });
-});
-
-const messageForm = document.getElementById('message-form');
-const messagesContainer = document.getElementById('messages');
-const errorMessage = document.getElementById('error-message');
-
-function showError(message) {
-    errorMessage.querySelector('p').textContent = message;
-    errorMessage.style.display = 'block';
-    setTimeout(() => {
-        errorMessage.style.display = 'none';
-    }, 5000);
-}
-
-if (messageForm) {
-    messageForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const textarea = document.getElementById('message-content');
-        const content = textarea.value.trim();
-        
-        if (!content) {
-            showError('Message cannot be empty');
-            return;
-        }
-
-        try {
-            const response = await fetch('send/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ content })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to send message');
-            }
-
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message sent';
-            messageElement.innerHTML = `
-                <div class="message-content">
-                    <strong>${data.sender}</strong>
-                    <p>${data.content}</p>
-                    <span class="timestamp">${data.timestamp}</span>
-                </div>
-            `;
-            messagesContainer.appendChild(messageElement);
-            textarea.value = '';
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        } catch (error) {
-            showError(error.message);
-            console.error('Error sending message:', error);
-        }
-    });
-}
-
-// Scroll to bottom on page load
-if (messagesContainer) {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-</script>
-
 <style>
 .chat-main {
     {% if chatroom %}
@@ -151,11 +75,33 @@ if (messagesContainer) {
 .error-message {
     background-color: #f8d7da;
     color: #721c24;
-    padding: 10px;
+    padding: 15px;
     margin: 10px;
     border-radius: 4px;
     border: 1px solid #f5c6cb;
-    text-align: center;
+    text-align: left;
+    display: none;
+}
+
+.error-message .error-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.error-message .error-details {
+    font-size: 0.9em;
+    margin-top: 5px;
+    color: #5a171d;
+}
+
+.error-message.show {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message-input {
@@ -185,21 +131,15 @@ if (messagesContainer) {
 
 {% if chatroom %}
 <script>
-    document.querySelector('.chat-main').innerHTML = `
+    const mainContent = `
         <div class="chat-header">
-            <h1>{{ chatroom.name }}</h1>
-            <div class="participants">
-                Participants: {% for participant in chatroom.participants.all %}
-                    {{ participant.username }}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </div>
+            <h1>{{ other_participant_name }}</h1>
         </div>
 
         <div id="messages" class="messages-container">
             {% for message in messages %}
             <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
                 <div class="message-content">
-                    <strong>{{ message.sender.username }}</strong>
                     <p>{{ message.content }}</p>
                     <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
                 </div>
@@ -207,18 +147,130 @@ if (messagesContainer) {
             {% endfor %}
         </div>
 
-        <div id="error-message" class="error-message" style="display: none;">
-            <p></p>
+        <div id="error-message" class="error-message">
+            <div class="error-title"></div>
+            <div class="error-content"></div>
+            <div class="error-details"></div>
         </div>
 
         <div class="message-input">
             <form id="message-form">
-                {% csrf_token %}
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                 <textarea id="message-content" placeholder="Type your message..."></textarea>
                 <button type="submit" class="btn btn-primary">Send</button>
             </form>
         </div>
     `;
+
+    // Set the main content
+    document.querySelector('.chat-main').innerHTML = mainContent;
+
+    // Initialize chat functionality after content is loaded
+    const messageForm = document.getElementById('message-form');
+    const messagesContainer = document.getElementById('messages');
+    const errorMessage = document.getElementById('error-message');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function showError(error, type, details = null) {
+        const errorDiv = document.getElementById('error-message');
+        const titles = {
+            'method_not_allowed': 'Invalid Request',
+            'permission_denied': 'Access Denied',
+            'not_found': 'Not Found',
+            'invalid_json': 'Invalid Request Data',
+            'empty_content': 'Invalid Message',
+            'validation_error': 'Validation Error',
+            'database_error': 'Database Error',
+            'server_error': 'Server Error'
+        };
+
+        errorDiv.querySelector('.error-title').textContent = titles[type] || 'Error';
+        errorDiv.querySelector('.error-content').textContent = error;
+        
+        if (details) {
+            errorDiv.querySelector('.error-details').textContent = details;
+            errorDiv.querySelector('.error-details').style.display = 'block';
+        } else {
+            errorDiv.querySelector('.error-details').style.display = 'none';
+        }
+
+        errorDiv.classList.add('show');
+        setTimeout(() => {
+            errorDiv.classList.remove('show');
+        }, 5000);
+    }
+
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const textarea = document.getElementById('message-content');
+        const content = textarea.value.trim();
+        
+        if (!content) {
+            showError('Message content cannot be empty', 'empty_content');
+            return;
+        }
+
+        try {
+            const response = await fetch('send/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ content })
+            });
+
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                throw new Error('Received non-JSON response from server');
+            }
+
+            if (!response.ok) {
+                throw {
+                    message: data.error || 'Failed to send message',
+                    type: data.error_type || 'server_error',
+                    details: data.details
+                };
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message sent';
+            messageElement.innerHTML = `
+                <div class="message-content">
+                    <p>${data.content}</p>
+                    <span class="timestamp">${data.timestamp}</span>
+                </div>
+            `;
+            messagesContainer.appendChild(messageElement);
+            textarea.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } catch (error) {
+            console.error('Error sending message:', error);
+            showError(
+                error.message || 'Failed to send message',
+                error.type || 'server_error',
+                error.details
+            );
+        }
+    });
+
+    // Scroll to bottom on page load
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Highlight active chat
+    const currentChatId = '{{ chatroom.id }}';
+    const chatItems = document.querySelectorAll('.chatroom-item');
+    chatItems.forEach(item => {
+        if (item.querySelector('a').href.includes(currentChatId)) {
+            item.classList.add('active');
+        }
+    });
 </script>
 {% endif %}
 {% endblock %}

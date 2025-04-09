@@ -4,7 +4,7 @@
 <div class="chat-layout">
     <div class="chat-sidebar">
         <div class="sidebar-header">
-            <h2>Chat Rooms</h2>
+            <h2>Chats</h2>
             <button id="newChatButton" class="btn btn-primary">New Chat</button>
         </div>
 
@@ -12,14 +12,10 @@
             <form method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="{{ form.name.id_for_label }}">Chat Name:</label>
-                    {{ form.name }}
+                    {{ form.participant.label_tag }}
+                    {{ form.participant }}
                 </div>
-                <div class="form-group">
-                    <label for="{{ form.participants.id_for_label }}">Select Participants:</label>
-                    {{ form.participants }}
-                </div>
-                <button type="submit" class="btn btn-success">Create Chat</button>
+                <button type="submit" class="btn btn-success">Start Chat</button>
                 <button type="button" class="btn btn-secondary" id="cancelChat">Cancel</button>
             </form>
         </div>
@@ -30,12 +26,12 @@
                     <div class="chatroom-item {% if chatroom.id == active_chat_id %}active{% endif %}">
                         <a href="{% url 'chatroom_detail' room_id=chatroom.id %}" class="chat-link">
                             <h3>{{ chatroom.name }}</h3>
-                            <p class="chat-participants">{{ chatroom.participants.count }} participants</p>
+                            <p class="chat-preview">Click to view conversation</p>
                         </a>
                     </div>
                 {% endfor %}
             {% else %}
-                <p class="no-chats">No chat rooms available. Create a new one!</p>
+                <p class="no-chats">No chats available. Start a new conversation!</p>
             {% endif %}
         </div>
     </div>
@@ -44,7 +40,7 @@
         {% if not chatrooms %}
             <div class="no-chat-selected">
                 <h2>Welcome to Chat</h2>
-                <p>Select a chat from the list or create a new one to start messaging</p>
+                <p>Select a user to start a conversation</p>
             </div>
         {% endif %}
     </div>
@@ -128,7 +124,7 @@ document.getElementById('cancelChat').addEventListener('click', function() {
     color: #333;
 }
 
-.chat-participants {
+.chat-preview {
     margin: 4px 0 0;
     font-size: 0.8rem;
     color: #666;
