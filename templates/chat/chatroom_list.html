@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="chat-layout">
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2>Chat Rooms</h2>
+            <button id="newChatButton" class="btn btn-primary">New Chat</button>
+        </div>
+
+        <div id="newChatForm" class="chat-form" style="display: none;">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Chat Name:</label>
+                    {{ form.name }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.participants.id_for_label }}">Select Participants:</label>
+                    {{ form.participants }}
+                </div>
+                <button type="submit" class="btn btn-success">Create Chat</button>
+                <button type="button" class="btn btn-secondary" id="cancelChat">Cancel</button>
+            </form>
+        </div>
+
+        <div class="chatroom-list">
+            {% if chatrooms %}
+                {% for chatroom in chatrooms %}
+                    <div class="chatroom-item {% if chatroom.id == active_chat_id %}active{% endif %}">
+                        <a href="{% url 'chatroom_detail' room_id=chatroom.id %}" class="chat-link">
+                            <h3>{{ chatroom.name }}</h3>
+                            <p class="chat-participants">{{ chatroom.participants.count }} participants</p>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-chats">No chat rooms available. Create a new one!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chat-main">
+        {% if not chatrooms %}
+            <div class="no-chat-selected">
+                <h2>Welcome to Chat</h2>
+                <p>Select a chat from the list or create a new one to start messaging</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('newChatButton').addEventListener('click', function() {
+    document.getElementById('newChatForm').style.display = 'block';
+});
+
+document.getElementById('cancelChat').addEventListener('click', function() {
+    document.getElementById('newChatForm').style.display = 'none';
+});
+</script>
+
+<style>
+.chat-layout {
+    display: flex;
+    height: calc(100vh - 100px); /* Adjust based on your header height */
+    background: #fff;
+    width: 100%;
+}
+
+.chat-sidebar {
+    width: 300px;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.chat-form {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fff;
+}
+
+.chatroom-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.chatroom-item {
+    margin-bottom: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.chatroom-item:hover {
+    background: #e9ecef;
+}
+
+.chatroom-item.active {
+    background: #e3f2fd;
+}
+
+.chat-link {
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.chat-link h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.chat-participants {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+.no-chat-selected {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-align: center;
+    padding: 20px;
+}
+
+.no-chats {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    margin-right: 10px;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+</style>
+{% endblock %}
