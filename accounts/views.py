@@ -1,35 +1,41 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login, logout
 from django.contrib import messages
+from .forms import CustomLoginForm, SignUpForm
+from TakeCare.backends import EmailAuthBackend
 
 # Login view
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
+        form = CustomLoginForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            backend = EmailAuthBackend()
+            user = backend.authenticate(request=request, username=email, password=password)
+            print(f"DEBUG: Found user - {user}")
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.error(request, "Email or Password is incorrect.")
         else:
-            messages.error(request, "Username or Password is incorrect.")
+            messages.error(request, "Please correct the errors below.")
     else:
-        form = AuthenticationForm()
+        form = CustomLoginForm()
+
     return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
     logout(request)
-    return redirect('home')
+    return redirect('login')
 # Registration view
 def register_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save(commit=True)
             return redirect('login')
     else:
-        form = UserCreationForm()
+        form = SignUpForm()
     return render(request, 'accounts/register.html', {'form': form})
-
