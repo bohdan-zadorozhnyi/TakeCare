@@ -7,10 +7,9 @@ class ChatRoom(models.Model):
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chatrooms')
 
     def clean(self):
-        # Skip validation when the instance is new
-        if self.pk:
-            if self.participants.count() > 2:
-                raise ValidationError("ChatRoom can only have two participants")
+        # Only validate the number of participants per chat
+        if self.pk and self.participants.count() > 2:
+            raise ValidationError("ChatRoom can only have two participants")
 
     def save(self, *args, **kwargs):
         self.full_clean()

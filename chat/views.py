@@ -22,16 +22,7 @@ def chatroom_list(request):
         form = ChatRoomForm(request.POST, user=request.user)
         if form.is_valid():
             other_user = form.cleaned_data['participant']
-            # Check if a chat already exists with these participants
-            existing_chat = ChatRoom.objects.filter(
-                participants=request.user
-            ).filter(
-                participants=other_user
-            ).first()
-            
-            if existing_chat:
-                return redirect('chatroom_detail', room_id=existing_chat.id)
-                
+            # Create a new chat room
             chatroom = form.save(user=request.user)
             return redirect('chatroom_detail', room_id=chatroom.id)
     
