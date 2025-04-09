@@ -7,29 +7,32 @@ services:
       - "8000:8000"
     environment:
       - POSTGRES_DB=takecare
-      - POSTGRES_USER=macbook
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=12345
       - POSTGRES_HOST=db
       - REDIS_HOST=redis
       - DJANGO_SUPERUSER_EMAIL=admin@example.com
       - DJANGO_SUPERUSER_PASSWORD=admin123
+      - DJANGO_DEBUG=True
+      - STATIC_ROOT=/app/staticfiles
     depends_on:
       - db
       - redis
     volumes:
       - .:/app
-      - static_volume:/app/static
+      - /app/staticfiles
       - media_volume:/app/media
     networks:
       - takecare_network
 
   db:
-    image: postgres:15
+    image: postgres:14
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
     environment:
       - POSTGRES_DB=takecare
-      - POSTGRES_USER=macbook
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=12345
     ports:
       - "5432:5432"
@@ -48,7 +51,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  static_volume:
   media_volume:
 
 networks:

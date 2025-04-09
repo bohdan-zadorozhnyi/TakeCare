@@ -8,6 +8,7 @@ done
 >&2 echo "Postgres is up - executing command"
 
 python manage.py migrate
+python manage.py collectstatic --noinput
 
 python manage.py shell -c "
 from django.contrib.auth import get_user_model;
