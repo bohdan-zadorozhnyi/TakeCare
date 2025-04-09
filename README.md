@@ -97,21 +97,14 @@ Default superuser credentials:
 
 8. Start the Redis server
 
-9. Run the development server:
+9. Start the development server with Daphne:
    ```bash
-   python manage.py runserver
+   daphne -b 0.0.0.0 -p 8000 TakeCare.asgi:application
    ```
 
 10. The application will be available at http://localhost:8000
 
-## Key Features
-- Patient-Doctor appointment scheduling
-- Real-time chat between patients and doctors
-- Medical records management
-- Prescription management
-- Referral system
-- Article publishing system
-- Notification system
+Note: Daphne is required for WebSocket support used by the real-time chat feature.
 
 ## Conventions
 
