@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}
+Appointments
+{% endblock %}
+
+{% block content %}
+<div class="appointments-container">
+    <h1>Your Appointments</h1>
+    
+    {% if has_appointments %}
+        {% for date, appointments in grouped_appointments %}
+            <div class="date-group">
+                <h2 class="date-header">{{ date|date:"l, F j, Y" }}</h2>
+                
+                <div class="appointments-list">
+                    {% for appointment in appointments %}
+                        <div class="appointment-card">
+                            <div class="appointment-time">{{ appointment.date|time:"g:i A" }}</div>
+                            <div class="appointment-details">
+                                {% if user.role == 'Doctor' %}
+                                    <p>Patient: {{ appointment.patient.get_full_name }}</p>
+                                {% else %}
+                                    <p>Doctor: {{ appointment.doctor.get_full_name }}</p>
+                                {% endif %}
+                                <p>Reason: {{ appointment.reason }}</p>
+                            </div>
+                            <div class="appointment-actions">
+                                <a href="{% url 'cancel_appointment' appointment.id %}" class="btn btn-danger">Cancel</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if grouped_appointments.paginator.num_pages > 1 %}
+            <div class="pagination">
+                <span class="step-links">
+                    {% if grouped_appointments.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ grouped_appointments.previous_page_number }}">previous</a>
+                    {% endif %}
+                    
+                    <span class="current">
+                        Page {{ grouped_appointments.number }} of {{ grouped_appointments.paginator.num_pages }}
+                    </span>
+                    
+                    {% if grouped_appointments.has_next %}
+                        <a href="?page={{ grouped_appointments.next_page_number }}">next</a>
+                        <a href="?page={{ grouped_appointments.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="no-appointments">
+            <p>No appointments for now...</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .appointments-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .date-group {
+        margin-bottom: 30px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .date-header {
+        background-color: #f5f5f5;
+        padding: 10px 15px;
+        margin: 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .appointments-list {
+        padding: 15px;
+    }
+    
+    .appointment-card {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .appointment-card:last-child {
+        border-bottom: none;
+    }
+    
+    .appointment-time {
+        min-width: 100px;
+        font-weight: bold;
+    }
+    
+    .appointment-details {
+        flex-grow: 1;
+        margin: 0 20px;
+    }
+    
+    .appointment-actions {
+        margin-left: auto;
+    }
+    
+    .pagination {
+        margin-top: 30px;
+        text-align: center;
+    }
+    
+    .pagination a {
+        color: #007bff;
+        text-decoration: none;
+        margin: 0 5px;
+    }
+    
+    .pagination .current {
+        margin: 0 10px;
+    }
+    
+    .no-appointments {
+        text-align: center;
+        padding: 50px;
+        color: #666;
+    }
+</style>
+{% endblock %}

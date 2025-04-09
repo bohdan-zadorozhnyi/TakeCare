@@ -7,4 +7,5 @@ urlpatterns = [
     path('api/v1/', include('TakeCare.api')),
     path('accounts/', include('accounts.urls')),
     path('', include('core.urls')),
+    path('', include('appointments.urls'))
 ]

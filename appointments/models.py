@@ -4,6 +4,8 @@ import uuid
 
 
 class AppointmentStatus(models.TextChoices):
+    AVAILABLE = "Available"
+    UNAVAILABLE = "Unavailable"
     CANCELLED = "Cancelled"
     BOOKED = "Booked"
     FINISHED = "Finished"
@@ -14,10 +16,10 @@ class Appointment(models.Model):
     doctor = models.ForeignKey(User, related_name="appointments_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
     patient = models.ForeignKey(User, related_name="appointments_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
     location = models.CharField(max_length=255)
-    referral = models.UUIDField(null=True, blank=True)  # Can be ForeignKey later
+    referral = models.UUIDField(null=True, blank=True)
     description = models.TextField()
     date = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=AppointmentStatus.choices)
+    status = models.CharField(choices=AppointmentStatus.choices)
 
     def __str__(self):
         return f"Appointment with {self.doctor.name} on {self.date}"

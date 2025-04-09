@@ -87,9 +87,9 @@ WSGI_APPLICATION = 'TakeCare.wsgi.application'
 DATABASES = { 
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'takecare',
+        'NAME': 'TakeCare',
         'USER': 'postgres',
-        'PASSWORD': '12345',
+        'PASSWORD': 'chel1234',
         'HOST': 'localhost',
         'PORT': '5432',
     }
