@@ -42,22 +42,48 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Set up environment variables
+    - name: Set up environment
+      env:
+        DJANGO_SETTINGS_MODULE: TakeCare.settings
+        POSTGRES_DB: github_actions
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        REDIS_HOST: localhost
+        DJANGO_SECRET_KEY: testing-key-not-for-production
+        DJANGO_DEBUG: True
       run: |
-        echo "DJANGO_SETTINGS_MODULE=TakeCare.settings" >> $GITHUB_ENV
-        echo "POSTGRES_DB=github_actions" >> $GITHUB_ENV
-        echo "POSTGRES_USER=postgres" >> $GITHUB_ENV
-        echo "POSTGRES_PASSWORD=postgres" >> $GITHUB_ENV
-        echo "POSTGRES_HOST=localhost" >> $GITHUB_ENV
-        echo "REDIS_HOST=localhost" >> $GITHUB_ENV
-        echo "DJANGO_SECRET_KEY=testing-key-not-for-production" >> $GITHUB_ENV
-        echo "DJANGO_DEBUG=True" >> $GITHUB_ENV
+        python -c "
+          import django
+          from django.conf import settings
+          django.setup()
+          print('Django configured with apps:', settings.INSTALLED_APPS)
+        "
         
     - name: Run Migrations
+      env:
+        DJANGO_SETTINGS_MODULE: TakeCare.settings
+        POSTGRES_DB: github_actions
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        REDIS_HOST: localhost
+        DJANGO_SECRET_KEY: testing-key-not-for-production
+        DJANGO_DEBUG: True
       run: |
+        python manage.py check
         python manage.py makemigrations
         python manage.py migrate
         
     - name: Run Tests
+      env:
+        DJANGO_SETTINGS_MODULE: TakeCare.settings
+        POSTGRES_DB: github_actions
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        REDIS_HOST: localhost
+        DJANGO_SECRET_KEY: testing-key-not-for-production
+        DJANGO_DEBUG: True
       run: |
-        python -m pytest
+        python manage.py test chat.tests -v 2
