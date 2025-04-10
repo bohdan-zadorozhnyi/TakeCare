@@ -31,7 +31,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: github_actions
         ports:
           - 5432:5432
         options: >-
@@ -57,13 +57,14 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y postgresql-client
-        PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -U postgres -d postgres -c "CREATE DATABASE github_actions;"
         
-    - name: Run Migrations
+    - name: Check for missing migrations
       run: |
-        python manage.py migrate --check
-        python manage.py makemigrations --check
-        python manage.py migrate
+        python manage.py makemigrations --check --dry-run
+        
+    - name: Apply migrations
+      run: |
+        python manage.py migrate --no-input
         
     - name: Run Tests
       run: |
