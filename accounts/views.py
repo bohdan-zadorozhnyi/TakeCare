@@ -3,6 +3,8 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from .forms import CustomLoginForm, SignUpForm
 from TakeCare.backends import EmailAuthBackend
+from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse_lazy
 
 # Login view
 def login_view(request):
@@ -39,3 +41,9 @@ def register_view(request):
     else:
         form = SignUpForm()
     return render(request, 'accounts/register.html', {'form': form})
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'accounts/password_reset/password_reset_form.html'
+    email_template_name = 'accounts/password_reset/password_reset_email.html'
+    # subject_template_name = 'accounts/password_reset/password_reset_subject.txt'
+    from_email = 'support@takecare.local'
