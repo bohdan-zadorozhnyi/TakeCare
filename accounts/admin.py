@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 from django.utils.translation import gettext_lazy as _
+from .forms import SignUpForm
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    add_form = SignUpForm
     model = User
     list_display = ('email', 'name', 'role', 'is_staff')
     list_filter = ('role', 'is_active', 'is_staff')
@@ -23,6 +25,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'name', 'password1', 'password2', 'role'),
-        }),
+            'fields': ('email', 'name', 'phone_number', 'address',
+                'birth_date', 'gender', 'personal_id', 'role',
+                'password1', 'password2',),}),
     )
