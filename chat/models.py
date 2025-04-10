@@ -3,11 +3,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 class ChatRoom(models.Model):
+    class Meta:
+        app_label = 'chat'
+        
     name = models.CharField(max_length=255)
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chatrooms')
 
     def clean(self):
-        # Only validate the number of participants per chat
         if self.pk and self.participants.count() > 2:
             raise ValidationError("ChatRoom can only have two participants")
 
@@ -25,6 +27,9 @@ class ChatRoom(models.Model):
         return self.name
 
 class Message(models.Model):
+    class Meta:
+        app_label = 'chat'
+        
     chatroom = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
