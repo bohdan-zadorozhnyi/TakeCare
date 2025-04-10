@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      POSTGRES_DB: github_actions_test
+      POSTGRES_DB: github_actions
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: localhost
@@ -29,9 +29,9 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_DB: github_actions_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
         options: >-
@@ -53,10 +53,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Verify PostgreSQL Connection
+    - name: Initialize PostgreSQL
       run: |
-        apt-get update && apt-get install -y postgresql-client
-        PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c '\conninfo'
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+        PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -U postgres -d postgres -c "CREATE DATABASE github_actions;"
         
     - name: Run Migrations
       run: |
