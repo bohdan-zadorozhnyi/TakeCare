@@ -42,9 +42,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run Tests
-      env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/github_actions
-        DJANGO_SETTINGS_MODULE: TakeCare.settings
+    - name: Set up environment variables
       run: |
-        pytest -v
+        echo "DJANGO_SETTINGS_MODULE=TakeCare.settings" >> $GITHUB_ENV
+        echo "POSTGRES_DB=github_actions" >> $GITHUB_ENV
+        echo "POSTGRES_USER=postgres" >> $GITHUB_ENV
+        echo "POSTGRES_PASSWORD=postgres" >> $GITHUB_ENV
+        echo "POSTGRES_HOST=localhost" >> $GITHUB_ENV
+        echo "REDIS_HOST=localhost" >> $GITHUB_ENV
+        echo "DJANGO_SECRET_KEY=testing-key-not-for-production" >> $GITHUB_ENV
+        echo "DJANGO_DEBUG=True" >> $GITHUB_ENV
+        
+    - name: Run Migrations
+      run: |
+        python manage.py makemigrations
+        python manage.py migrate
+        
+    - name: Run Tests
+      run: |
+        python -m pytest
