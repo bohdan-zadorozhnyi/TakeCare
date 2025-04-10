@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'notifications',
     'issues',
     'medical',
-    'chat',
-    'core'
+    'core',
+    'chat'
 ]
 
 MIDDLEWARE = [
@@ -128,6 +128,18 @@ AUTHENTICATION_BACKENDS = [
     'TakeCare.backends.EmailAuthBackend',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'TakeCare Support <noreply@takecare.local>'
+
+""" 
+# For Production:
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'email@gmail.com'
+EMAIL_HOST_PASSWORD = 'email_password_or_app_token'
+"""
 
 LANGUAGE_CODE = 'en-us'
 
