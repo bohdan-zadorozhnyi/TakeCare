@@ -10,6 +10,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    env:
+      POSTGRES_DB: github_actions_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      REDIS_HOST: localhost
+      DJANGO_SECRET_KEY: testing-key-not-for-production
+      DJANGO_DEBUG: True
+      DJANGO_SETTINGS_MODULE: TakeCare.settings
+    
     services:
       redis:
         image: redis
@@ -18,9 +29,9 @@ jobs:
       postgres:
         image: postgres:13
         env:
+          POSTGRES_DB: github_actions_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: github_actions
         ports:
           - 5432:5432
         options: >-
@@ -42,48 +53,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Set up environment
-      env:
-        DJANGO_SETTINGS_MODULE: TakeCare.settings
-        POSTGRES_DB: github_actions
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_HOST: localhost
-        REDIS_HOST: localhost
-        DJANGO_SECRET_KEY: testing-key-not-for-production
-        DJANGO_DEBUG: True
+    - name: Verify PostgreSQL Connection
       run: |
-        python -c "
-          import django
-          from django.conf import settings
-          django.setup()
-          print('Django configured with apps:', settings.INSTALLED_APPS)
-        "
+        apt-get update && apt-get install -y postgresql-client
+        PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c '\conninfo'
         
     - name: Run Migrations
-      env:
-        DJANGO_SETTINGS_MODULE: TakeCare.settings
-        POSTGRES_DB: github_actions
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_HOST: localhost
-        REDIS_HOST: localhost
-        DJANGO_SECRET_KEY: testing-key-not-for-production
-        DJANGO_DEBUG: True
       run: |
-        python manage.py check
-        python manage.py makemigrations
+        python manage.py migrate --check
+        python manage.py makemigrations --check
         python manage.py migrate
         
     - name: Run Tests
-      env:
-        DJANGO_SETTINGS_MODULE: TakeCare.settings
-        POSTGRES_DB: github_actions
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_HOST: localhost
-        REDIS_HOST: localhost
-        DJANGO_SECRET_KEY: testing-key-not-for-production
-        DJANGO_DEBUG: True
       run: |
         python manage.py test chat.tests -v 2
