@@ -6,7 +6,16 @@ Appointments
 
 {% block content %}
 <div class="appointments-container">
-    <h1>Your Appointments</h1>
+    <div class="appointments-header">
+        <h1>Your Appointments</h1>
+        {% if user.role == 'DOCTOR' %}
+            <a href="{% url 'create_appointment' %}">
+                <div id="addAppointmentBtn" class="btn btn-primary">
+                    Add Appointment Slot
+                </div>
+            </a>
+        {% endif %}
+    </div>
     
     {% if has_appointments %}
         {% for date, appointments in grouped_appointments %}
@@ -18,7 +27,7 @@ Appointments
                         <div class="appointment-card">
                             <div class="appointment-time">{{ appointment.date|time:"g:i A" }}</div>
                             <div class="appointment-details">
-                                {% if user.role == 'Doctor' %}
+                                {% if user.role == 'DOCTOR' %}
                                     <p>Patient: {{ appointment.patient.get_full_name }}</p>
                                 {% else %}
                                     <p>Doctor: {{ appointment.doctor.get_full_name }}</p>
@@ -66,6 +75,13 @@ Appointments
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
+    }
+    
+    .appointments-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
     
     .date-group {
@@ -130,6 +146,181 @@ Appointments
         text-align: center;
         padding: 50px;
         color: #666;
+    }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 50%;
+        max-width: 600px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: #000;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .form-group input[type="date"],
+    .form-group input[type="time"],
+    .form-group input[type="number"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .recurring-options {
+        margin-top: 10px;
+    }
+    
+    .checkbox-container,
+    .radio-container {
+        display: block;
+        position: relative;
+        padding-left: 35px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        font-size: 16px;
+        user-select: none;
+    }
+    
+    .checkbox-container input,
+    .radio-container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .checkmark,
+    .radio-mark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+        border-radius: 3px;
+    }
+    
+    .radio-mark {
+        border-radius: 50%;
+    }
+    
+    .checkbox-container:hover input ~ .checkmark,
+    .radio-container:hover input ~ .radio-mark {
+        background-color: #ccc;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark,
+    .radio-container input:checked ~ .radio-mark {
+        background-color: #007bff;
+    }
+    
+    .checkmark:after,
+    .radio-mark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark:after {
+        display: block;
+    }
+    
+    .checkbox-container .checkmark:after {
+        left: 7px;
+        top: 3px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+    }
+    
+    .radio-container input:checked ~ .radio-mark:after {
+        display: block;
+    }
+    
+    .radio-container .radio-mark:after {
+        top: 6px;
+        left: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .form-actions button {
+        margin-left: 10px;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
     }
 </style>
 {% endblock %}
