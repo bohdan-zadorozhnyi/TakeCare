@@ -90,11 +90,18 @@ CHANNEL_LAYERS = {
 DATABASES = { 
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'TakeCare',
-        'USER': 'postgres',
-        'PASSWORD': 'chel1234',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('POSTGRES_DB', 'takecare'),
+        'USER': os.environ.get('POSTGRES_USER', 'macbook'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '12345'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'TEST': {
+            'NAME': 'test_' + os.environ.get('POSTGRES_DB', 'takecare'),
+            'USER': os.environ.get('POSTGRES_USER', 'macbook'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '12345'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        },
     }
 }
 

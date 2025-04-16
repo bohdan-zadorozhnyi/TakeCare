@@ -81,3 +81,24 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class EditUserProfileForm(forms.ModelForm):
+    email = forms.EmailField(label='Email Address', max_length=75)
+    name = forms.CharField(label='Full Name', max_length=255)
+    phone_number = forms.CharField(label='Phone Number', max_length=15)
+    personal_id = forms.CharField(label='Personal ID', max_length=50)
+    birth_date = forms.DateField(
+        label='Birth Date',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'birthdate-picker'})
+    )
+    gender = forms.ChoiceField(label='Gender', choices=[('MALE', 'Male'), ('FEMALE', 'Female'), ('OTHER', 'Other')])
+    address = forms.CharField(label='Address', max_length=255, min_length=5)
+
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'phone_number', 'personal_id', 'birth_date', 'gender', 'address', 'personal_id']
+
+        widgets = {
+            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+        }

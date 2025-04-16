@@ -1,6 +1,6 @@
 from django.urls import path, include, reverse_lazy
 from rest_framework.routers import DefaultRouter
-from .views import login_view, register_view, logout_view, CustomPasswordResetView
+from .views import login_view, register_view, logout_view, CustomPasswordResetView, view_profile, edit_profile
 from django.contrib.auth import views as auth_views
 
 
@@ -21,4 +21,6 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='accounts/password_reset/password_reset_complete.html'
     ), name='password_reset_complete'),
+    path('profile/<uuid:user_id>/', view_profile, name='view_profile'),
+    path('edit_profile/<uuid:user_id>/', edit_profile, name='edit_profile'),
 ]

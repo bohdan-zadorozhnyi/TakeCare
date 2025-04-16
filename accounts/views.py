@@ -1,10 +1,15 @@
-from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
-from .forms import CustomLoginForm, SignUpForm
+from .forms import CustomLoginForm, SignUpForm, EditUserProfileForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
+
+from .models import User
+
 
 # Login view
 def login_view(request):
@@ -47,3 +52,34 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name = 'accounts/password_reset/password_reset_email.html'
     # subject_template_name = 'accounts/password_reset/password_reset_subject.txt'
     from_email = 'support@takecare.local'
+
+
+@login_required
+def view_profile(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    viewer = request.user
+
+    is_own_profile = viewer.id == user.id
+
+    return render(request, 'accounts/view_profile.html', {
+        'user': user,
+        'viewer': viewer,
+        'is_own_profile': is_own_profile
+    })
+
+@login_required
+def edit_profile(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    if request.user != user and request.user.role != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to edit this profile.")
+
+    if request.method == 'POST':
+        form = EditUserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()  # Save the updated user data
+            return redirect('view_profile', user_id=user.id)  # Redirect back to the view profile page
+    else:
+        form = EditUserProfileForm(instance=user)
+
+    return render(request, 'accounts/edit_profile.html', {'form': form, 'user': user})
