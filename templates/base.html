@@ -9,6 +9,7 @@
     </title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}">
 </head>
 <body>
     <!-- Top Navigation Bar -->
@@ -22,10 +23,10 @@
             <div class="right-nav">
                 <ul>
                     {% block right-nav %}
-                    <li><a href="#">Report Issue</a></li>
-                    <li><a href="#">Notifications</a></li>
-                    <li><a href="#">Lang</a></li>
-                    <li><a href="#">Profile</a></li>
+                    <li><a href="#"> Report Issue <i class="fas fa-exclamation-circle"></i></a></li>
+                    <li><a href="#"><i class="fas fa-bell"></i></a></li>
+                    <li><a href="#"><i class="fas fa-language"></i> Lang</a></li>
+                    <li><a href="{% url 'view_profile' request.user.id %}"><i class="fas fa-user"></i> Profile</a></li>
                     {% endblock %}
                 </ul>
             </div>
@@ -35,29 +36,23 @@
     <!-- Content Wrapper: Vertical Navigation and Main Content -->
     <div class="content-wrapper">
         <!-- Left Vertical Navigation Bar -->
+        {% block vertical-nav %}
         <nav class="vertical-nav">
             <div class="top-nav">
                 <ul>
-                    {% block top-nav %}
-                    <li><a href="#">Dashboard</a></li>
-                    <li><a href="{% url 'appointment' %}">Appointments</a></li>
-                    <li><a href="{% url 'chatroom_list' %}">Chat</a></li>
-                    <li><a href="#">Prescriptions</a></li>
-                    <li><a href="#">Referrals</a></li>
-                    {% endblock %}
+                    {% include 'navigation.html' %}
                 </ul>
             </div>
     
             <div class="bottom-nav">
                 <ul>
-                    {% block bottom-nav %}
-                        <li><a href="#">View Profile</a></li>
-                        <li><a href={% url 'logout' %}>Logout</a></li>
-                        <li><a href={% url 'about' %}>About</a></li>
-                    {% endblock %}
+                    <li><a href="{% url 'view_profile' request.user.id %}"><i class="fas fa-id-badge"></i> View Profile</a></li>
+                    <li><a href={% url 'logout' %}><i class="fas fa-sign-out-alt"></i>Logout</a></li>
+                    <li><a href={% url 'about' %}><i class="fas fa-info-circle"></i>About</a></li>
                 </ul>
             </div>
         </nav>
+        {% endblock %}
 
         <!-- Main Content Area -->
         <div class="main-content">

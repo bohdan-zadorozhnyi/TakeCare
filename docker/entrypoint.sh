@@ -17,4 +17,5 @@ if not User.objects.filter(email='$DJANGO_SUPERUSER_EMAIL').exists():
     User.objects.create_superuser('$DJANGO_SUPERUSER_EMAIL', '$DJANGO_SUPERUSER_PASSWORD')
 "
 
-exec daphne -b 0.0.0.0 -p 8000 TakeCare.asgi:application
+# exec daphne -b 0.0.0.0 -p 8000 TakeCare.asgi:application
+exec python manage.py runserver 0.0.0.0:8000

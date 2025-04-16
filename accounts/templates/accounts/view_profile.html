@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}View Profile{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Profile - {{ user.name }}</h2>
+    <h3>{{ user.role }}</h3>
+
+    <div class="form-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <div class="label-wrapper">Name:</div>
+                <div class="value">{{ user.name }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Email:</div>
+                <div class="value">{{ user.email }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Phone Number:</div>
+                <div class="value">{{ user.phone_number }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Personal ID:</div>
+                <div class="value">{{ user.personal_id }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Birth Date:</div>
+                <div class="value">{{ user.birth_date }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Gender:</div>
+                <div class="value">{{ user.gender }}</div>
+            </div>
+
+            <div class="form-group">
+                <div class="label-wrapper">Address:</div>
+                <div class="value">{{ user.address }}</div>
+            </div>
+        </div>
+
+        {% if is_own_profile %}
+            <div class="button-wrapper">
+                <a href="{% url 'edit_profile' user.id %}">
+                    <button class="submit-btn">Edit Profile</button>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,18 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}
-    Register
-{% endblock %}
-
-{% block right-nav %}
-{% endblock %}
-
-{% block vertical-nav %}
-{% endblock %}
+{% block title %}Edit Profile{% endblock %}
 
 {% block content %}
     <div class="form-container">
-        <h2>Create an account in TakeCare!</h2>
+        <h2>Edit Profile</h2>
 
         <form method="POST" class="form-form">
             {% csrf_token %}
@@ -38,11 +30,10 @@
                     </div>
                 {% endfor %}
             </div>
-
-            <div class="button-wrapper">
-                <button type="submit" class="submit-btn">Register</button>
-                <button type="button" class="cancel-btn" onclick="window.location.href='/accounts/login'">Cancel</button>
-            </div>
+            <button type="submit" class="submit-btn">Save</button>
         </form>
+        <a href="{% url 'view_profile' user.id %}">
+            <button type="button" class="cancel-btn">Cancel</button>
+        </a>
     </div>
 {% endblock %}
