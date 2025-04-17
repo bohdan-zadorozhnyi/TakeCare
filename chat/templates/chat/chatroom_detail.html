@@ -168,7 +168,7 @@
     const messageForm = document.getElementById('message-form');
     const messagesContainer = document.getElementById('messages');
     const errorMessage = document.getElementById('error-message');
-    
+
     function showError(error, type, details = null) {
         const errorDiv = document.getElementById('error-message');
         const titles = {
@@ -179,7 +179,7 @@
 
         errorDiv.querySelector('.error-title').textContent = titles[type] || 'Error';
         errorDiv.querySelector('.error-content').textContent = error;
-        
+
         if (details) {
             errorDiv.querySelector('.error-details').textContent = details;
             errorDiv.querySelector('.error-details').style.display = 'block';
@@ -224,7 +224,7 @@
         e.preventDefault();
         const messageInputDom = document.getElementById('message-content');
         const message = messageInputDom.value.trim();
-        
+
         if (!message) {
             showError('Message content cannot be empty', 'empty_content');
             return;
