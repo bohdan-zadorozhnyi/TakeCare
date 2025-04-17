@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from .models import AppointmentSlot, Appointment
@@ -9,6 +11,7 @@ from collections import defaultdict
 from notifications.models import Notification
 from django.db.models import Q
 
+User = get_user_model()
 def CreateAppointment(request):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
@@ -266,4 +269,17 @@ def BookAppointment(request, appointment_id):
             
     except AppointmentSlot.DoesNotExist:
         return render(request, 'appointments/not_found.html')
+
+
+@login_required
+def doctors_list(request):
+    doctors = User.objects.filter(role='DOCTOR').order_by('name')
+    paginator = Paginator(doctors, 10)  # 10 doctors per page
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'appointments/doctors/doctors_list.html', {
+        'page_obj': page_obj
+    })
             

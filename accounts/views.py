@@ -1,14 +1,20 @@
+from datetime import timezone
+
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib import messages
+
+from appointments.models import Appointment
+from prescriptions.models import Prescription
 from .forms import CustomLoginForm, SignUpForm, EditUserProfileForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
 
-from .models import User
+User = get_user_model()
 
 
 # Login view
@@ -83,3 +89,27 @@ def edit_profile(request, user_id):
         form = EditUserProfileForm(instance=user)
 
     return render(request, 'accounts/edit_profile.html', {'form': form, 'user': user})
+
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+    if user.role == 'PATIENT':
+        appointments = Appointment.objects.filter(patient=user)
+        subscriptions = Prescription.objects.filter(patient=user)
+        return render(request, 'accounts/dashboard/patient_dashboard.html', {
+            'appointments': appointments,
+            'subscriptions': subscriptions,
+        })
+
+    elif user.role == 'DOCTOR':
+        appointments = Appointment.objects.filter(patient=user)
+        subscriptions = Prescription.objects.filter(patient=user)
+        return render(request, 'accounts/dashboard/doctor_dashboard.html', {
+            'appointments': appointments,
+        })
+    elif user.role == 'ADMIN':
+        return render(request, 'accounts/dashboard/admin_dashboard.html')
+
+    return redirect('home')
+

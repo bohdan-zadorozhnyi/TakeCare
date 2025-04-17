@@ -6,5 +6,6 @@ urlpatterns = [
     path('appointment/', views.GetAppointment, name='appointment'),
     path('appointment/create/', views.CreateAppointment, name='create_appointment'),
     path('appointment/cancel/<uuid:appointment_id>/', views.CancelAppointment, name='cancel_appointment'),
-    path('appointment/book/<uuid:appointment_id>/', views.BookAppointment, name='book_appointment')
+    path('appointment/book/<uuid:appointment_id>/', views.BookAppointment, name='book_appointment'),
+    path('doctors/', views.doctors_list, name='doctors_list'),
 ]
