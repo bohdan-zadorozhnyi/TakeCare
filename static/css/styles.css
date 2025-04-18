@@ -2,9 +2,9 @@
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
     font-family: 'Roboto Condensed', 'Open Sans', Arial, Helvetica, sans-serif;
 }
+
 
 .take {
     font-weight: bold;
@@ -27,6 +27,9 @@ body {
     min-height: 100vh;
     flex-direction: column;
     background-color: #f7fcff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden
 }
 
 /* Horizontal Navigation Bar (Top) */
@@ -35,7 +38,6 @@ header {
     border: 1px solid #f7fcff;
     color: #3a3a3a;
     width: 100%;
-    position: fixed; /* Fix the header to the top */
     padding: 0;
     top: 0;
     left: 0;
@@ -85,7 +87,6 @@ header {
 .content-wrapper {
     display: flex;
     flex: 1;
-    margin-top: 4rem; /* Add margin to account for the fixed header */
 }
 
 /* Left Navigation Bar (Vertical) */
@@ -95,17 +96,32 @@ header {
     left: 0;
     width: auto;
     background-color: #ffffff;
-    min-width: 200px; /* Optional: fixed width for better alignment */
     border-right: 1px solid #e0e0e0;
+    transition: width 0.3s ease; /* Optional: smooth transition when toggling */
 }
 
+/* Ensuring that the entire sidebar collapses */
+.vertical-nav.collapsed {
+    width: 0;
+    visibility: hidden;
+    padding: 0;
+}
+
+/* This handles the content inside the sidebar when collapsed */
+.vertical-nav.collapsed .top-nav,
+.vertical-nav.collapsed .bottom-nav {
+    display: none;
+}
+
+/* Top Navigation */
 .top-nav {
     flex-grow: 1;
 }
 
+/* Bottom Navigation */
 .bottom-nav {
     margin-top: auto;
-    margin-bottom: 10px;
+    margin-bottom: 4rem;
     border-top: 2px solid #f7fcff;
 }
 
@@ -116,6 +132,7 @@ header {
     margin: 0;
 }
 
+/* Individual Navigation Items */
 .vertical-nav li {
     padding: 5px 10px;
     margin: 5px;
@@ -138,6 +155,7 @@ header {
     background-color: #007bff;
     color: #fff;
 }
+
 .vertical-nav li a i {
     margin-right: 8px;
     min-width: 20px;

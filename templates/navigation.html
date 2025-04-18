@@ -1,4 +1,4 @@
-<li><a href="#"><i class="fas fa-home"></i> Dashboard</a></li>
+<li><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
 
 {% if request.user.role == 'DOCTOR' %}
     <li><a href="{% url 'appointment' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
@@ -7,6 +7,7 @@
 
 {% elif request.user.role == 'PATIENT' %}
     <li><a href="{% url 'appointment' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+    <li><a href="{% url 'doctors_list' %}"><i class="fas fa-user-doctor"></i> Doctors</a></li>
     <li><a href="#"><i class="fas fa-pills"></i> My Prescriptions</a></li>
     <li><a href="#"><i class="fas fa-file-medical-alt"></i> My Referrals</a></li>
 

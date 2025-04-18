@@ -11,9 +11,10 @@
 {% endblock %}
 
 {% block content %}
-    <div class="horizontal-container">
+    <div class="container py-5">
+        <div class="row justify-content-center align-items-center">
         <!-- Left Section: Form and Content -->
-        <div class="form-container">
+        <div class="col-md-6 form-container">
             <h1>Care made simple-<br>your health, your way</h1>
             <h3>Welcome back! Please, login to your account.<br>
                 Don't have an account? <a href={% url 'register' %}>Sign Up</a> </h3>
@@ -49,9 +50,11 @@
         </div>
 
         <!-- Right Section: Image -->
-        <div class="image-container">
+        <div class="col-md-6 image-container d-none d-md-block">
             {% load static %}
             <img src="{% static 'img/doctors.jpg' %}" alt="Your Image">
+        </div>
+
         </div>
     </div>
 {% endblock %}
