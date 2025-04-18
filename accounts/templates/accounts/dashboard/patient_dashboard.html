@@ -13,7 +13,7 @@
             {% for appointment in appointments %}
                 <li class="list-group-item">
                     <strong>Date:</strong> {{ appointment.date }}<br>
-                    <strong>Doctor:</strong> {{ appointment.doctor.get_full_name }}
+                    <strong>Doctor:</strong> {{ appointment.doctor.name }}
                 </li>
             {% empty %}
                 <li class="list-group-item">No upcoming appointments.</li>

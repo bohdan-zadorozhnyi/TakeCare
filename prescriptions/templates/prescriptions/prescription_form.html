@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Create New Prescription</h3>
+        </div>
+        <div class="card-body">
+            {% if form.errors or medication_formset.errors %}
+                <div class="alert alert-danger">
+                    Please correct the errors below.
+                </div>
+            {% endif %}
+
+            <form method="post" id="prescription-form">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Patient <span class="text-danger">*</span></label>
+                            <div class="d-flex align-items-center" style="margin-top: 16px;">
+                                {{ form.patient }}
+                            </div>
+                            {% if form.patient.errors %}
+                                <div class="invalid-feedback d-block">{{ form.patient.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Expiration Date <span class="text-danger">*</span></label>
+                            <div class="d-flex align-items-center">
+                                {{ form.expiration_date }}
+                            </div>
+                            {% if form.expiration_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.expiration_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="date-warning" class="alert alert-warning mt-2 d-none">
+                    Expiration date must be in the future
+                </div>
+
+                <div class="medications-formset mb-4">
+                    <h4 class="mb-3">Medications <span class="text-danger">*</span></h4>
+                    <div id="medication-warning" class="alert alert-warning d-none">
+                        <p class="mb-0"><strong>Please complete the medication details:</strong></p>
+                        <ul class="mb-0 mt-1">
+                            <li>Both medication name and dosage are required for each entry</li>
+                            <li>At least one complete medication entry is needed</li>
+                            <li>If you started filling out a medication, please complete both fields</li>
+                        </ul>
+                    </div>
+                    {{ medication_formset.management_form }}
+                    <div id="medications-container">
+                        {% for medication_form in medication_formset %}
+                            <div class="medication-form mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold">Medication Name <span class="text-danger">*</span></label>
+                                                    <div class="d-flex">
+                                                        {{ medication_form.medication_name }}
+                                                        {{ medication_form.id }}
+                                                    </div>
+                                                    {% if medication_form.medication_name.errors %}
+                                                        <div class="invalid-feedback d-block">{{ medication_form.medication_name.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold">Dosage <span class="text-danger">*</span></label>
+                                                    <div class="d-flex">
+                                                        {{ medication_form.dosage }}
+                                                    </div>
+                                                    {% if medication_form.dosage.errors %}
+                                                        <div class="invalid-feedback d-block">{{ medication_form.dosage.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold">&nbsp;</label>
+                                                    <div class="d-flex" style="margin-top: 14px;">
+                                                        {% if forloop.counter > 1 %}
+                                                            <button type="button" class="btn btn-danger remove-medication">Remove</button>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-success add-medication">Add Another Medication</button>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="font-weight-bold">Notes <span class="text-danger">*</span></label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">Add any additional instructions or notes about the prescription</small>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'prescriptions:prescription_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">Create Prescription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        padding: 6px 12px !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+        background-color: #fff !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #212529 !important;
+        line-height: 25px !important;
+        padding-left: 0 !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 6px !important;
+    }
+
+    .select2-dropdown {
+        border-color: #ced4da !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    .select2-search__field {
+        height: 38px !important;
+        padding: 6px 12px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d6efd !important;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        border-top-left-radius: 0.5rem !important;
+        border-top-right-radius: 0.5rem !important;
+    }
+
+    /* Select2 custom styling to match other form fields */
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        background-color: #fff !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px !important;
+        padding-left: 12px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+
+    .select2-container--default .select2-dropdown {
+        border: 1px solid #ced4da !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #007bff !important;
+    }
+
+    .select2-search__field {
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        padding: 0.5rem !important;
+    }
+
+    /* Style for the clear button */
+    .select2-container--default .select2-selection--single .select2-selection__clear {
+        margin-right: 25px;
+        color: #6c757d;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+        color: #dc3545;
+    }
+
+    /* Consistent placeholder styling for all form fields */
+    .form-control::placeholder {
+        color: #6c757d !important;
+        opacity: 0.7 !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
+    }
+
+    .form-control:focus::placeholder {
+        opacity: 0.5 !important;
+    }
+
+    textarea.form-control::placeholder {
+        padding-top: 0 !important;
+    }
+
+    /* Additional input field styling to match Select2 */
+    .form-control {
+        height: 38px !important;
+        padding: 6px 12px !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+        background-color: #fff !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    textarea.form-control {
+        height: auto !important;
+    }
+
+    .warning-field {
+        border-color: #ffc107 !important;
+        background-color: #fff8e6 !important;
+    }
+
+    .warning-field:focus {
+        border-color: #ffc107 !important;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+    }
+
+    .warning-date {
+        border-color: #ffc107 !important;
+        background-color: #fff8e6 !important;
+    }
+
+    .warning-date:focus {
+        border-color: #ffc107 !important;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+    }
+
+    /* Date input specific styles */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        margin-right: 0;
+        padding-right: 4px;
+    }
+
+    input[type="date"] {
+        padding-right: 8px !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for patient field
+        $('#id_patient').select2({
+            theme: 'default',
+            ajax: {
+                url: '{% url "prescriptions:search_patients" %}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        term: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            placeholder: 'Search for a patient...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        function validateMedications() {
+            let hasValidMedication = false;
+            let showWarning = false;
+            let incompleteFields = [];
+            
+            $('#medications-container .medication-form').each(function(index) {
+                const medicationName = $(this).find('[name$="-medication_name"]').val();
+                const dosage = $(this).find('[name$="-dosage"]').val();
+                
+                if (medicationName || dosage) {
+                    if (!medicationName || !dosage) {
+                        showWarning = true;
+                        $(this).find('input').addClass('warning-field');
+                        
+                        // Track which fields are incomplete
+                        if (!medicationName) {
+                            incompleteFields.push(`Medication ${index + 1}: Name is missing`);
+                        }
+                        if (!dosage) {
+                            incompleteFields.push(`Medication ${index + 1}: Dosage is missing`);
+                        }
+                    } else {
+                        hasValidMedication = true;
+                        $(this).find('input').removeClass('warning-field');
+                    }
+                }
+            });
+            
+            if (!hasValidMedication) {
+                showWarning = true;
+                if ($('#medications-container .medication-form').length === 1) {
+                    $('#medications-container .medication-form:first input').addClass('warning-field');
+                }
+            }
+            
+            const warningElement = $('#medication-warning');
+            warningElement.toggleClass('d-none', !showWarning);
+            
+            // Update warning message with specific details if needed
+            if (showWarning && incompleteFields.length > 0) {
+                let warningHtml = '<p class="mb-0"><strong>Please complete the medication details:</strong></p><ul class="mb-0 mt-1">';
+                incompleteFields.forEach(field => {
+                    warningHtml += `<li>${field}</li>`;
+                });
+                if (!hasValidMedication) {
+                    warningHtml += '<li>At least one complete medication entry is required</li>';
+                }
+                warningHtml += '</ul>';
+                warningElement.html(warningHtml);
+            }
+            
+            return hasValidMedication;
+        }
+
+        // Handle form submission
+        $('#prescription-form').on('submit', function(e) {
+            if (!validateMedications()) {
+                e.preventDefault();
+                $('html, body').animate({
+                    scrollTop: $('#medication-warning').offset().top - 100
+                }, 500);
+            }
+        });
+
+        // Validate on input change
+        $(document).on('input', '#medications-container input', function() {
+            validateMedications();
+        });
+
+        // Handle dynamic medication forms
+        const medicationsContainer = $('#medications-container');
+        const totalFormsInput = $('#id_medications-TOTAL_FORMS');
+        const medicationFormTemplate = medicationsContainer.children().first().clone();
+        
+        // Add remove button to template for cloning
+        const removeBtn = $('<button type="button" class="btn btn-danger remove-medication">Remove</button>');
+        medicationFormTemplate.find('.col-md-2').append(removeBtn);
+
+        $('.add-medication').click(function() {
+            const totalForms = parseInt(totalFormsInput.val());
+            const newForm = medicationFormTemplate.clone();
+            
+            // Update form index
+            newForm.find(':input').each(function() {
+                const name = $(this).attr('name');
+                if (name) {
+                    const newName = name.replace('-0-', `-${totalForms}-`);
+                    $(this).attr('name', newName);
+                    $(this).attr('id', newName);
+                }
+            });
+
+            // Clear values and warnings
+            newForm.find('input').val('').removeClass('warning-field');
+            newForm.find('.invalid-feedback').remove();
+            
+            medicationsContainer.append(newForm);
+            totalFormsInput.val(totalForms + 1);
+            validateMedications();
+        });
+
+        // Handle remove medication button
+        $(document).on('click', '.remove-medication', function() {
+            const totalForms = parseInt(totalFormsInput.val());
+            if (totalForms > 1) {
+                $(this).closest('.medication-form').remove();
+                totalFormsInput.val(totalForms - 1);
+                
+                // Update form indices for remaining forms
+                medicationsContainer.children('.medication-form').each(function(index) {
+                    $(this).find(':input').each(function() {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            const newName = name.replace(/-\d+-/, `-${index}-`);
+                            $(this).attr('name', newName);
+                            $(this).attr('id', newName);
+                        }
+                    });
+                });
+                validateMedications();
+            } else {
+                alert('At least one medication is required');
+            }
+        });
+
+        // Handle date validation
+        function validateExpirationDate() {
+            const dateInput = $('#id_expiration_date');
+            const selectedDate = new Date(dateInput.val());
+            selectedDate.setHours(0, 0, 0, 0);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const warningElement = $('#date-warning');
+            
+            if (selectedDate < today) {
+                dateInput.addClass('warning-date');
+                warningElement.removeClass('d-none');
+                return false;
+            } else {
+                dateInput.removeClass('warning-date');
+                warningElement.addClass('d-none');
+                return true;
+            }
+        }
+
+        // Check date on input change
+        $('#id_expiration_date').on('input change', validateExpirationDate);
+
+        // Validate date on form submission
+        const originalForm = $('#prescription-form').get(0);
+        $('#prescription-form').on('submit', function(e) {
+            const dateIsValid = validateExpirationDate();
+            const medsAreValid = validateMedications();
+            
+            if (!dateIsValid || !medsAreValid) {
+                e.preventDefault();
+                if (!dateIsValid) {
+                    $('html, body').animate({
+                        scrollTop: $('#date-warning').offset().top - 100
+                    }, 500);
+                }
+            }
+        });
+
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        $('#id_expiration_date').attr('min', today);
+    });
+</script>
+{% endblock %}
+{% endblock %}
