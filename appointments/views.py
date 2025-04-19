@@ -1,32 +1,31 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from .models import AppointmentSlot, Appointment
-from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models.functions import TruncDate
-from django.db.models import Count
 from collections import defaultdict
 from notifications.models import Notification
-from django.db.models import Q
+from django.db.models import IntegerField, DateTimeField
+from django.db.models import Q, ExpressionWrapper, F
+from django.db.models.functions import Cast
+from datetime import datetime, timedelta
+from referrals.models import Referral
 
 User = get_user_model()
+
+@login_required
 def CreateAppointment(request):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
-        return HttpResponseForbidden("Only doctors can create appointments")
+        return render(request, "appointments/error.html", {'error_message': "Only doctors can create appointments"})
     
     if request.method == 'GET':
         return render(request, 'appointments/create_appointment.html')
     
     elif request.method == 'POST':
-        # Process the form data and create a new appointment
         try:
-            # Get form data
             datetime_str = request.POST.get('datetime')
             if not datetime_str:
-                # If datetime is not provided, try to combine date and time
                 date = request.POST.get('date')
                 time = request.POST.get('time')
                 if date and time:
@@ -39,29 +38,36 @@ def CreateAppointment(request):
             is_recurring = request.POST.get('is_recurring') == 'on'
             recurring_type = request.POST.get('recurring_type', '')
             recurring_count = int(request.POST.get('recurring_count', 1))
+            referal_type = request.POST.get('referal_type')
             
-            from datetime import datetime
-            appointment_datetime = datetime.fromisoformat(datetime_str)
+            
+            appointment_start_datetime = datetime.fromisoformat(datetime_str)
+            appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
-            current_slot = AppointmentSlot.objects.filter(date=appointment_datetime).first()
+            # check if the appointments overlap
+            current_slot = AppointmentSlot.objects.annotate(
+                                                            end_time=ExpressionWrapper(F('date') + Cast(F('duration'), IntegerField())  * timedelta(minutes=1)),
+                                                            output_field=DateTimeField()
+                                                            ).filter(Q(
+                                                                        Q(date_gt=appointment_start_datetime) & Q(end_time_lt=appointment_end_datetime))
+                                                                    | Q(
+                                                                        Q(date_lt=appointment_start_datetime) & Q(end_time_gt=appointment_start_datetime))
+                                                                    | Q(
+                                                                        Q(date_gt=appointment_start_datetime) & Q(end_time_gt=appointment_end_datetime)
+                                                                        )
+                                                                    ).first()
             if current_slot is not None:
                 raise ValueError("Cannot create an appointment slot. This time is already used in some other timeslot")
             
-            # Create the initial appointment
-            appointment = AppointmentSlot.objects.create(
+            AppointmentSlot.objects.create(
                 doctor=curr_user,
-                date=appointment_datetime,
+                date=appointment_start_datetime,
                 duration=duration,
                 description=description,
                 status='Available',
                 location = curr_user.address
             )
-            print(recurring_type)
-            # Handle recurring appointments
             if is_recurring and recurring_type:
-                from datetime import timedelta
-                
-                # Calculate the interval based on recurring type
                 if recurring_type == 'daily':
                     interval = timedelta(days=1)
                 elif recurring_type == 'weekly':
@@ -69,25 +75,10 @@ def CreateAppointment(request):
                 elif recurring_type == 'biweekly':
                     interval = timedelta(weeks=2)
                 elif recurring_type == 'monthly':
-                    # For monthly, we need to handle month boundaries
-                    from dateutil.relativedelta import relativedelta
-                    next_date = appointment_datetime
-                    
-                    for i in range(1, recurring_count):
-                        next_date = next_date + relativedelta(months=1)
-                        AppointmentSlot.objects.create(
-                            doctor=curr_user,
-                            date=next_date,
-                            duration=duration,
-                            description=description,
-                            status='Available',
-                            location = curr_user.address
-                        )
-                    
-                    return render(request, 'appointments/success.html')
+                    interval = timedelta(months=1)
                 
-                next_date = appointment_datetime
-                for i in range(1, recurring_count):
+                next_date = appointment_start_datetime
+                for _ in range(1, recurring_count):
                     next_date = next_date + interval
                     AppointmentSlot.objects.create(
                         doctor=curr_user,
@@ -95,30 +86,22 @@ def CreateAppointment(request):
                         duration=duration,
                         description=description,
                         status='Available',
-                        location = curr_user.address
+                        location = curr_user.address,
+                        referal_type = referal_type
                     )
             
             return render(request, 'appointments/success.html')
             
         except Exception as e:
-            # Log the error and return an error page
             print(f"Error creating appointment: {e}")
             return render(request, 'appointments/error.html', {'error_message': str(e)})
             
 
 
 def categorize_appointments(appointments, today):
-    past = []
-    today_appointments = []
-    future = []
-    
-    for appointment in appointments:
-        if appointment.date.date() < today:
-            past.append(appointment)
-        elif appointment.date.date() == today:
-            today_appointments.append(appointment)
-        else:
-            future.append(appointment)
+    past = [appointment for appointment in appointments if appointment.date.date() < today]
+    today_appointments = [appointment for appointment in appointments if appointment.date.date() == today]
+    future = [appointment for appointment in appointments if appointment.date.date() > today]
     
     return {
         'past': past,
@@ -134,12 +117,10 @@ def group_appointments_by_date(appointments):
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     return grouped_appointments
 
+@login_required
 def GetAppointment(request):
     curr_user = request.user
-    if not curr_user.is_authenticated:
-        return render(request, 'shared/unauthenticated.html')
     
-    # Get appointments based on user role
     if curr_user.role == 'DOCTOR':
         appointments = AppointmentSlot.objects.filter(
             doctor=curr_user
@@ -147,11 +128,9 @@ def GetAppointment(request):
             Q(status="Available") | Q(status="Booked")
         ).order_by('date')
     elif curr_user.role == 'PATIENT':
-        # First get the filtered appointment slots
         filtered_slots = AppointmentSlot.objects.filter(
             Q(status="Available") | Q(status="Booked")
         )
-        # Then get appointments that reference these slots
         appointments = Appointment.objects.filter(
             patient=curr_user,
             appointment_slot__in=filtered_slots
@@ -159,21 +138,15 @@ def GetAppointment(request):
     else:
         appointments = []
     
-    # Group appointments by date
     appointments_by_date = defaultdict(list)
     for appointment in appointments:
-        if curr_user.role == 'DOCTOR':
-            date_key = appointment.date.date()
-        else:  # PATIENT
-            date_key = appointment.appointment_slot.date.date()
+        date_key = appointment.appointment_slot.date.date()
         appointments_by_date[date_key].append(appointment)
     
-    # Convert to list of tuples (date, appointments) and sort by date
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     
-    # Pagination
     page = request.GET.get('page', 1)
-    paginator = Paginator(grouped_appointments, 5)  # Show 5 dates per page
+    paginator = Paginator(grouped_appointments, 5)
     
     try:
         paginated_dates = paginator.page(page)
@@ -189,78 +162,77 @@ def GetAppointment(request):
     
     return render(request, 'appointments/list.html', context)
 
+@login_required
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
-    if not curr_user.is_authenticated:
-        return render(request, 'shared/unauthenticated.html')
     
     try:
-        appointment_slot = AppointmentSlot.objects.get(id=appointment_id)
-        if appointment_slot.status == 'Booked':
-            appointment = Appointment.objects.filter(appointment_slot = appointment_slot).first()
-        if curr_user.role == 'DOCTOR' and appointment_slot.doctor == curr_user:
-            if appointment_slot.status == 'Booked':
+        chosen_appointment_slot = AppointmentSlot.objects.get(id=appointment_id)
+        
+        if curr_user.role == 'DOCTOR' and chosen_appointment_slot.doctor == curr_user:
+            if chosen_appointment_slot.status == 'Booked':
+                appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
+                if appointment.referral:
+                    appointment.referral.is_used = False
+                appointment.referral.save()
                 Notification.objects.create(receiver=appointment.patient, message="Your appointment has been cancelled by {appointment_slot.doctor}")
-            appointment_slot.status = 'Cancelled'
-            appointment_slot.save()
-            return render(request, 'appointments/cancel_success.html')
-        elif curr_user.role == 'PATIENT' and appointment_slot.patient == curr_user:
-            if appointment_slot.status == 'Booked':
-                Notification.objects.create(receiver=appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
-            appointment_slot.status = 'Cancelled'
-            appointment_slot.save()
-            return render(request, 'appointments/cancel_success.html')
+        elif curr_user.role == 'PATIENT' and appointment.patient == curr_user:
+            if chosen_appointment_slot.status == 'Booked':
+                appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
+                if appointment.referral:
+                    appointment.referral.is_used = False
+                appointment.referral.save()
+                Notification.objects.create(receiver=chosen_appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
         else:
-            return HttpResponseForbidden("You don't have permission to cancel this appointment")
+            return render(request, 'appointments/error.html', {'error_message': "You don't have right to do this!"})
+        chosen_appointment_slot.status = 'Cancelled'
+        chosen_appointment_slot.save()
+        return render(request, 'appointments/cancel_success.html')
     except AppointmentSlot.DoesNotExist:
         return render(request, 'appointments/not_found.html')
 
 
+@login_required
 def BookAppointment(request, appointment_id):
     curr_user = request.user
-    if not curr_user.is_authenticated:
-        return HttpUnauthorized()
     
     if curr_user.role != "PATIENT":
-        return HttpResponseForbidden("Only patients can book appointments")
+        return render(request, 'appointments/error.html', {'error_message': "You can't do this!"})
 
     try:
         appointment_slot = AppointmentSlot.objects.get(id=appointment_id, status='Available')
+        if not appointment_slot:
+            return render(request, "appointments/error.html", {'error_message': "No slot available"})
         
         if request.method == "GET":
             return render(request, 'appointments/book_appointment.html', {'appointment': appointment_slot})
         
         if request.method == "POST":
-            # Check if patient already has an appointment on the same day
-            appointment_date = appointment_slot.date.date()
-            existing_appointments = Appointment.objects.filter(
-                patient=curr_user,
-                appointment_slot__date__date=appointment_date
-            )
-            
-            if existing_appointments.exists():
-                # Patient already has an appointment on this day
-                return render(request, 'appointments/error.html', {
-                    'error_message': f"You already have an appointment scheduled for {appointment_date}. You cannot book multiple appointments on the same day."
-                })
-            
-            # Create the appointment
+            available_referral = None
+            if appointment_slot.referal_type:
+                available_referral = Referral.objects.filter(Q(patient=curr_user) &
+                                                        Q(specialist_type=appointment_slot.referal_type) &
+                                                        Q(is_used=False) &
+                                                        Q(expiration_date_gte=datetime.now().date())).first()
+                if available_referral is None:
+                    return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
+                available_referral.is_used=True
+                available_referral.save()
             appointment = Appointment.objects.create(
                 patient=curr_user,
-                appointment_slot=appointment_slot
+                appointment_slot=appointment_slot,
+                referral=available_referral
             )
-            
-            # Update the appointment slot status
+
             appointment_slot.status = "Booked"
             appointment_slot.save()
             
-            # Send notifications to both doctor and patient
-            doctor_notification = Notification.objects.create(
+            Notification.objects.create(
                 receiver=appointment_slot.doctor,
                 message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.first_name} {curr_user.last_name}."
             )
             
-            patient_notification = Notification.objects.create(
+            Notification.objects.create(
                 receiver=curr_user,
                 message=f"Your appointment with Dr. {appointment_slot.doctor.first_name} {appointment_slot.doctor.last_name} on {appointment_slot.date} has been confirmed."
             )

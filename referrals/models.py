@@ -21,6 +21,7 @@ class Referral(models.Model):
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
     issue_date = models.DateField()
     expiration_date = models.DateField()
+    is_used = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"
