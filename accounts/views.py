@@ -12,6 +12,7 @@ from prescriptions.models import Prescription
 from .forms import CustomLoginForm, CustomUserCreationForm, EditUserProfileForm, AdminCreateUserForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
+from django.db.models import Q
 from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
 User = get_user_model()
@@ -63,11 +64,22 @@ def view_profile(request, user_id):
     viewer = request.user
 
     is_own_profile = viewer.id == user.id
+    viewer_is_admin = viewer.role == 'ADMIN'
+
+    profile = None
+    if user.role == 'DOCTOR':
+        profile = getattr(user, 'doctor_profile', None)
+    elif user.role == 'PATIENT':
+        profile = getattr(user, 'patient_profile', None)
+    elif user.role == 'ADMIN':
+        profile = getattr(user, 'admin_profile', None)
 
     return render(request, 'accounts/view_profile.html', {
         'user': user,
         'viewer': viewer,
-        'is_own_profile': is_own_profile
+        'profile': profile,
+        'is_own_profile': is_own_profile,
+        'viewer_is_admin' : viewer_is_admin
     })
 
 @login_required
@@ -92,18 +104,25 @@ def edit_profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
     if request.user != user and request.user.role != 'ADMIN':
-        return HttpResponseForbidden("You are not allowed to edit this profile.")
+        return HttpResponseForbidden()
+
+    profile = None
+    if user.role == 'DOCTOR':
+        profile = DoctorProfile.objects.get(user=user)
+    elif user.role == 'PATIENT':
+        profile = PatientProfile.objects.get(user=user)
+    elif user.role == 'ADMIN':
+        profile = AdminProfile.objects.get(user=user)
 
     if request.method == 'POST':
-        form = EditUserProfileForm(request.POST, instance=user)
+        form = EditUserProfileForm(request.POST, instance=user, profile=profile)
         if form.is_valid():
-            form.save()  # Save the updated user data
-            return redirect('view_profile', user_id=user.id)  # Redirect back to the view profile page
+            form.save()
+            return redirect('view_profile', user_id=user.id)
     else:
-        form = EditUserProfileForm(instance=user)
+        form = EditUserProfileForm(instance=user, profile=profile)
 
     return render(request, 'accounts/edit_profile.html', {'form': form, 'user': user})
-
 
 @login_required
 def dashboard_view(request):
@@ -129,3 +148,55 @@ def dashboard_view(request):
 
     return redirect('home')
 
+@login_required
+def users_list_view(request):
+    if request.user.role != 'ADMIN':
+        return HttpResponseForbidden()
+    query = request.GET.get('q')
+    users = User.objects.order_by('name')
+
+    if query:
+        users = users.filter(
+            Q(name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(personal_id__icontains=query)
+        )
+
+    paginator = Paginator(users, 10)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'accounts/users/users_list.html', {
+        'page_obj': page_obj,
+        'query': query,
+    })
+
+@login_required
+def admin_block_unblock_user(request, user_id):
+    if request.user.role != 'ADMIN':
+        return HttpResponseForbidden()
+
+    user = get_object_or_404(User, id=user_id)
+    if user == request.user:
+        messages.error(request, "You cannot block yourself.")
+    else:
+        user.is_active = not user.is_active
+        user.save()
+        messages.success(request, f"User {'unblocked' if user.is_active else 'blocked'} successfully.")
+
+    return redirect('users_list')
+
+@login_required
+def admin_delete_user(request, user_id):
+    if request.user.role != 'ADMIN':
+        return HttpResponseForbidden()
+
+    user = get_object_or_404(User, id=user_id)
+    if user == request.user:
+        messages.error(request, "You cannot delete yourself.")
+    else:
+        user.delete()
+        messages.success(request, "User deleted successfully.")
+
+    return redirect('users_list')

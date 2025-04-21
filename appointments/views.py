@@ -282,4 +282,5 @@ def doctors_list(request):
     return render(request, 'appointments/doctors/doctors_list.html', {
         'page_obj': page_obj
     })
+
             

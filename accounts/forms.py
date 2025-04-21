@@ -93,6 +93,7 @@ class AdminCreateUserForm(CustomUserCreationForm):
         choices=DoctorCategory.choices,
         required=False
     )
+    work_address = forms.CharField(max_length=100, required=False)
 
     class Meta(CustomUserCreationForm.Meta):
         fields = CustomUserCreationForm.Meta.fields + ('role',)
@@ -110,7 +111,8 @@ class AdminCreateUserForm(CustomUserCreationForm):
                 DoctorProfile.objects.create(
                     user=user,
                     license_uri=self.cleaned_data['license_uri'],
-                    specialization=self.cleaned_data['specialization']
+                    specialization=self.cleaned_data['specialization'],
+                    work_address=self.cleaned_data['work_address']
                 )
             elif user.role == 'PATIENT':
                 PatientProfile.objects.create(user=user)
@@ -131,6 +133,13 @@ class EditUserProfileForm(forms.ModelForm):
     gender = forms.ChoiceField(label='Gender', choices=[('MALE', 'Male'), ('FEMALE', 'Female'), ('OTHER', 'Other')])
     address = forms.CharField(label='Address', max_length=255, min_length=5)
 
+    specialization = forms.ChoiceField(
+        choices=DoctorCategory.choices,
+        required=False
+    )
+    license_uri = forms.URLField(max_length=100, required=False)
+    work_address = forms.CharField(max_length=100, required=False)
+
     class Meta:
         model = User
         fields = ['name', 'email', 'phone_number', 'personal_id', 'birth_date', 'gender', 'address', 'personal_id']
@@ -138,3 +147,24 @@ class EditUserProfileForm(forms.ModelForm):
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.profile = kwargs.pop('profile', None)
+        super().__init__(*args, **kwargs)
+
+        if self.profile and isinstance(self.profile, DoctorProfile):
+            self.fields['specialization'].initial = self.profile.specialization
+            self.fields['license_uri'].initial = self.profile.license_uri
+            self.fields['work_address'].initial = self.profile.work_address
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+
+        if self.profile and isinstance(self.profile, DoctorProfile):
+            self.profile.specialization = self.cleaned_data['specialization']
+            self.profile.license_uri = self.cleaned_data['license_uri']
+            self.profile.work_address = self.cleaned_data['work_address']
+            if commit:
+                self.profile.save()
+
+        return user
