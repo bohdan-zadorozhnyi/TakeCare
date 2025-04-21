@@ -5,5 +5,5 @@ from .models import MedicalRecord
 class MedicalRecordAdmin(admin.ModelAdmin):
     list_display = ('patient', 'doctor', 'date')
     list_filter = ('date',)
-    search_fields = ('patient__name', 'doctor__name', 'condition')
+    search_fields = ('patient__user__name', 'doctor__user__name', 'condition')
     ordering = ('-date',)

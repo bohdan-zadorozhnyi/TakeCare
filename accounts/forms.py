@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, PatientProfile, DoctorProfile, AdminProfile, DoctorCategory
 from django.core.exceptions import ValidationError
 import re
 import datetime
@@ -9,7 +9,7 @@ class CustomLoginForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=255)
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
 
-class SignUpForm(UserCreationForm):
+class CustomUserCreationForm(UserCreationForm):
     """ Custom sign-up form for the User model """
 
     email = forms.EmailField(label='Email Address', max_length=75)
@@ -82,6 +82,42 @@ class SignUpForm(UserCreationForm):
             user.save()
         return user
 
+class AdminCreateUserForm(CustomUserCreationForm):
+    role = forms.ChoiceField(choices=[
+        ('DOCTOR', 'Doctor'),
+        ('PATIENT', 'Patient'),
+        ('ADMIN', 'Administrator'),
+    ])
+    license_uri = forms.URLField(required=False)
+    specialization = forms.ChoiceField(
+        choices=DoctorCategory.choices,
+        required=False
+    )
+
+    class Meta(CustomUserCreationForm.Meta):
+        fields = CustomUserCreationForm.Meta.fields + ('role',)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = self.cleaned_data['role']
+        if user.role == 'ADMIN':
+            user.is_staff = True
+            user.is_superuser = True
+        if commit:
+            user.save()
+
+            if user.role == 'DOCTOR':
+                DoctorProfile.objects.create(
+                    user=user,
+                    license_uri=self.cleaned_data['license_uri'],
+                    specialization=self.cleaned_data['specialization']
+                )
+            elif user.role == 'PATIENT':
+                PatientProfile.objects.create(user=user)
+            elif user.role == 'ADMIN':
+                AdminProfile.objects.create(user=user)
+
+        return user
 
 class EditUserProfileForm(forms.ModelForm):
     email = forms.EmailField(label='Email Address', max_length=75)

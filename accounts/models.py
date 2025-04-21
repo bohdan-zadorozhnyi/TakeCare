@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group, Permission
 from django.db import models
+from referrals.models import DoctorCategory
 import uuid
-
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -50,3 +50,22 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.name
+
+class DoctorProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='doctor_profile')
+    license_uri = models.URLField(unique=True)
+    specialization = models.CharField(
+        max_length=50,
+        choices=DoctorCategory.choices,
+        default=DoctorCategory.PEDIATRICIAN,
+    )
+    work_address = models.TextField()
+
+class PatientProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='patient_profile')
+
+class AdminProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='admin_profile')

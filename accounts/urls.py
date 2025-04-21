@@ -22,6 +22,8 @@ urlpatterns = [
         template_name='accounts/password_reset/password_reset_complete.html'
     ), name='password_reset_complete'),
     path('profile/<uuid:user_id>/', views.view_profile, name='view_profile'),
+    path('admin/create-user/', views.admin_create_user_view, name='admin_create_user'),
     path('edit_profile/<uuid:user_id>/', views.edit_profile, name='edit_profile'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+
 ]

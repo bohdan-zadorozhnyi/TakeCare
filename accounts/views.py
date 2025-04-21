@@ -6,18 +6,16 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib import messages
-
+from .models import PatientProfile, DoctorProfile, AdminProfile
 from appointments.models import Appointment
 from prescriptions.models import Prescription
-from .forms import CustomLoginForm, SignUpForm, EditUserProfileForm
+from .forms import CustomLoginForm, CustomUserCreationForm, EditUserProfileForm, AdminCreateUserForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
+from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
-
 User = get_user_model()
 
-
-# Login view
 def login_view(request):
     if request.method == 'POST':
         form = CustomLoginForm(request.POST)
@@ -42,15 +40,15 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
-# Registration view
+
 def register_view(request):
     if request.method == "POST":
-        form = SignUpForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
             return redirect('login')
     else:
-        form = SignUpForm()
+        form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 class CustomPasswordResetView(PasswordResetView):
@@ -58,7 +56,6 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name = 'accounts/password_reset/password_reset_email.html'
     # subject_template_name = 'accounts/password_reset/password_reset_subject.txt'
     from_email = 'support@takecare.local'
-
 
 @login_required
 def view_profile(request, user_id):
@@ -72,6 +69,23 @@ def view_profile(request, user_id):
         'viewer': viewer,
         'is_own_profile': is_own_profile
     })
+
+@login_required
+def admin_create_user_view(request):
+    user: User = request.user
+    if user.role != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to create users.")
+
+    if request.method == 'POST':
+        form = AdminCreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User created successfully.")
+            return redirect('dashboard')
+    else:
+        form = AdminCreateUserForm()
+
+    return render(request, 'accounts/admin_create_user.html', {'form': form})
 
 @login_required
 def edit_profile(request, user_id):
@@ -93,18 +107,20 @@ def edit_profile(request, user_id):
 
 @login_required
 def dashboard_view(request):
-    user = request.user
+    user: User = request.user
     if user.role == 'PATIENT':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+        patient_profile = request.user.patient_profile
+        appointments = Appointment.objects.filter(patient=patient_profile)
+        subscriptions = Prescription.objects.filter(patient=patient_profile)
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': appointments,
             'subscriptions': subscriptions,
         })
 
     elif user.role == 'DOCTOR':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+        doctor_profile = request.user.doctor_profile
+        appointments = Appointment.objects.filter(doctor=doctor_profile)
+        subscriptions = Prescription.objects.filter(doctor=doctor_profile)
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
             'appointments': appointments,
         })

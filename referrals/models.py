@@ -1,5 +1,4 @@
 from django.db import models
-from accounts.models import User
 import uuid
 
 class DoctorCategory(models.TextChoices):
@@ -17,10 +16,10 @@ class DoctorCategory(models.TextChoices):
 
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    patient = models.ForeignKey(User, limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    patient = models.ForeignKey('accounts.PatientProfile', on_delete=models.CASCADE)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
     issue_date = models.DateField()
     expiration_date = models.DateField()
 
     def __str__(self):
-        return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"
+        return f"Referral for {self.patient.user.name} to {self.get_specialist_type_display()}"
