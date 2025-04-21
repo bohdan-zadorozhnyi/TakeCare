@@ -43,6 +43,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     groups = models.ManyToManyField(Group, related_name="custom_user_set", blank=True)
     user_permissions = models.ManyToManyField(Permission, related_name="custom_user_set", blank=True)
 
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, default='avatars/default_avatar.jpg')
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 

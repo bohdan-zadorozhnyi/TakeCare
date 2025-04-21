@@ -178,7 +178,13 @@ footer {
     width: 100%;
 }
 
-/* Container that holds both sections */
+.avatar {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
 .horizontal-container {
     display: flex;
     justify-content: space-between;

@@ -97,8 +97,9 @@ class EditUserProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['name', 'email', 'phone_number', 'personal_id', 'birth_date', 'gender', 'address', 'personal_id']
+        fields = ['name', 'email', 'phone_number', 'personal_id', 'birth_date', 'gender', 'address', 'personal_id', 'avatar']
 
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
+            'avatar': forms.FileInput(),
         }
