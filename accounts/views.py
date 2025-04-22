@@ -95,11 +95,11 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user = request.user
     if user.role == 'PATIENT':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+        appointments = Appointment.objects.filter(patient=user).order_by('appointment_slot__date')
+        prescriptions = Prescription.objects.filter(patient=user).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': appointments,
-            'subscriptions': subscriptions,
+            'prescriptions': prescriptions,
         })
 
     elif user.role == 'DOCTOR':

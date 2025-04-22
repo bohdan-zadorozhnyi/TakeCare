@@ -12,9 +12,9 @@ class CustomLoginForm(forms.Form):
 class SignUpForm(UserCreationForm):
     """ Custom sign-up form for the User model """
 
-    email = forms.EmailField(label='Email Address', max_length=75)
+    email = forms.EmailField(label='Email', max_length=75)
     name = forms.CharField(label='Full Name', max_length=255)
-    phone_number = forms.CharField(label='Phone Number', max_length=15)
+    phone_number = forms.CharField(label='Phone', max_length=15)
     personal_id = forms.CharField(label='Personal ID', max_length=50)
     birth_date = forms.DateField(
         label='Birth Date',
@@ -84,9 +84,9 @@ class SignUpForm(UserCreationForm):
 
 
 class EditUserProfileForm(forms.ModelForm):
-    email = forms.EmailField(label='Email Address', max_length=75)
+    email = forms.EmailField(label='Email', max_length=75)
     name = forms.CharField(label='Full Name', max_length=255)
-    phone_number = forms.CharField(label='Phone Number', max_length=15)
+    phone_number = forms.CharField(label='Phone', max_length=15)
     personal_id = forms.CharField(label='Personal ID', max_length=50)
     birth_date = forms.DateField(
         label='Birth Date',

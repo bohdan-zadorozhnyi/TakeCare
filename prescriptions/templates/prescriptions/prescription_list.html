@@ -58,10 +58,9 @@
             </form>
         </div>
     </div>
-    
     <div id="prescriptionsList" class="list-group" style="max-height: 70vh; overflow-y: auto;">
         {% for prescription in prescriptions %}
-            <a href="{% url 'prescriptions:prescription_detail' prescription.pk %}" 
+            <a href="{% url 'prescriptions:prescription_detail' prescription.pk %}"
                class="list-group-item list-group-item-action {% if prescription.expiration_date < today %}text-muted{% endif %}">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1">
