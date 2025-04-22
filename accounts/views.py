@@ -102,11 +102,14 @@ def dashboard_view(request):
             'prescriptions': prescriptions,
         })
 
+
     elif user.role == 'DOCTOR':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+
+        appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
+
             'appointments': appointments,
+
         })
     elif user.role == 'ADMIN':
         return render(request, 'accounts/dashboard/admin_dashboard.html')

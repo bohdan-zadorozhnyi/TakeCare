@@ -4,24 +4,48 @@
 <div class="container mt-5">
     <h2 class="mb-4">Doctor Dashboard</h2>
 
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            Upcoming Appointments
+    <!-- Upcoming Appointments -->
+    <div class="mb-5">
+        <div class="card shadow rounded-4">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Upcoming Appointments</h4>
+                {% if appointments %}
+                    <!-- Fake thead inside card to look like a header -->
+                    <div class="card border-0 rounded-top px-3 pt-2 pb-2 mb-3" style="background-color: #f5f5f5;">
+                        <div class="row fw-semibold">
+                            <div class="col-12 col-sm-3">Patient</div>
+                            <div class="col-12 col-sm-3">Date - Time</div>
+                            <div class="col-12 col-sm-3">Location</div>
+                            <div class="col-12 col-sm-3">Action</div>
+                        </div>
+                    </div>
+
+                    <!-- Table body -->
+                    <div class="table-responsive">
+                        <table class="table table-hover custom-table mb-0 w-100">
+                            <tbody>
+                                {% for appointment in appointments %}
+                                    <tr class="d-flex flex-column flex-sm-row">
+                                        <td class="col-12 col-sm-3 d-flex align-items-center">
+                                            <img src="{{ appointment.patient.avatar.url }}" alt="Doctor Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">
+                                            {{ appointment.patient.name }}
+                                        </td>
+                                        <td class="col-12 col-sm-3 d-flex align-items-center">{{ appointment.appointment_slot.date|date:"d.m.y - H:i" }}</td>
+                                        <td class="col-12 col-sm-3 d-flex align-items-center">{{ appointment.appointment_slot.location }}</td>
+                                        <td class="col-12 col-sm-3 d-flex align-items-center">
+                                            <a href="#" class="btn btn-sm bg-primary btn-outline-light w-100 w-sm-auto">View Details</a>
+                                            <a href="#" class="btn btn-sm bg-danger btn-outline-light w-100 w-sm-auto">Cancel</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No upcoming appointments.</p>
+                {% endif %}
+            </div>
         </div>
-        <ul class="list-group list-group-flush">
-            {% if appointments %}
-                {% for appointment in appointments %}
-                <li class="list-group-item">
-                    <strong>Date:</strong> {{ appointment.date }}<br>
-                    <strong>Doctor:</strong> {{ appointment.doctor.name }}
-                </li>
-                {% empty %}
-                    <li class="list-group-item">No upcoming appointments.</li>
-                {% endfor %}
-            {% else %}
-                <li class="list-group-item text-muted">No upcoming appointments.</li>
-            {% endif %}
-        </ul>
     </div>
 </div>
 {% endblock %}
