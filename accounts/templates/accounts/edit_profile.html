@@ -6,12 +6,12 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8 form-container">
-            <h2 class="text-center mb-4">Edit Profile</h2>
 
-            <form method="POST" class="form-form">
+            <form method="POST" class="form-form" enctype="multipart/form-data">
                 {% csrf_token %}
+                <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar mx-auto d-block">
+                <h2 class="text-center mt-4">Edit Profile</h2>
                 {{ form.non_field_errors }}
-
                 <div class="form-grid">
                     {% for field in form %}
                         <div class="form-group mb-3">

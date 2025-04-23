@@ -13,6 +13,7 @@ from .forms import CustomLoginForm, SignUpForm, EditUserProfileForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -81,7 +82,7 @@ def edit_profile(request, user_id):
         return HttpResponseForbidden("You are not allowed to edit this profile.")
 
     if request.method == 'POST':
-        form = EditUserProfileForm(request.POST, instance=user)
+        form = EditUserProfileForm(request.POST,request.FILES, instance=user)
         if form.is_valid():
             form.save()  # Save the updated user data
             return redirect('view_profile', user_id=user.id)  # Redirect back to the view profile page
@@ -95,16 +96,23 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user = request.user
     if user.role == 'PATIENT':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+        upcoming_appointments = Appointment.objects.filter(
+            patient=user,
+            appointment_slot__date__gte=timezone.now()
+        ).order_by('appointment_slot__date')
+        active_prescriptions = Prescription.objects.filter(
+            patient=user,
+            expiration_date__gte=timezone.now()
+        ).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
-            'appointments': appointments,
-            'subscriptions': subscriptions,
+            'appointments': upcoming_appointments,
+            'prescriptions': active_prescriptions,
         })
 
+
     elif user.role == 'DOCTOR':
-        appointments = Appointment.objects.filter(patient=user)
-        subscriptions = Prescription.objects.filter(patient=user)
+
+        appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
             'appointments': appointments,
         })

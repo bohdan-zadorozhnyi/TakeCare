@@ -17,13 +17,13 @@ class AppointmentSlot(models.Model):
     date = models.DateTimeField()
     duration = models.IntegerField()
     status = models.CharField(choices=AppointmentStatus.choices)
-    referal_type = models.CharField(choices=DoctorCategory.choices, null=True)
+    referal_type = models.CharField(choices=DoctorCategory.choices, null=True, blank=True)
 
 class Appointment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     patient = models.ForeignKey(User, related_name="appointments_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
     appointment_slot = models.ForeignKey(AppointmentSlot, on_delete=models.CASCADE)
-    referral = models.ForeignKey(Referral, null=True, on_delete=models.PROTECT)
+    referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
         return f"Appointment with {self.appointment_slot.doctor} on {self.appointment_slot.date}"

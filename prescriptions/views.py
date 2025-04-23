@@ -163,6 +163,7 @@ def search_prescriptions(request):
             'issue_date': prescription.issue_date.strftime('%Y-%m-%d'),
             'is_expired': prescription.expiration_date < today,
             'doctor_name': prescription.doctor.name if request.user.role == 'PATIENT' else None,
+            'doctor_avatar_url': prescription.doctor.avatar.url if request.user.role == 'PATIENT' else None,
             'patient_name': prescription.patient.name if request.user.role == 'DOCTOR' else None,
         })
     

@@ -5,38 +5,14 @@
     <h2 class="mb-4">Patient Dashboard</h2>
 
     <!-- Upcoming Appointments -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            Upcoming Appointments
-        </div>
-        <ul class="list-group list-group-flush">
-            {% for appointment in appointments %}
-                <li class="list-group-item">
-                    <strong>Date:</strong> {{ appointment.date }}<br>
-                    <strong>Doctor:</strong> {{ appointment.doctor.name }}
-                </li>
-            {% empty %}
-                <li class="list-group-item">No upcoming appointments.</li>
-            {% endfor %}
-        </ul>
-    </div>
+    {% include 'appointments/_appointment_list.html' with title="Upcoming Appointments"%}
 
     <!-- Prescriptions -->
-    <div class="card">
-        <div class="card-header bg-success text-white">
-            My Subscriptions
-        </div>
-        <ul class="list-group list-group-flush">
-            {% for pre in prescriptions %}
-                <li class="list-group-item">
-                    <strong>Plan:</strong> {{ sub.plan_name }}<br>
-                    <strong>Status:</strong> {{ sub.status }}<br>
-                    <strong>Expires:</strong> {{ sub.expires_at }}
-                </li>
-            {% empty %}
-                <li class="list-group-item">You have no active prescriptions.</li>
-            {% endfor %}
-        </ul>
-    </div>
+    {% include 'prescriptions/_prescription_list.html' with title="Active Prescriptions"%}
 </div>
+
+
+
 {% endblock %}
+
+

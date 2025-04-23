@@ -58,41 +58,8 @@
             </form>
         </div>
     </div>
-    
-    <div id="prescriptionsList" class="list-group" style="max-height: 70vh; overflow-y: auto;">
-        {% for prescription in prescriptions %}
-            <a href="{% url 'prescriptions:prescription_detail' prescription.pk %}" 
-               class="list-group-item list-group-item-action {% if prescription.expiration_date < today %}text-muted{% endif %}">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        {% for medication in prescription.medications.all %}
-                            {{ medication.medication_name }}{% if not forloop.last %}, {% endif %}
-                        {% endfor %}
-                    </h5>
-                    <small>
-                        Issued: {{ prescription.issue_date }}
-                        {% if prescription.expiration_date < today %}
-                            <span class="badge bg-secondary ms-2">Expired</span>
-                        {% else %}
-                            <span class="badge bg-success ms-2">Active</span>
-                        {% endif %}
-                    </small>
-                </div>
-                <p class="mb-1">
-                    {% for medication in prescription.medications.all %}
-                        {{ medication.medication_name }}: {{ medication.dosage }}{% if not forloop.last %}<br>{% endif %}
-                    {% endfor %}
-                </p>
-                {% if user.role == 'DOCTOR' %}
-                    <small>Patient: {{ prescription.patient.name }}</small>
-                {% else %}
-                    <small>Doctor: {{ prescription.doctor.name }}</small>
-                {% endif %}
-            </a>
-        {% empty %}
-            <div class="alert alert-info">No prescriptions found.</div>
-        {% endfor %}
-    </div>
+    {% include 'prescriptions/_prescription_list.html' with title="My Prescriptions"%}
+
 </div>
 
 {% block extra_css %}
@@ -102,7 +69,7 @@
     .input-group {
         width: 250px;
     }
-    
+
     .input-group-text {
         padding: 0;
         height: 31px;
@@ -111,7 +78,7 @@
         align-items: flex-start;
         justify-content: center;
     }
-    
+
     #medicationSearch {
         background-color: #fff;
         font-size: 0.875rem;
@@ -119,16 +86,16 @@
         padding: 0.25rem 0.75rem;
         border-color: #dee2e6;
     }
-    
+
     #medicationSearch:focus {
         box-shadow: none;
     }
-    
+
     .input-group-text,
     #medicationSearch {
         border-color: #dee2e6;
     }
-    
+
     .input-group:focus-within .input-group-text,
     .input-group:focus-within #medicationSearch {
         border-color: #86b7fe;
@@ -161,41 +128,29 @@
         box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
     }
 
-    /* Animation classes */
-    .list-group-item {
-        transition: opacity 0.3s ease-in-out;
-    }
 
-    .list-group-item.hiding {
-        opacity: 0;
-    }
-
-    .list-group-item.showing {
-        opacity: 1;
-    }
-    
     /* Filter toggle icon styles */
     .filter-toggle[aria-expanded="true"] .filter-icon {
         display: none;
     }
-    
+
     .filter-toggle[aria-expanded="true"] .close-icon {
         display: inline-block !important;
     }
-    
+
     .filter-toggle[aria-expanded="false"] .filter-icon {
         display: inline-block;
     }
-    
+
     .filter-toggle[aria-expanded="false"] .close-icon {
         display: none !important;
     }
-    
+
     /* Smooth collapse animation */
     .collapse {
         transition: height 0.35s ease;
     }
-    
+
     .collapsing {
         transition: height 0.35s ease;
     }
@@ -229,55 +184,88 @@ $(document).ready(function() {
         },
         minimumInputLength: 2
     });
-    
+
     // Handle collapse state
     const filterMenu = document.getElementById('filterMenu');
     filterMenu.addEventListener('hidden.bs.collapse shown.bs.collapse', function () {
         document.querySelector('.filter-toggle').blur();
     });
-    
+
     // Dynamic medication search
     let searchTimeout;
     const prescriptionsList = $('#prescriptionsList');
     const medicationSearch = $('#medicationSearch');
-    
-    function renderPrescription(prescription) {
-        const medications = prescription.medications.map(med => med.name).join(', ');
-        const medicationDetails = prescription.medications.map(med => `${med.name}: ${med.dosage}`).join('<br>');
-        const isExpired = prescription.is_expired;
-        const statusBadge = isExpired ? 
-            '<span class="badge bg-secondary ms-2">Expired</span>' : 
-            '<span class="badge bg-success ms-2">Active</span>';
-        
-        return `
-            <a href="/prescriptions/${prescription.id}/"
-               class="list-group-item list-group-item-action showing ${isExpired ? 'text-muted' : ''}">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">${medications}</h5>
-                    <small>
-                        Issued: ${prescription.issue_date}
-                        ${statusBadge}
-                    </small>
-                </div>
-                <p class="mb-1">${medicationDetails}</p>
-                <small>${prescription.doctor_name ? 'Doctor: ' + prescription.doctor_name : ''}${prescription.patient_name ? 'Patient: ' + prescription.patient_name : ''}</small>
-            </a>
-        `;
+
+function renderPrescription(prescription, userRole, today) {
+    const isExpired = prescription.is_expired;
+    const mutedClass = isExpired ? 'text-muted' : '';
+    const buttonClass = isExpired ? 'bg-secondary' : 'bg-primary';
+
+    const statusBadge = isExpired
+        ? '<span class="badge bg-secondary d-flex align-items-center px-3 py-2 fw-bold fs-6">Expired</span>'
+        : '<span class="badge bg-success d-flex align-items-center px-3 py-2 fw-bold fs-6">Active</span>';
+
+    const medications = prescription.medications.length
+        ? prescription.medications.map(med =>
+            `<span>${med.name} (${med.dosage})</span>`).join(', ')
+        : '<p>No medications listed</p>';
+
+    const formattedDate = new Date(prescription.issue_date).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let name = '';
+    let avatarImg = '';
+
+    if (prescription.doctor_avatar_url) {
+        avatarImg = `<img src="${prescription.doctor_avatar_url}" alt="Doctor Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
     }
-    
+    if (prescription.doctor_name) {
+        name = `Dr. ${prescription.doctor_name}`;
+    }
+    if (prescription.patient_avatar_url) {
+        avatarImg = `<img src="${prescription.patient_avatar_url}" alt="Patient Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
+    }
+    if (prescription.patient_name) {
+        name = prescription.patient_name;
+    }
+
+    return `
+        <tr class="d-flex flex-column flex-sm-row">
+            <td class="col-12 col-sm-2 d-flex align-items-center ${mutedClass}">
+                ${avatarImg}${name}
+            </td>
+            <td class="col-12 col-sm-3 ${mutedClass}">
+                ${medications}
+            </td>
+            <td class="col-12 col-sm-2 d-flex align-items-center ${mutedClass}">
+                ${formattedDate}
+            </td>
+            <td class="col-12 col-sm-2 d-flex align-items-center">
+                ${statusBadge}
+            </td>
+            <td class="col-12 col-sm-3 d-flex align-items-center ${mutedClass}">
+                <a href="/prescriptions/${prescription.id}/" class="btn btn-sm ${buttonClass} btn-outline-light w-100 w-sm-auto">
+                    View Details
+                </a>
+            </td>
+        </tr>
+    `;
+}
+
     medicationSearch.on('input', function() {
         clearTimeout(searchTimeout);
         const searchTerm = $(this).val().trim();
         const activeFilter = $('#active').prop('checked');
         const expiredFilter = $('#expired').prop('checked');
-        
+
         searchTimeout = setTimeout(function() {
             if (searchTerm.length === 0) {
                 location.reload();
                 return;
             }
-            
-            $.get('{% url "prescriptions:search_prescriptions" %}', { 
+
+            $.get('{% url "prescriptions:search_prescriptions" %}', {
                 term: searchTerm,
                 active: activeFilter ? 'true' : 'false',
                 expired: expiredFilter ? 'true' : 'false'
@@ -288,6 +276,7 @@ $(document).ready(function() {
                     prescriptionsList.empty();
                     if (data.prescriptions.length > 0) {
                         data.prescriptions.forEach(function(prescription) {
+                            console.log(prescription);
                             prescriptionsList.append(renderPrescription(prescription));
                         });
                     } else {
@@ -297,7 +286,7 @@ $(document).ready(function() {
             });
         }, 300);
     });
-    
+
     // Also trigger search when filters change
     $('#active, #expired').on('change', function() {
         if (medicationSearch.val().trim().length > 0) {

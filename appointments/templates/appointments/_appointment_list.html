@@ -1,0 +1,75 @@
+<!-- _appointment_list.html -->
+<div class="mb-5">
+    <div class="card shadow rounded-4">
+        <div class="card-body">
+            <h4 class="card-title mb-4">{{ title }}</h4>
+            {% if appointments %}
+                <!-- Table header (only visible on md and above) -->
+                <div class="d-none d-md-block card border-0 rounded-top px-3 pt-2 pb-2 mb-3" style="background-color: #f5f5f5;">
+                    <div class="row fw-semibold">
+                        <div class="col-md-3">
+                            {% if user.role == 'PATIENT' %}
+                                Doctor
+                            {% else %}
+                                Patient
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">Date - Time</div>
+                        <div class="col-md-3">Location</div>
+                        <div class="col-md-3">Action</div>
+                    </div>
+                </div>
+
+                <!-- Appointments list -->
+                <div class="table-responsive">
+                    <div class="d-flex flex-column gap-3">
+                        {% for appointment in appointments %}
+                            <div class="card p-3 shadow-sm rounded-3">
+                                <div class="row align-items-center gy-2">
+                                    <!-- Name -->
+                                    <div class="col-12 col-md-3">
+
+                                        {% if user.role == 'DOCTOR' %}
+                                        <strong class="d-md-none">
+                                                Patient:
+                                        </strong>
+                                        {% endif %}
+                                        <div class="d-flex align-items-center">
+                                            {% if user.role == 'PATIENT' %}
+                                                <img src="{{ appointment.appointment_slot.doctor.avatar.url }}" alt="Doctor Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                                Dr. {{ appointment.appointment_slot.doctor.name }}
+                                            {% else %}
+                                                <img src="{{ appointment.patient.avatar.url }}" alt="Patient Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                                {{ appointment.patient.name }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Date & Time -->
+                                    <div class="col-12 col-md-3">
+                                        <strong class="d-md-none">Date - Time:</strong>
+                                        {{ appointment.appointment_slot.date|date:"d.m.y - H:i" }}
+                                    </div>
+
+                                    <!-- Location -->
+                                    <div class="col-12 col-md-3">
+                                        <strong class="d-md-none">Location:</strong>
+                                        {{ appointment.appointment_slot.location }}
+                                    </div>
+
+                                    <!-- Action -->
+                                    <div class="col-12 col-md-3 d-flex justify-content-between align-items-center">
+                                        <a href="#" class="btn btn-sm bg-primary btn-outline-light w-50">View</a>
+                                        <a href="#" class="btn btn-sm bg-danger btn-outline-light w-50">Cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted">No upcoming appointments.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
