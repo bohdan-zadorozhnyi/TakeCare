@@ -214,11 +214,26 @@ function renderPrescription(prescription, userRole, today) {
         year: 'numeric', month: 'long', day: 'numeric'
     });
 
+    let name = '';
+    let avatarImg = '';
+
+    if (prescription.doctor_avatar_url) {
+        avatarImg = `<img src="${prescription.doctor_avatar_url}" alt="Doctor Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
+    }
+    if (prescription.doctor_name) {
+        name = `Dr. ${prescription.doctor_name}`;
+    }
+    if (prescription.patient_avatar_url) {
+        avatarImg = `<img src="${prescription.patient_avatar_url}" alt="Patient Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
+    }
+    if (prescription.patient_name) {
+        name = prescription.patient_name;
+    }
+
     return `
         <tr class="d-flex flex-column flex-sm-row">
             <td class="col-12 col-sm-2 d-flex align-items-center ${mutedClass}">
-                <img src="${prescription.doctor_avatar_url}" alt="Doctor Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">
-                ${prescription.doctor_name ? 'Dr. ' + prescription.doctor_name : ''}${prescription.patient_name ? + prescription.patient_name : ''}
+                ${avatarImg}${name}
             </td>
             <td class="col-12 col-sm-3 ${mutedClass}">
                 ${medications}
