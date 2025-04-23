@@ -13,6 +13,7 @@ from .forms import CustomLoginForm, SignUpForm, EditUserProfileForm
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -95,11 +96,17 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user = request.user
     if user.role == 'PATIENT':
-        appointments = Appointment.objects.filter(patient=user).order_by('appointment_slot__date')
-        prescriptions = Prescription.objects.filter(patient=user).order_by('-issue_date')
+        upcoming_appointments = Appointment.objects.filter(
+            patient=user,
+            appointment_slot__date__gte=timezone.now()
+        ).order_by('appointment_slot__date')
+        active_prescriptions = Prescription.objects.filter(
+            patient=user,
+            expiration_date__gte=timezone.now()
+        ).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
-            'appointments': appointments,
-            'prescriptions': prescriptions,
+            'appointments': upcoming_appointments,
+            'prescriptions': active_prescriptions,
         })
 
 
@@ -107,9 +114,7 @@ def dashboard_view(request):
 
         appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
-
             'appointments': appointments,
-
         })
     elif user.role == 'ADMIN':
         return render(request, 'accounts/dashboard/admin_dashboard.html')
