@@ -44,7 +44,6 @@ def CreateAppointment(request):
             appointment_start_datetime = datetime.fromisoformat(datetime_str)
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
-            # check if the appointments overlap
             current_slot = AppointmentSlot.objects.annotate(
                                                             end_time=ExpressionWrapper(F('date') + Cast(F('duration'), IntegerField())  * timedelta(minutes=1)),
                                                             output_field=DateTimeField()
@@ -140,7 +139,10 @@ def GetAppointment(request):
     
     appointments_by_date = defaultdict(list)
     for appointment in appointments:
-        date_key = appointment.appointment_slot.date.date()
+        if curr_user.role == 'DOCTOR':
+            date_key = appointment.date.date()
+        else:
+            date_key = appointment.appointment_slot.date.date()
         appointments_by_date[date_key].append(appointment)
     
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
@@ -246,7 +248,6 @@ def BookAppointment(request, appointment_id):
 @login_required
 def doctors_list(request):
     doctors = User.objects.filter(role='DOCTOR').order_by('name')
-    paginator = Paginator(doctors, 10)  # 10 doctors per page
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -254,4 +255,3 @@ def doctors_list(request):
     return render(request, 'appointments/doctors/doctors_list.html', {
         'page_obj': page_obj
     })
-            
