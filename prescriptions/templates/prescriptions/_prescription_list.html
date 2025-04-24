@@ -23,10 +23,10 @@
 
                 <!-- Prescription list -->
                 <div class="table-responsive">
-                    <div class="d-flex flex-column gap-3">
+                    <div id="prescriptionsList" class="d-flex flex-column gap-3">
                         {% for pre in prescriptions %}
-                            <div class="card p-3 shadow-sm rounded-3 {% if pre.expiration_date < today %}bg-light{% endif %}">
-                                <div class="row align-items-center gy-2">
+                            <div class="card p-3 shadow-sm rounded-3 list-group-item {% if pre.expiration_date < today %}bg-light{% endif %}">
+                                <div class="row align-items-center gy-2 ">
                                     <!-- Name -->
                                     <div class="col-12 col-md-2">
                                         {% if user.role == 'DOCTOR' %}
