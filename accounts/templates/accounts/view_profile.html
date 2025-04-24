@@ -46,7 +46,7 @@
                         <div class="value">{{ user.address }}</div>
                     </div>
 
-                    {% if user.role == 'DOCTOR' %}
+                    {% if user.role == 'DOCTOR' and profile%}
                     <div class="form-group mb-3">
                         <div class="label-wrapper">Specialization:</div>
                         <div class="value">{{ profile.get_specialization_display }}</div>

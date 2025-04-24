@@ -52,6 +52,7 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
+
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'accounts/password_reset/password_reset_form.html'
     email_template_name = 'accounts/password_reset/password_reset_email.html'
@@ -83,6 +84,7 @@ def view_profile(request, user_id):
     })
 
 @login_required
+@permission_required('accounts.add_user', raise_exception=True)
 def admin_create_user_view(request):
     user: User = request.user
     if user.role != 'ADMIN':
@@ -149,6 +151,7 @@ def dashboard_view(request):
     return redirect('home')
 
 @login_required
+@permission_required('accounts.list_user', raise_exception=True)
 def users_list_view(request):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -173,6 +176,7 @@ def users_list_view(request):
     })
 
 @login_required
+@permission_required('accounts.block_user', raise_exception=True)
 def admin_block_unblock_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -188,6 +192,7 @@ def admin_block_unblock_user(request, user_id):
     return redirect('users_list')
 
 @login_required
+@permission_required('accounts.delete_user', raise_exception=True)
 def admin_delete_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()

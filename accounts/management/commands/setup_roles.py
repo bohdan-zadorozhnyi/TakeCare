@@ -14,9 +14,10 @@ class Command(BaseCommand):
                 AppointmentSlot: ['add', 'change', 'delete', 'view'],
                 Prescription: ['add', 'change', 'delete', 'view'],
                 Referral: ['add', 'change', 'delete', 'view'],
-                User: ['add', 'change', 'delete', 'view']
+                User: ['add', 'change', 'delete', 'view', 'block', 'list']
             },
             'DOCTOR': {
+                Appointment: ['add', 'change', 'delete', 'view'],
                 AppointmentSlot: ['add', 'change', 'view'],
                 Prescription: ['add', 'change', 'view'],
                 Referral: ['add', 'change', 'view']

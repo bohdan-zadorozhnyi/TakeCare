@@ -11,8 +11,12 @@ from collections import defaultdict
 from notifications.models import Notification
 from django.db.models import Q
 from accounts.models import PatientProfile, DoctorProfile, AdminProfile
+from django.contrib.auth.decorators import permission_required, login_required
 
 User = get_user_model()
+
+@login_required()
+@permission_required('appointments.add_appointment', raise_exception=True)
 def CreateAppointment(request):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
@@ -137,7 +141,8 @@ def group_appointments_by_date(appointments):
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     return grouped_appointments
 
-@login_required
+@login_required()
+@permission_required('appointments.view_appointment', raise_exception=True)
 def GetAppointment(request):
     curr_user = request.user
     if not curr_user.is_authenticated:
@@ -195,6 +200,8 @@ def GetAppointment(request):
     
     return render(request, 'appointments/list.html', context)
 
+@login_required()
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     if not curr_user.is_authenticated:
@@ -221,7 +228,8 @@ def CancelAppointment(request, appointment_id):
     except AppointmentSlot.DoesNotExist:
         return render(request, 'appointments/not_found.html')
 
-
+@login_required()
+@permission_required('appointments.add_appointment', raise_exception=True)
 def BookAppointment(request, appointment_id):
     curr_user = request.user
     if not curr_user.is_authenticated:
