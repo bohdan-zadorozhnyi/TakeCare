@@ -57,7 +57,7 @@
 
 /* Form Select Elements - Fix for black background and sizing */
 .form-select {
-    appearance: auto;
+    appearance: none;
     background-color: #fff;
     color: #212529;
     border: 1px solid #ced4da;
