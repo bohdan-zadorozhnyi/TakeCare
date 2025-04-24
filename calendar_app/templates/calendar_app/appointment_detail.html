@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load calendar_extras %}
+
+{% block title %}Appointment Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .appointment-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .appointment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .appointment-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .appointment-subtitle {
+        margin-top: 5px;
+        color: #666;
+    }
+    
+    .appointment-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .appointment-info {
+        margin-bottom: 30px;
+    }
+    
+    .appointment-detail {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .appointment-detail i {
+        width: 20px;
+        margin-right: 10px;
+        color: #007bff;
+    }
+    
+    .appointment-detail-label {
+        font-weight: 600;
+        margin-right: 10px;
+        min-width: 100px;
+    }
+    
+    .appointment-notes {
+        background: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .note-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .note-item:last-child {
+        border-bottom: none;
+    }
+    
+    .note-content {
+        margin: 5px 0 10px;
+        white-space: pre-line;
+    }
+    
+    .note-meta {
+        color: #666;
+        font-size: 0.85rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .add-note-form {
+        margin-top: 20px;
+    }
+    
+    .add-note-form textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        min-height: 100px;
+    }
+    
+    .chat-section {
+        margin-top: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .appointment-actions {
+            margin-top: 15px;
+        }
+        
+        .appointment-detail {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .appointment-detail i {
+            margin-bottom: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appointment-container">
+    <div class="appointment-header">
+        <div>
+            <h1 class="appointment-title">
+                {% if request.user.role == 'PATIENT' %}
+                    Appointment with Dr. {{ appointment.appointment_slot.doctor.name }}
+                {% else %}
+                    Appointment with {{ appointment.patient.name }}
+                {% endif %}
+            </h1>
+            <p class="appointment-subtitle">{{ appointment.appointment_slot.date|date:"l, F j, Y • g:i A" }}</p>
+        </div>
+        
+        <div class="appointment-actions">
+            <a href="{% url 'calendar_view' %}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar"></i> Back to Calendar
+            </a>
+            
+            {% if can_cancel %}
+            <form action="{% url 'cancel_appointment' appointment.id %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                    <i class="fas fa-times"></i> Cancel Appointment
+                </button>
+            </form>
+            {% endif %}
+            
+            {% if can_reschedule %}
+            <a href="#" class="btn btn-outline-secondary">
+                <i class="fas fa-exchange-alt"></i> Reschedule
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="appointment-info">
+        <div class="appointment-detail">
+            <i class="fas fa-clock"></i>
+            <span class="appointment-detail-label">Time:</span>
+            <span>{{ appointment.appointment_slot.date|date:"g:i A" }} - <span id="end-time"></span></span>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="appointment-detail-label">Location:</span>
+            <span>{{ appointment.appointment_slot.location }}</span>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-stethoscope"></i>
+            <span class="appointment-detail-label">Service Type:</span>
+            <span>{{ appointment.appointment_slot.referal_type|default:"General Consultation" }}</span>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-info-circle"></i>
+            <span class="appointment-detail-label">Description:</span>
+            <span>{{ appointment.appointment_slot.description }}</span>
+        </div>
+        
+        {% if appointment.referral %}
+        <div class="appointment-detail">
+            <i class="fas fa-file-medical"></i>
+            <span class="appointment-detail-label">Referral:</span>
+            <span>{{ appointment.referral.description }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Notes section -->
+    <div class="appointment-notes">
+        <h3>Notes & Recommendations</h3>
+        
+        {% if notes %}
+            {% for note in notes %}
+            <div class="note-item">
+                <div class="note-content">{{ note.content }}</div>
+                <div class="note-meta">
+                    <span>By {{ note.created_by.name }}</span>
+                    <span>{{ note.created_at|date:"M d, Y • g:i A" }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No notes have been added yet.</p>
+        {% endif %}
+        
+        <div class="add-note-form">
+            <h4>Add a Note</h4>
+            <form action="{% url 'add_appointment_note' appointment.id %}" method="post">
+                {% csrf_token %}
+                <textarea name="content" placeholder="Add your note or recommendation here..."></textarea>
+                <button type="submit" class="btn btn-primary">Add Note</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Chat section if chat room exists -->
+    {% if chat_room %}
+    <div class="chat-section">
+        <h3>Chat with 
+            {% if request.user.role == 'PATIENT' %}
+                Dr. {{ appointment.appointment_slot.doctor.name }}
+            {% else %}
+                {{ appointment.patient.name }}
+            {% endif %}
+        </h3>
+        <a href="{% url 'chatroom_detail' room_id=chat_room.id %}" class="btn btn-primary">
+            <i class="fas fa-comments"></i> Go to Chat
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate end time
+        const startTime = "{{ appointment.appointment_slot.date|date:'g:i A' }}";
+        const duration = {{ appointment.appointment_slot.duration }};
+        
+        // Parse start time
+        const [timePart, period] = startTime.split(' ');
+        const [hours, minutes] = timePart.split(':').map(num => parseInt(num, 10));
+        
+        // Convert to 24-hour format
+        let totalMinutes = hours * 60 + parseInt(minutes);
+        if (period === 'PM' && hours < 12) {
+            totalMinutes += 12 * 60;
+        } else if (period === 'AM' && hours === 12) {
+            totalMinutes = parseInt(minutes);
+        }
+        
+        // Add duration
+        totalMinutes += duration;
+        
+        // Convert back to 12-hour format
+        let endHours = Math.floor(totalMinutes / 60);
+        const endMinutes = totalMinutes % 60;
+        let endPeriod = 'AM';
+        
+        if (endHours >= 12) {
+            endPeriod = 'PM';
+            if (endHours > 12) {
+                endHours -= 12;
+            }
+        }
+        
+        if (endHours === 0) {
+            endHours = 12;
+        }
+        
+        // Format the end time
+        const endTime = `${endHours}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
+        document.getElementById('end-time').textContent = endTime;
+    });
+</script>
+{% endblock %}
