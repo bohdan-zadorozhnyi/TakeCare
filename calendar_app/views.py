@@ -4,8 +4,10 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Q
+from django.views.decorators.http import require_POST
+from datetime import datetime, timedelta
 
-from appointments.models import Appointment, AppointmentSlot
+from appointments.models import Appointment, AppointmentSlot, AppointmentStatus
 from accounts.models import User
 from .models import AppointmentNote, AppointmentReminder, CalendarSettings
 
@@ -26,6 +28,21 @@ def calendar_view(request):
         'default_view': settings.default_view,
         'user_role': request.user.role,
     }
+    
+    # If the user is a doctor, provide locations and patients for the add slot form
+    if request.user.role == 'DOCTOR':
+        # Get unique locations from doctor's existing appointment slots
+        doctor_locations = AppointmentSlot.objects.filter(
+            doctor=request.user
+        ).values_list('location', flat=True).distinct()
+        
+        # Get all patients (users with PATIENT role)
+        patients = User.objects.filter(role='PATIENT')
+        
+        context.update({
+            'doctor_locations': doctor_locations,
+            'patients': patients
+        })
     
     return render(request, 'calendar_app/calendar.html', context)
 
@@ -270,3 +287,130 @@ def update_calendar_settings(request):
     settings.save()
     
     return redirect('calendar_view')
+
+@login_required
+@require_POST
+def add_calendar_slot(request):
+    """Add a new appointment slot to the calendar"""
+    # Only doctors can create slots
+    if request.user.role != 'DOCTOR':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Only doctors can create appointment slots'
+        }, status=403)
+    
+    try:
+        # Get form data
+        date_str = request.POST.get('date')
+        time_str = request.POST.get('time')
+        duration = int(request.POST.get('duration', 30))
+        description = request.POST.get('description', '')
+        referal_type = request.POST.get('referal_type') or None  # Convert empty string to None
+        location = request.POST.get('location', "Main Clinic")
+        patient_id = request.POST.get('patient')
+        
+        # Create datetime object
+        start_datetime = timezone.make_aware(
+            datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        )
+        
+        # Check if the datetime is in the future
+        if start_datetime <= timezone.now():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Appointment slots must be in the future'
+            }, status=400)
+        
+        # Create initial slot
+        new_slot = AppointmentSlot(
+            doctor=request.user,
+            location=location,
+            description=description,
+            date=start_datetime,
+            duration=duration,
+            status=AppointmentStatus.AVAILABLE,
+            referal_type=referal_type
+        )
+        new_slot.save()
+        
+        created_slots = [new_slot]
+        
+        # If a patient is selected, create an appointment for this slot
+        if patient_id:
+            try:
+                patient = User.objects.get(id=patient_id, role='PATIENT')
+                # Create appointment
+                appointment = Appointment.objects.create(
+                    patient=patient,
+                    appointment_slot=new_slot
+                )
+                # Update slot status to booked
+                new_slot.status = AppointmentStatus.BOOKED
+                new_slot.save()
+            except User.DoesNotExist:
+                pass  # Continue without creating an appointment if patient doesn't exist
+        
+        # Handle recurring appointments if checked
+        is_recurring = request.POST.get('is_recurring') == 'on'
+        if is_recurring:
+            recurring_type = request.POST.get('recurring_type', 'weekly')
+            recurring_count = int(request.POST.get('recurring_count', 4))
+            
+            # Calculate recurring dates and create slots
+            for i in range(1, recurring_count):
+                if recurring_type == 'daily':
+                    next_date = start_datetime + timedelta(days=i)
+                elif recurring_type == 'weekly':
+                    next_date = start_datetime + timedelta(weeks=i)
+                elif recurring_type == 'biweekly':
+                    next_date = start_datetime + timedelta(weeks=2*i)
+                elif recurring_type == 'monthly':
+                    # This is a simplified approach for monthly recurrence
+                    # For a more accurate approach you might need a more complex calculation
+                    next_month = start_datetime.month + i
+                    next_year = start_datetime.year
+                    while next_month > 12:
+                        next_month -= 12
+                        next_year += 1
+                    next_date = start_datetime.replace(year=next_year, month=next_month)
+                else:
+                    continue
+                
+                # Create the recurring slot
+                recurring_slot = AppointmentSlot(
+                    doctor=request.user,
+                    location=location,
+                    description=description,
+                    date=next_date,
+                    duration=duration,
+                    status=AppointmentStatus.AVAILABLE,
+                    referal_type=referal_type
+                )
+                recurring_slot.save()
+                created_slots.append(recurring_slot)
+                
+                # If a patient is selected, create appointments for all recurring slots too
+                if patient_id:
+                    try:
+                        # Create appointment for this recurring slot
+                        appointment = Appointment.objects.create(
+                            patient=patient,
+                            appointment_slot=recurring_slot
+                        )
+                        # Update slot status to booked
+                        recurring_slot.status = AppointmentStatus.BOOKED
+                        recurring_slot.save()
+                    except:
+                        pass  # Continue if there's an error with one slot
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Successfully created {len(created_slots)} appointment slot(s)',
+            'slots': [str(slot.id) for slot in created_slots]
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error creating appointment slot: {str(e)}'
+        }, status=400)
