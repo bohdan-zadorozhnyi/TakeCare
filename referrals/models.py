@@ -18,7 +18,7 @@ class DoctorCategory(models.TextChoices):
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     patient = models.ForeignKey(User, related_name="referrals_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
-    referring_doctor = models.ForeignKey(User, related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
+    referring_doctor = models.ForeignKey(User, related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE, null=True, blank=True)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
     description = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
