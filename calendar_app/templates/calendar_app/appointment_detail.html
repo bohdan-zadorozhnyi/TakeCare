@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load calendar_extras %}
+
+{% block title %}Appointment Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/appointment-detail.css' %}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+{% endblock %}
+
+{% block content %}
+<div class="appointment-container">
+    <div class="appointment-header">
+        <div>
+            <h1 class="appointment-title">
+                {% if request.user.role == 'PATIENT' %}
+                    Appointment with Dr. {{ appointment.appointment_slot.doctor.name }}
+                {% else %}
+                    Appointment with {{ appointment.patient.name }}
+                {% endif %}
+            </h1>
+            <p class="appointment-subtitle">{{ appointment.appointment_slot.date|date:"l, F j, Y • g:i A" }}</p>
+        </div>
+        
+        <div class="appointment-actions">
+            <a href="{% url 'calendar_view' %}" class="btn btn-outline-primary btn-back-to-calendar">
+                <i class="fas fa-calendar"></i> Back to Calendar
+            </a>
+            
+            {% if can_cancel %}
+            <form action="{% url 'cancel_appointment' appointment.id %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                    <i class="fas fa-times"></i> Cancel Appointment
+                </button>
+            </form>
+            {% endif %}
+            
+            {% if can_reschedule %}
+            <a href="#" class="btn btn-outline-secondary">
+                <i class="fas fa-exchange-alt"></i> Reschedule
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="appointment-info">
+        <div class="appointment-detail">
+            <i class="fas fa-clock"></i>
+            <div>
+                <span class="appointment-detail-label">Time:</span>
+                <span>{{ appointment.appointment_slot.date|date:"g:i A" }} - <span id="end-time"></span></span>
+            </div>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-map-marker-alt"></i>
+            <div>
+                <span class="appointment-detail-label">Location:</span>
+                <span>{{ appointment.appointment_slot.location }}</span>
+            </div>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-stethoscope"></i>
+            <div>
+                <span class="appointment-detail-label">Service Type:</span>
+                <span>{{ appointment.appointment_slot.referal_type|default:"General Consultation" }}</span>
+            </div>
+        </div>
+        
+        <div class="appointment-detail">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <span class="appointment-detail-label">Description:</span>
+                <span>{{ appointment.appointment_slot.description }}</span>
+            </div>
+        </div>
+        
+        {% if appointment.referral %}
+        <div class="appointment-detail">
+            <i class="fas fa-file-medical"></i>
+            <div>
+                <span class="appointment-detail-label">Referral:</span>
+                <span>{{ appointment.referral.description }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Notes section -->
+    <div class="appointment-notes">
+        <h3 class="notes-header">Notes & Recommendations</h3>
+        
+        {% if notes %}
+            {% for note in notes %}
+            <div class="note-item">
+                <div class="note-metadata">
+                    <span>By {{ note.created_by.name }}</span>
+                    <span>{{ note.created_at|date:"M d, Y • g:i A" }}</span>
+                </div>
+                <div class="note-content">{{ note.content }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No notes have been added yet.</p>
+        {% endif %}
+        
+        <div class="add-note-form">
+            <h4>Add a Note</h4>
+            <form action="{% url 'add_appointment_note' appointment.id %}" method="post">
+                {% csrf_token %}
+                <textarea name="content" placeholder="Add your note or recommendation here..."></textarea>
+                <button type="submit" class="btn btn-primary btn-block">Add Note</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Chat section if chat room exists -->
+    {% if chat_room %}
+    <div class="chat-section">
+        <h3>Chat with 
+            {% if request.user.role == 'PATIENT' %}
+                Dr. {{ appointment.appointment_slot.doctor.name }}
+            {% else %}
+                {{ appointment.patient.name }}
+            {% endif %}
+        </h3>
+        <a href="{% url 'chatroom_detail' room_id=chat_room.id %}" class="btn btn-primary btn-block">
+            <i class="fas fa-comments"></i> Go to Chat
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Define variables needed for end time calculation - these need to be in the template to access Django variables
+    const startTimeStr = "{{ appointment.appointment_slot.date|date:'g:i A' }}";
+    const appointmentDuration = {{ appointment.appointment_slot.duration }};
+</script>
+<script src="{% static 'js/appointment-detail.js' %}"></script>
+{% endblock %}
