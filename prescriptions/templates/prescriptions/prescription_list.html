@@ -271,6 +271,7 @@ function renderPrescription(prescription, userRole, today) {
                 expired: expiredFilter ? 'true' : 'false'
             })
             .done(function(data) {
+                console.log(prescriptionsList.find('.list-group-item'));
                 prescriptionsList.find('.list-group-item').addClass('hiding');
                 setTimeout(function() {
                     prescriptionsList.empty();
