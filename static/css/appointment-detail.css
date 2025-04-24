@@ -13,19 +13,20 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
 }
 
 .appointment-title {
     font-size: 1.5rem;
     font-weight: 600;
-    margin: 0;
     color: #333;
+    margin-bottom: 5px;
 }
 
 .appointment-subtitle {
-    margin-top: 5px;
     color: #666;
+    margin-bottom: 0;
 }
 
 .appointment-actions {
@@ -34,53 +35,59 @@
 }
 
 .appointment-info {
-    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
 .appointment-detail {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    gap: 10px;
 }
 
 .appointment-detail i {
+    color: #4285F4;
     width: 20px;
-    margin-right: 10px;
-    color: #007bff;
+    text-align: center;
 }
 
 .appointment-detail-label {
     font-weight: 600;
-    margin-right: 10px;
-    min-width: 100px;
+    margin-right: 5px;
 }
 
 .appointment-notes {
-    background: #f9f9f9;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+    margin-top: 25px;
+}
+
+.notes-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
 .note-item {
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border-left: 4px solid #4285F4;
 }
 
-.note-item:last-child {
-    border-bottom: none;
+.note-metadata {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #666;
 }
 
 .note-content {
-    margin: 5px 0 10px;
-    white-space: pre-line;
-}
-
-.note-meta {
-    color: #666;
-    font-size: 0.85rem;
-    display: flex;
-    justify-content: space-between;
+    color: #333;
 }
 
 .add-note-form {
@@ -90,27 +97,92 @@
 .add-note-form textarea {
     width: 100%;
     padding: 10px;
-    border-radius: 4px;
     border: 1px solid #ddd;
-    margin-bottom: 10px;
+    border-radius: 4px;
     min-height: 100px;
+    margin-bottom: 15px;
 }
 
 .chat-section {
     margin-top: 30px;
 }
 
+/* Enhanced Mobile Responsiveness */
 @media (max-width: 768px) {
+    .appointment-container {
+        padding: 15px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .appointment-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .appointment-title {
+        font-size: 1.3rem;
+    }
+    
     .appointment-actions {
-        margin-top: 15px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .appointment-actions .btn {
+        flex: 1;
+        padding: 10px 5px;
+        font-size: 14px;
+        text-align: center;
+    }
+    
+    .appointment-actions .btn i {
+        margin-right: 4px;
     }
     
     .appointment-detail {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+
     }
     
     .appointment-detail i {
         margin-bottom: 5px;
+    }
+}
+
+/* Additional mobile optimizations for very small screens */
+@media (max-width: 480px) {
+    .appointment-container {
+        padding: 10px;
+    }
+    
+    .appointment-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .appointment-actions .btn {
+        width: 100%;
+    }
+    
+    .appointment-detail {
+        flex-wrap: wrap;
+    }
+    
+    .note-metadata {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+/* Back to Calendar button - make it more prominent on mobile */
+@media (max-width: 768px) {
+    .btn-back-to-calendar {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 12px;
+        text-align: center;
+        font-size: 16px;
     }
 }

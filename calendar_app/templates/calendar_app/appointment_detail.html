@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/appointment-detail.css' %}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 {% endblock %}
 
 {% block content %}
@@ -23,7 +24,7 @@
         </div>
         
         <div class="appointment-actions">
-            <a href="{% url 'calendar_view' %}" class="btn btn-outline-primary">
+            <a href="{% url 'calendar_view' %}" class="btn btn-outline-primary btn-back-to-calendar">
                 <i class="fas fa-calendar"></i> Back to Calendar
             </a>
             
@@ -47,49 +48,59 @@
     <div class="appointment-info">
         <div class="appointment-detail">
             <i class="fas fa-clock"></i>
-            <span class="appointment-detail-label">Time:</span>
-            <span>{{ appointment.appointment_slot.date|date:"g:i A" }} - <span id="end-time"></span></span>
+            <div>
+                <span class="appointment-detail-label">Time:</span>
+                <span>{{ appointment.appointment_slot.date|date:"g:i A" }} - <span id="end-time"></span></span>
+            </div>
         </div>
         
         <div class="appointment-detail">
             <i class="fas fa-map-marker-alt"></i>
-            <span class="appointment-detail-label">Location:</span>
-            <span>{{ appointment.appointment_slot.location }}</span>
+            <div>
+                <span class="appointment-detail-label">Location:</span>
+                <span>{{ appointment.appointment_slot.location }}</span>
+            </div>
         </div>
         
         <div class="appointment-detail">
             <i class="fas fa-stethoscope"></i>
-            <span class="appointment-detail-label">Service Type:</span>
-            <span>{{ appointment.appointment_slot.referal_type|default:"General Consultation" }}</span>
+            <div>
+                <span class="appointment-detail-label">Service Type:</span>
+                <span>{{ appointment.appointment_slot.referal_type|default:"General Consultation" }}</span>
+            </div>
         </div>
         
         <div class="appointment-detail">
             <i class="fas fa-info-circle"></i>
-            <span class="appointment-detail-label">Description:</span>
-            <span>{{ appointment.appointment_slot.description }}</span>
+            <div>
+                <span class="appointment-detail-label">Description:</span>
+                <span>{{ appointment.appointment_slot.description }}</span>
+            </div>
         </div>
         
         {% if appointment.referral %}
         <div class="appointment-detail">
             <i class="fas fa-file-medical"></i>
-            <span class="appointment-detail-label">Referral:</span>
-            <span>{{ appointment.referral.description }}</span>
+            <div>
+                <span class="appointment-detail-label">Referral:</span>
+                <span>{{ appointment.referral.description }}</span>
+            </div>
         </div>
         {% endif %}
     </div>
     
     <!-- Notes section -->
     <div class="appointment-notes">
-        <h3>Notes & Recommendations</h3>
+        <h3 class="notes-header">Notes & Recommendations</h3>
         
         {% if notes %}
             {% for note in notes %}
             <div class="note-item">
-                <div class="note-content">{{ note.content }}</div>
-                <div class="note-meta">
+                <div class="note-metadata">
                     <span>By {{ note.created_by.name }}</span>
                     <span>{{ note.created_at|date:"M d, Y • g:i A" }}</span>
                 </div>
+                <div class="note-content">{{ note.content }}</div>
             </div>
             {% endfor %}
         {% else %}
@@ -101,7 +112,7 @@
             <form action="{% url 'add_appointment_note' appointment.id %}" method="post">
                 {% csrf_token %}
                 <textarea name="content" placeholder="Add your note or recommendation here..."></textarea>
-                <button type="submit" class="btn btn-primary">Add Note</button>
+                <button type="submit" class="btn btn-primary btn-block">Add Note</button>
             </form>
         </div>
     </div>
@@ -116,7 +127,7 @@
                 {{ appointment.patient.name }}
             {% endif %}
         </h3>
-        <a href="{% url 'chatroom_detail' room_id=chat_room.id %}" class="btn btn-primary">
+        <a href="{% url 'chatroom_detail' room_id=chat_room.id %}" class="btn btn-primary btn-block">
             <i class="fas fa-comments"></i> Go to Chat
         </a>
     </div>
