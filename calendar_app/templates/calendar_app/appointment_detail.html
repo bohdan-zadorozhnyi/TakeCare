@@ -5,122 +5,7 @@
 {% block title %}Appointment Details{% endblock %}
 
 {% block extra_css %}
-<style>
-    .appointment-container {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    
-    .appointment-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-    
-    .appointment-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 0;
-        color: #333;
-    }
-    
-    .appointment-subtitle {
-        margin-top: 5px;
-        color: #666;
-    }
-    
-    .appointment-actions {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .appointment-info {
-        margin-bottom: 30px;
-    }
-    
-    .appointment-detail {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-    
-    .appointment-detail i {
-        width: 20px;
-        margin-right: 10px;
-        color: #007bff;
-    }
-    
-    .appointment-detail-label {
-        font-weight: 600;
-        margin-right: 10px;
-        min-width: 100px;
-    }
-    
-    .appointment-notes {
-        background: #f9f9f9;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    
-    .note-item {
-        padding: 15px;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .note-item:last-child {
-        border-bottom: none;
-    }
-    
-    .note-content {
-        margin: 5px 0 10px;
-        white-space: pre-line;
-    }
-    
-    .note-meta {
-        color: #666;
-        font-size: 0.85rem;
-        display: flex;
-        justify-content: space-between;
-    }
-    
-    .add-note-form {
-        margin-top: 20px;
-    }
-    
-    .add-note-form textarea {
-        width: 100%;
-        padding: 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        margin-bottom: 10px;
-        min-height: 100px;
-    }
-    
-    .chat-section {
-        margin-top: 30px;
-    }
-    
-    @media (max-width: 768px) {
-        .appointment-actions {
-            margin-top: 15px;
-        }
-        
-        .appointment-detail {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .appointment-detail i {
-            margin-bottom: 5px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/appointment-detail.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -241,45 +126,9 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Calculate end time
-        const startTime = "{{ appointment.appointment_slot.date|date:'g:i A' }}";
-        const duration = {{ appointment.appointment_slot.duration }};
-        
-        // Parse start time
-        const [timePart, period] = startTime.split(' ');
-        const [hours, minutes] = timePart.split(':').map(num => parseInt(num, 10));
-        
-        // Convert to 24-hour format
-        let totalMinutes = hours * 60 + parseInt(minutes);
-        if (period === 'PM' && hours < 12) {
-            totalMinutes += 12 * 60;
-        } else if (period === 'AM' && hours === 12) {
-            totalMinutes = parseInt(minutes);
-        }
-        
-        // Add duration
-        totalMinutes += duration;
-        
-        // Convert back to 12-hour format
-        let endHours = Math.floor(totalMinutes / 60);
-        const endMinutes = totalMinutes % 60;
-        let endPeriod = 'AM';
-        
-        if (endHours >= 12) {
-            endPeriod = 'PM';
-            if (endHours > 12) {
-                endHours -= 12;
-            }
-        }
-        
-        if (endHours === 0) {
-            endHours = 12;
-        }
-        
-        // Format the end time
-        const endTime = `${endHours}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
-        document.getElementById('end-time').textContent = endTime;
-    });
+    // Define variables needed for end time calculation - these need to be in the template to access Django variables
+    const startTimeStr = "{{ appointment.appointment_slot.date|date:'g:i A' }}";
+    const appointmentDuration = {{ appointment.appointment_slot.duration }};
 </script>
+<script src="{% static 'js/appointment-detail.js' %}"></script>
 {% endblock %}
