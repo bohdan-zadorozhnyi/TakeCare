@@ -11,10 +11,13 @@
     // Chat main content template
     const mainContent = `
         <div class="chat-header">
-            <div>
+            <div class="chat-header-content">
                 <h1>{{ other_participant_name }}</h1>
                 <div class="participants">Conversation with {{ other_participant_name }}</div>
             </div>
+            <a href="{% url 'chatroom_list' %}" class="all-chats-btn">
+                <i class="fas fa-arrow-left"></i> Back to chats
+            </a>
         </div>
 
         <div id="messages" class="messages-container">
