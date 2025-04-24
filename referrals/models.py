@@ -17,11 +17,14 @@ class DoctorCategory(models.TextChoices):
 
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    patient = models.ForeignKey(User, limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    patient = models.ForeignKey(User, related_name="referrals_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    referring_doctor = models.ForeignKey(User, related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
+    description = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
     expiration_date = models.DateField()
     is_used = models.BooleanField(default=False)
+    expiry_notified = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"

@@ -13,4 +13,6 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('prescriptions/', include('prescriptions.urls')),
     path('calendar/', include('calendar_app.urls')),  # Added the calendar app URLs
+    path('notifications/', include('notifications.urls')),  # Add notification URLs
+    path('referrals/', include('referrals.urls')),  # Add referrals URLs
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

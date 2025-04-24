@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from cryptography.fernet import Fernet
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -161,3 +162,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Notifications settings
+ENCRYPTION_KEY = Fernet.generate_key()
+
+# Maximum time to deliver notifications (in seconds)
+NOTIFICATION_MAX_DELIVERY_TIME = 30

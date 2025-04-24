@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 from accounts.models import User
 from django.db import transaction
+from notifications.services import NotificationService
 
 def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
@@ -30,6 +31,10 @@ def create_prescription(request):
                     
                     medication_formset.instance = prescription
                     medication_formset.save()
+                    
+                    # Send notification to patient using the notification service
+                    NotificationService.notify_about_prescription(prescription)
+                    
                     messages.success(request, 'Prescription created successfully.')
                     return redirect('prescriptions:prescription_detail', pk=prescription.pk)
             except Exception as e:

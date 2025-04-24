@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="notifications-header">
+        <h1>Notifications</h1>
+        <div class="notification-actions">
+            <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-primary mark-all-read">
+                <i class="fas fa-check-double"></i> Mark All as Read
+            </a>
+        </div>
+    </div>
+    
+    <div class="notifications-filters">
+        <form method="get" class="filter-form">
+            <div class="row">
+                <div class="col-md-4">
+                    <select name="type" class="form-select">
+                        <option value="">All types</option>
+                        {% for type in notification_types %}
+                            <option value="{{ type }}" {% if filter_type == type %}selected{% endif %}>
+                                {{ type|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="read" class="form-select">
+                        <option value="">All statuses</option>
+                        <option value="read" {% if filter_read == 'read' %}selected{% endif %}>Read</option>
+                        <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>Unread</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{% url 'notification_list' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="notifications-list">
+        {% if page_obj %}
+            {% for notification in page_obj %}
+                <div class="notification-item {% if not notification.read %}unread{% endif %}">
+                    <div class="notification-icon">
+                        {% if notification.notification_type == 'APPOINTMENT' %}
+                            <i class="fas fa-calendar-alt"></i>
+                        {% elif notification.notification_type == 'PRESCRIPTION' %}
+                            <i class="fas fa-prescription-bottle-alt"></i>
+                        {% elif notification.notification_type == 'REFERRAL' %}
+                            <i class="fas fa-file-medical"></i>
+                        {% elif notification.notification_type == 'ISSUE' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% elif notification.notification_type == 'ADMIN' %}
+                            <i class="fas fa-bullhorn"></i>
+                        {% else %}
+                            <i class="fas fa-bell"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="notification-content">
+                        <div class="notification-message">{{ notification.message }}</div>
+                        <div class="notification-meta">
+                            <span class="notification-time">{{ notification.date|date:"M d, Y • g:i A" }}</span>
+                            {% if notification.sender %}
+                                <span class="notification-sender">From: {{ notification.sender.name }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="notification-actions">
+                        <a href="{% url 'notification_detail' notification.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        {% if notification.related_object_id %}
+                            <a href="{% url 'notification_detail' notification.id %}?redirect=true" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-external-link-alt"></i> Go to
+                            </a>
+                        {% endif %}
+                        {% if not notification.read %}
+                            <a href="{% url 'mark_notification_read' notification.id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-check"></i> Mark read
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Pagination -->
+            {% if page_obj.paginator.num_pages > 1 %}
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">previous</a>
+                        {% endif %}
+                        
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="no-notifications">
+                <p>No notifications yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .notifications-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .notifications-filters {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .filter-form .row {
+        align-items: center;
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background-color: white;
+        transition: background-color 0.3s;
+    }
+    
+    .notification-item.unread {
+        background-color: #f0f7ff;
+        border-left: 3px solid #007bff;
+    }
+    
+    .notification-icon {
+        font-size: 1.5rem;
+        color: #007bff;
+        width: 40px;
+        text-align: center;
+        margin-right: 15px;
+    }
+    
+    .notification-content {
+        flex-grow: 1;
+        margin-right: 15px;
+    }
+    
+    .notification-message {
+        margin-bottom: 5px;
+        font-size: 1rem;
+    }
+    
+    .notification-meta {
+        display: flex;
+        gap: 15px;
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    .notification-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .no-notifications {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+    }
+    
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .notifications-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .notification-item {
+            flex-direction: column;
+        }
+        
+        .notification-icon {
+            margin-bottom: 10px;
+        }
+        
+        .notification-actions {
+            flex-direction: row;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .notification-actions .btn {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .filter-form .col-md-4 {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mark as read via AJAX for better UX
+        document.querySelectorAll('.notification-actions a[href*="mark-notification-read"]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = this.getAttribute('href').split('?')[0];
+                const notificationItem = this.closest('.notification-item');
+                
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        notificationItem.classList.remove('unread');
+                        this.remove();
+                    }
+                });
+            });
+        });
+        
+        // Mark all as read via AJAX
+        const markAllReadBtn = document.querySelector('.mark-all-read');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = this.getAttribute('href');
+                
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelectorAll('.notification-item.unread').forEach(function(item) {
+                            item.classList.remove('unread');
+                        });
+                        
+                        document.querySelectorAll('.notification-actions a[href*="mark-notification-read"]').forEach(function(btn) {
+                            btn.remove();
+                        });
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -5,6 +5,7 @@ from .models import AppointmentSlot, Appointment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from collections import defaultdict
 from notifications.models import Notification
+from notifications.services import NotificationService
 from django.db.models import IntegerField, DateTimeField
 from django.db.models import Q, ExpressionWrapper, F
 from django.db.models.functions import Cast
@@ -176,17 +177,33 @@ def CancelAppointment(request, appointment_id):
                 appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
                 if appointment.referral:
                     appointment.referral.is_used = False
-                appointment.referral.save()
-                Notification.objects.create(receiver=appointment.patient, message="Your appointment has been cancelled by {appointment_slot.doctor}")
-        elif curr_user.role == 'PATIENT' and appointment.patient == curr_user:
+                    appointment.referral.save()
+                
+                # Set cancelled_by field for notification context
+                appointment.cancelled_by = 'doctor'
+                
+                # Use the new notification service
+                NotificationService.notify_about_appointment_cancellation(appointment)
+                
+        elif curr_user.role == 'PATIENT':
             if chosen_appointment_slot.status == 'Booked':
                 appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
+                if appointment.patient != curr_user:
+                    return render(request, 'appointments/error.html', {'error_message': "You don't have right to do this!"})
+                    
                 if appointment.referral:
                     appointment.referral.is_used = False
-                appointment.referral.save()
-                Notification.objects.create(receiver=chosen_appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
+                    appointment.referral.save()
+                
+                # Set cancelled_by field for notification context
+                appointment.cancelled_by = 'patient'
+                
+                # Use the new notification service
+                NotificationService.notify_about_appointment_cancellation(appointment)
+                
         else:
             return render(request, 'appointments/error.html', {'error_message': "You don't have right to do this!"})
+            
         chosen_appointment_slot.status = 'Cancelled'
         chosen_appointment_slot.save()
         return render(request, 'appointments/cancel_success.html')
@@ -215,7 +232,7 @@ def BookAppointment(request, appointment_id):
                 available_referral = Referral.objects.filter(Q(patient=curr_user) &
                                                         Q(specialist_type=appointment_slot.referal_type) &
                                                         Q(is_used=False) &
-                                                        Q(expiration_date_gte=datetime.now().date())).first()
+                                                        Q(expiration_date__gte=datetime.now().date())).first()
                 if available_referral is None:
                     return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
                 available_referral.is_used=True
@@ -229,15 +246,8 @@ def BookAppointment(request, appointment_id):
             appointment_slot.status = "Booked"
             appointment_slot.save()
             
-            Notification.objects.create(
-                receiver=appointment_slot.doctor,
-                message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.first_name} {curr_user.last_name}."
-            )
-            
-            Notification.objects.create(
-                receiver=curr_user,
-                message=f"Your appointment with Dr. {appointment_slot.doctor.first_name} {appointment_slot.doctor.last_name} on {appointment_slot.date} has been confirmed."
-            )
+            # Use the new notification service to send notifications about the appointment booking
+            NotificationService.notify_about_appointment_booking(appointment)
             
             return render(request, 'appointments/booking_success.html', {'appointment': appointment})
             
