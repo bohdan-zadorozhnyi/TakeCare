@@ -29,6 +29,21 @@ def calendar_view(request):
         'user_role': request.user.role,
     }
     
+    # If the user is a doctor, provide locations and patients for the add slot form
+    if request.user.role == 'DOCTOR':
+        # Get unique locations from doctor's existing appointment slots
+        doctor_locations = AppointmentSlot.objects.filter(
+            doctor=request.user
+        ).values_list('location', flat=True).distinct()
+        
+        # Get all patients (users with PATIENT role)
+        patients = User.objects.filter(role='PATIENT')
+        
+        context.update({
+            'doctor_locations': doctor_locations,
+            'patients': patients
+        })
+    
     return render(request, 'calendar_app/calendar.html', context)
 
 @login_required
@@ -291,6 +306,8 @@ def add_calendar_slot(request):
         duration = int(request.POST.get('duration', 30))
         description = request.POST.get('description', '')
         referal_type = request.POST.get('referal_type') or None  # Convert empty string to None
+        location = request.POST.get('location', "Main Clinic")
+        patient_id = request.POST.get('patient')
         
         # Create datetime object
         start_datetime = timezone.make_aware(
@@ -307,7 +324,7 @@ def add_calendar_slot(request):
         # Create initial slot
         new_slot = AppointmentSlot(
             doctor=request.user,
-            location=request.user.clinic or "Main Clinic",  # Using clinic from user profile or default
+            location=location,
             description=description,
             date=start_datetime,
             duration=duration,
@@ -317,6 +334,21 @@ def add_calendar_slot(request):
         new_slot.save()
         
         created_slots = [new_slot]
+        
+        # If a patient is selected, create an appointment for this slot
+        if patient_id:
+            try:
+                patient = User.objects.get(id=patient_id, role='PATIENT')
+                # Create appointment
+                appointment = Appointment.objects.create(
+                    patient=patient,
+                    appointment_slot=new_slot
+                )
+                # Update slot status to booked
+                new_slot.status = AppointmentStatus.BOOKED
+                new_slot.save()
+            except User.DoesNotExist:
+                pass  # Continue without creating an appointment if patient doesn't exist
         
         # Handle recurring appointments if checked
         is_recurring = request.POST.get('is_recurring') == 'on'
@@ -347,7 +379,7 @@ def add_calendar_slot(request):
                 # Create the recurring slot
                 recurring_slot = AppointmentSlot(
                     doctor=request.user,
-                    location=request.user.clinic or "Main Clinic",
+                    location=location,
                     description=description,
                     date=next_date,
                     duration=duration,
@@ -356,6 +388,20 @@ def add_calendar_slot(request):
                 )
                 recurring_slot.save()
                 created_slots.append(recurring_slot)
+                
+                # If a patient is selected, create appointments for all recurring slots too
+                if patient_id:
+                    try:
+                        # Create appointment for this recurring slot
+                        appointment = Appointment.objects.create(
+                            patient=patient,
+                            appointment_slot=recurring_slot
+                        )
+                        # Update slot status to booked
+                        recurring_slot.status = AppointmentStatus.BOOKED
+                        recurring_slot.save()
+                    except:
+                        pass  # Continue if there's an error with one slot
         
         return JsonResponse({
             'status': 'success',
