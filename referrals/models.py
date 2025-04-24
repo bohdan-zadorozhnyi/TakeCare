@@ -2,16 +2,16 @@ from django.db import models
 import uuid
 
 class DoctorCategory(models.TextChoices):
-    DERMATOLOGIST = "Dermatologist"
-    NEUROLOGIST = "Neurologist"
-    PEDIATRICIAN = "Pediatrician"
-    CARDIOLOGIST = "Cardiologist"
-    GASTROENTEROLOGIST = "Gastroenterologist"
-    OPHTHALMOLOGIST = "Ophthalmologist"
-    ENDOCRINOLOGIST = "Endocrinologist"
-    FAMILY_MEDICINE = "Family medicine"
-    GENERAL_SURGERY = "General surgery"
-    NEPHROLOGIST = "Nephrologist"
+    DERMATOLOGIST = 'DERMATOLOGIST', 'Dermatologist'
+    NEUROLOGIST = 'NEUROLOGIST', 'Neurologist'
+    PEDIATRICIAN = 'PEDIATRICIAN', 'Pediatrician'
+    CARDIOLOGIST = 'CARDIOLOGIST', 'Cardiologist'
+    GASTROENTEROLOGIST = 'GASTROENTEROLOGIST', 'Gastroenterologist'
+    OPHTHALMOLOGIST = 'OPHTHALMOLOGIST', 'Ophthalmologist'
+    ENDOCRINOLOGIST = 'ENDOCRINOLOGIST', 'Endocrinologist'
+    FAMILY_MEDICINE = 'FAMILY_MEDICINE', 'Family Medicine'
+    GENERAL_SURGERY = 'GENERAL_SURGERY', 'General Surgery'
+    NEPHROLOGIST = 'NEPHROLOGIST', 'Nephrologist'
 
 
 class Referral(models.Model):

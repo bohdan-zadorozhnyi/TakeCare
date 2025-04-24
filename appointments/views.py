@@ -10,13 +10,16 @@ from django.db.models import Count
 from collections import defaultdict
 from notifications.models import Notification
 from django.db.models import Q
+from accounts.models import PatientProfile, DoctorProfile, AdminProfile
 
 User = get_user_model()
 def CreateAppointment(request):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
         return HttpResponseForbidden("Only doctors can create appointments")
-    
+
+    doctor_profile = getattr(request.user, 'doctor_profile', None)
+
     if request.method == 'GET':
         return render(request, 'appointments/create_appointment.html')
     
@@ -49,7 +52,7 @@ def CreateAppointment(request):
             
             # Create the initial appointment
             appointment = AppointmentSlot.objects.create(
-                doctor=curr_user,
+                doctor=doctor_profile,
                 date=appointment_datetime,
                 duration=duration,
                 description=description,
@@ -76,7 +79,7 @@ def CreateAppointment(request):
                     for i in range(1, recurring_count):
                         next_date = next_date + relativedelta(months=1)
                         AppointmentSlot.objects.create(
-                            doctor=curr_user,
+                            doctor=doctor_profile,
                             date=next_date,
                             duration=duration,
                             description=description,
@@ -90,7 +93,7 @@ def CreateAppointment(request):
                 for i in range(1, recurring_count):
                     next_date = next_date + interval
                     AppointmentSlot.objects.create(
-                        doctor=curr_user,
+                        doctor=doctor_profile,
                         date=next_date,
                         duration=duration,
                         description=description,
@@ -134,6 +137,7 @@ def group_appointments_by_date(appointments):
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     return grouped_appointments
 
+@login_required
 def GetAppointment(request):
     curr_user = request.user
     if not curr_user.is_authenticated:
@@ -141,19 +145,21 @@ def GetAppointment(request):
     
     # Get appointments based on user role
     if curr_user.role == 'DOCTOR':
+        doctor_profile = getattr(request.user, 'doctor_profile', None)
         appointments = AppointmentSlot.objects.filter(
-            doctor=curr_user
+            doctor=doctor_profile
         ).filter(
             Q(status="Available") | Q(status="Booked")
         ).order_by('date')
     elif curr_user.role == 'PATIENT':
+        patient_profile = getattr(request.user, 'patient_profile', None)
         # First get the filtered appointment slots
         filtered_slots = AppointmentSlot.objects.filter(
             Q(status="Available") | Q(status="Booked")
         )
         # Then get appointments that reference these slots
         appointments = Appointment.objects.filter(
-            patient=curr_user,
+            patient=patient_profile,
             appointment_slot__in=filtered_slots
         ).select_related('appointment_slot').order_by('appointment_slot__date')
     else:
@@ -198,15 +204,15 @@ def CancelAppointment(request, appointment_id):
         appointment_slot = AppointmentSlot.objects.get(id=appointment_id)
         if appointment_slot.status == 'Booked':
             appointment = Appointment.objects.filter(appointment_slot = appointment_slot).first()
-        if curr_user.role == 'DOCTOR' and appointment_slot.doctor == curr_user:
+        if curr_user.role == 'DOCTOR' and appointment_slot.doctor.user == curr_user:
             if appointment_slot.status == 'Booked':
-                Notification.objects.create(receiver=appointment.patient, message="Your appointment has been cancelled by {appointment_slot.doctor}")
+                Notification.objects.create(receiver=appointment.patient.user, message="Your appointment has been cancelled by {appointment_slot.doctor.user}")
             appointment_slot.status = 'Cancelled'
             appointment_slot.save()
             return render(request, 'appointments/cancel_success.html')
-        elif curr_user.role == 'PATIENT' and appointment_slot.patient == curr_user:
+        elif curr_user.role == 'PATIENT' and appointment_slot.patient.user == curr_user:
             if appointment_slot.status == 'Booked':
-                Notification.objects.create(receiver=appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
+                Notification.objects.create(receiver=appointment_slot.doctor.user, message="The appointment has been cancelled by {appointment.patient.user}")
             appointment_slot.status = 'Cancelled'
             appointment_slot.save()
             return render(request, 'appointments/cancel_success.html')
@@ -219,7 +225,7 @@ def CancelAppointment(request, appointment_id):
 def BookAppointment(request, appointment_id):
     curr_user = request.user
     if not curr_user.is_authenticated:
-        return HttpUnauthorized()
+        return HttpResponseForbidden()
     
     if curr_user.role != "PATIENT":
         return HttpResponseForbidden("Only patients can book appointments")
@@ -231,10 +237,11 @@ def BookAppointment(request, appointment_id):
             return render(request, 'appointments/book_appointment.html', {'appointment': appointment_slot})
         
         if request.method == "POST":
+            patient_profile = getattr(request.user, 'patient_profile', None)
             # Check if patient already has an appointment on the same day
             appointment_date = appointment_slot.date.date()
             existing_appointments = Appointment.objects.filter(
-                patient=curr_user,
+                patient=patient_profile,
                 appointment_slot__date__date=appointment_date
             )
             
@@ -246,7 +253,7 @@ def BookAppointment(request, appointment_id):
             
             # Create the appointment
             appointment = Appointment.objects.create(
-                patient=curr_user,
+                patient=patient_profile,
                 appointment_slot=appointment_slot
             )
             
@@ -256,13 +263,13 @@ def BookAppointment(request, appointment_id):
             
             # Send notifications to both doctor and patient
             doctor_notification = Notification.objects.create(
-                receiver=appointment_slot.doctor,
+                receiver=appointment_slot.doctor.user,
                 message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.first_name} {curr_user.last_name}."
             )
             
             patient_notification = Notification.objects.create(
                 receiver=curr_user,
-                message=f"Your appointment with Dr. {appointment_slot.doctor.first_name} {appointment_slot.doctor.last_name} on {appointment_slot.date} has been confirmed."
+                message=f"Your appointment with Dr. {appointment_slot.doctor.user.first_name} {appointment_slot.doctor.user.last_name} on {appointment_slot.date} has been confirmed."
             )
             
             return render(request, 'appointments/booking_success.html', {'appointment': appointment})

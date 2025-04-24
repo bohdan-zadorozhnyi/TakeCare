@@ -1,5 +1,5 @@
 from datetime import timezone
-
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
@@ -108,11 +108,11 @@ def edit_profile(request, user_id):
 
     profile = None
     if user.role == 'DOCTOR':
-        profile = DoctorProfile.objects.get(user=user)
+        profile = getattr(user, 'doctor_profile', None)
     elif user.role == 'PATIENT':
-        profile = PatientProfile.objects.get(user=user)
+        profile = getattr(user, 'patient_profile', None)
     elif user.role == 'ADMIN':
-        profile = AdminProfile.objects.get(user=user)
+        profile = getattr(user, 'admin_profile', None)
 
     if request.method == 'POST':
         form = EditUserProfileForm(request.POST, instance=user, profile=profile)
@@ -128,7 +128,7 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user: User = request.user
     if user.role == 'PATIENT':
-        patient_profile = request.user.patient_profile
+        patient_profile = getattr(request.user, 'patient_profile', None)
         appointments = Appointment.objects.filter(patient=patient_profile)
         subscriptions = Prescription.objects.filter(patient=patient_profile)
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
@@ -137,7 +137,7 @@ def dashboard_view(request):
         })
 
     elif user.role == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
+        doctor_profile = getattr(request.user, 'doctor_profile', None)
         appointments = Appointment.objects.filter(doctor=doctor_profile)
         subscriptions = Prescription.objects.filter(doctor=doctor_profile)
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {

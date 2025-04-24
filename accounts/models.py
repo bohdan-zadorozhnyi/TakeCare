@@ -62,6 +62,7 @@ class DoctorProfile(models.Model):
     )
     work_address = models.TextField()
 
+
 class PatientProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='patient_profile')

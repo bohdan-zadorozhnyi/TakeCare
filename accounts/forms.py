@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, PatientProfile, DoctorProfile, AdminProfile, DoctorCategory
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import Group
 import re
 import datetime
 
@@ -76,10 +77,12 @@ class CustomUserCreationForm(UserCreationForm):
         user.birth_date = self.cleaned_data["birth_date"]
         user.gender = self.cleaned_data["gender"]
         user.address = self.cleaned_data["address"]
-        #user.role = self.cleaned_data["role"]
 
         if commit:
             user.save()
+            group = Group.objects.get(name=user.role)
+            user.groups.add(group)
+
         return user
 
 class AdminCreateUserForm(CustomUserCreationForm):
@@ -106,6 +109,8 @@ class AdminCreateUserForm(CustomUserCreationForm):
             user.is_superuser = True
         if commit:
             user.save()
+            group = Group.objects.get(name=user.role)
+            user.groups.add(group)
 
             if user.role == 'DOCTOR':
                 DoctorProfile.objects.create(
@@ -158,7 +163,6 @@ class EditUserProfileForm(forms.ModelForm):
             self.fields['work_address'].initial = self.profile.work_address
 
     def save(self, commit=True):
-        user = super().save(commit=commit)
 
         if self.profile and isinstance(self.profile, DoctorProfile):
             self.profile.specialization = self.cleaned_data['specialization']
@@ -166,5 +170,7 @@ class EditUserProfileForm(forms.ModelForm):
             self.profile.work_address = self.cleaned_data['work_address']
             if commit:
                 self.profile.save()
+
+        user = super().save(commit=commit)
 
         return user
