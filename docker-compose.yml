@@ -21,7 +21,7 @@ services:
     volumes:
       - .:/app
       - /app/staticfiles
-      - media_volume:/app/media
+      - ./media:/app/media
     networks:
       - takecare_network
 
@@ -51,7 +51,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  media_volume:
 
 networks:
   takecare_network:

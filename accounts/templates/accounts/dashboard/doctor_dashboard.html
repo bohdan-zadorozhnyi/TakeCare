@@ -4,24 +4,8 @@
 <div class="container mt-5">
     <h2 class="mb-4">Doctor Dashboard</h2>
 
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            Upcoming Appointments
-        </div>
-        <ul class="list-group list-group-flush">
-            {% if appointments %}
-                {% for appointment in appointments %}
-                <li class="list-group-item">
-                    <strong>Date:</strong> {{ appointment.date }}<br>
-                    <strong>Doctor:</strong> {{ appointment.doctor.get_full_name }}
-                </li>
-                {% empty %}
-                    <li class="list-group-item">No upcoming appointments.</li>
-                {% endfor %}
-            {% else %}
-                <li class="list-group-item text-muted">No upcoming appointments.</li>
-            {% endif %}
-        </ul>
-    </div>
+    <!-- Upcoming Appointments -->
+    {% include 'appointments/_appointment_list.html' with title="Upcoming Appointments" %}
+
 </div>
 {% endblock %}

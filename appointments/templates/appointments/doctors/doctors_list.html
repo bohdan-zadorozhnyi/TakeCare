@@ -4,11 +4,13 @@
 <div class="container mt-5">
     <h2 class="mb-4">Doctors List</h2>
 
-    {% for doctor in page_obj %}
-        {% include 'appointments/doctors/doctor_card.html' with doctor=doctor %}
-    {% empty %}
-        <p>No doctors found.</p>
-    {% endfor %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+        {% for doctor in page_obj %}
+            {% include 'appointments/doctors/doctor_card.html' with doctor=doctor %}
+        {% empty %}
+            <p>No doctors found.</p>
+        {% endfor %}
+    </div>
 
     <!-- Pagination -->
     <nav aria-label="Doctors pagination" class="mt-4">

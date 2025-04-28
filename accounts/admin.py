@@ -15,7 +15,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email', 'name')
 
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
+        (None, {'fields': ('email', 'password', 'avatar')}),
         (_('Personal info'), {'fields': ('name', 'phone_number', 'birth_date', 'gender', 'address', 'personal_id')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login',)}),
@@ -26,6 +26,6 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('email', 'name', 'phone_number', 'address',
-                'birth_date', 'gender', 'personal_id', 'role',
+                'birth_date', 'gender', 'personal_id', 'role', 'avatar',
                 'password1', 'password2',),}),
     )

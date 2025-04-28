@@ -1,10 +1,12 @@
 from django.db import models
 import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class MedicalRecord(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    patient = models.ForeignKey('accounts.PatientProfile', on_delete=models.CASCADE, related_name='medical_records_as_patient')
-    doctor = models.ForeignKey('accounts.DoctorProfile', on_delete=models.CASCADE, related_name='medical_records_as_doctor')
+    patient = models.ForeignKey(User, related_name="medical_records_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(User, related_name="medical_records_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     condition = models.TextField()
     treatment = models.TextField()

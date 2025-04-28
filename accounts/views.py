@@ -15,6 +15,7 @@ from django.contrib.auth.views import PasswordResetView
 from django.db.models import Q
 from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
+from django.utils import timezone
 User = get_user_model()
 
 def login_view(request):
@@ -117,7 +118,8 @@ def edit_profile(request, user_id):
         profile = getattr(user, 'admin_profile', None)
 
     if request.method == 'POST':
-        form = EditUserProfileForm(request.POST, instance=user, profile=profile)
+        form = EditUserProfileForm(request.POST, request.FILES, instance=user, profile=profile)
+
         if form.is_valid():
             form.save()
             return redirect('view_profile', user_id=user.id)
@@ -130,18 +132,21 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user: User = request.user
     if user.role == 'PATIENT':
-        patient_profile = getattr(request.user, 'patient_profile', None)
-        appointments = Appointment.objects.filter(patient=patient_profile)
-        subscriptions = Prescription.objects.filter(patient=patient_profile)
+        upcoming_appointments = Appointment.objects.filter(
+            patient=user,
+            appointment_slot__date__gte=timezone.now()
+        ).order_by('appointment_slot__date')
+        active_prescriptions = Prescription.objects.filter(
+            patient=user,
+            expiration_date__gte=timezone.now()
+        ).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
-            'appointments': appointments,
-            'subscriptions': subscriptions,
+            'appointments': upcoming_appointments,
+            'prescriptions': active_prescriptions,
         })
-
     elif user.role == 'DOCTOR':
-        doctor_profile = getattr(request.user, 'doctor_profile', None)
-        appointments = Appointment.objects.filter(doctor=doctor_profile)
-        subscriptions = Prescription.objects.filter(doctor=doctor_profile)
+        appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
+
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
             'appointments': appointments,
         })

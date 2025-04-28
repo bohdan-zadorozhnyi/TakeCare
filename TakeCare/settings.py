@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'issues',
     'medical',
     'core',
-    'chat'
+    'chat',
+    'calendar_app'
 ]
 
 MIDDLEWARE = [

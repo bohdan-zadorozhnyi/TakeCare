@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="calendar-header">
+        <h1 class="calendar-title">My Calendar</h1>
+        
+        <div class="calendar-controls">
+            <div class="calendar-filter">
+                <select id="view-selector" class="form-select">
+                    <option value="dayGridMonth" {% if default_view == 'month' %}selected{% endif %}>Month</option>
+                    <option value="timeGridWeek" {% if default_view == 'week' %}selected{% endif %}>Week</option>
+                    <option value="timeGridDay" {% if default_view == 'day' %}selected{% endif %}>Day</option>
+                </select>
+                
+                {% if user_role == "DOCTOR" %}
+                <button id="add-slot-btn" class="btn btn-primary add-slot-btn">
+                    <i class="fas fa-plus"></i> Add Slot
+                </button>
+                {% endif %}
+            </div>
+            
+            <button id="settings-btn" class="btn btn-outline-secondary settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </div>
+    </div>
+    
+    <div id="calendar"></div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="settings-modal">
+    <div class="settings-content">
+        <div class="modal-header">
+            <h2>Calendar Settings</h2>
+            <button id="close-settings" class="close-btn">&times;</button>
+        </div>
+        
+        <form action="{% url 'update_calendar_settings' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="default_view">Default View</label>
+                <select id="default_view" name="default_view" class="form-select">
+                    <option value="month" {% if default_view == 'month' %}selected{% endif %}>Month</option>
+                    <option value="week" {% if default_view == 'week' %}selected{% endif %}>Week</option>
+                    <option value="day" {% if default_view == 'day' %}selected{% endif %}>Day</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="reminder_before">Notification Time</label>
+                <select id="reminder_before" name="reminder_before" class="form-select">
+                    <option value="1">1 hour</option>
+                    <option value="2">2 hours</option>
+                    <option value="3">3 hours</option>
+                    <option value="6">6 hours</option>
+                    <option value="12">12 hours</option>
+                    <option value="24">24 hours</option>
+                    <option value="48">48 hours</option>
+                </select>
+            </div>
+            
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="show_past_appointments" name="show_past_appointments" checked>
+                <label class="form-check-label" for="show_past_appointments">Show past appointments</label>
+            </div>
+            
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Slot Modal -->
+<div id="add-slot-modal" class="settings-modal">
+    <div class="settings-content">
+        <div class="modal-header">
+            <h2>Create Appointment Slot</h2>
+            <button id="close-add-slot" class="close-btn">&times;</button>
+        </div>
+        
+        <form id="add-slot-form" action="{% url 'add_calendar_slot' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="slot_date">Date</label>
+                <input type="date" id="slot_date" name="date" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="slot_time">Time</label>
+                <input type="time" id="slot_time" name="time" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="slot_duration">Duration (minutes)</label>
+                <select id="slot_duration" name="duration" class="form-select">
+                    <option value="15">15 minutes</option>
+                    <option value="30" selected>30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="90">1 hour 30 minutes</option>
+                    <option value="120">2 hours</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="slot_location">Location</label>
+                <input type="text" id="slot_location" name="location" class="form-control" list="locations" placeholder="Enter location">
+                <datalist id="locations">
+                    {% for location in doctor_locations %}
+                        <option value="{{ location }}">{{ location }}</option>
+                    {% endfor %}
+                </datalist>
+            </div>
+            
+            <div class="form-group">
+                <label for="slot_patient">Patient (optional)</label>
+                <select id="slot_patient" name="patient" class="form-select">
+                    <option value="">No specific patient</option>
+                    {% for patient in patients %}
+                        <option value="{{ patient.id }}">{{ patient.get_full_name|default:patient.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="slot_description">Description</label>
+                <textarea id="slot_description" name="description" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="referal_type">Referral Type (if required)</label>
+                <select id="referal_type" name="referal_type" class="form-select">
+                    <option value="">No referral required</option>
+                    <option value="CARDIOLOGIST">Cardiologist</option>
+                    <option value="DERMATOLOGIST">Dermatologist</option>
+                    <option value="NEUROLOGIST">Neurologist</option>
+                    <option value="ORTHOPEDIST">Orthopedist</option>
+                    <option value="PEDIATRICIAN">Pediatrician</option>
+                    <option value="PSYCHIATRIST">Psychiatrist</option>
+                </select>
+            </div>
+            
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
+                <label class="form-check-label" for="is_recurring">Create recurring slots</label>
+            </div>
+            
+            <div id="recurring-options" style="display: none;">
+                <div class="form-group">
+                    <label for="recurring_type">Repeat interval</label>
+                    <select id="recurring_type" name="recurring_type" class="form-select">
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="biweekly">Bi-weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recurring_count">Number of occurrences</label>
+                    <input type="number" id="recurring_count" name="recurring_count" class="form-control" value="4" min="2" max="52">
+                </div>
+            </div>
+            
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">Create Slot</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    // Define URL for events - this needs to be in the template to access the Django URL template tag
+    const appointmentsJsonUrl = '{% url "get_appointments_json" %}';
+</script>
+<script src="{% static 'js/calendar.js' %}"></script>
+{% endblock %}

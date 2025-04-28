@@ -5,8 +5,9 @@
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 form-container">
-            <h2 class="text-center">Profile - {{ user.name }}</h2>
+        <div class="col-12 col-md-10 col-lg-8 form-container mx-auto">
+            <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar mx-auto d-block">
+            <h2 class="text-center mt-4">Profile - {{ user.name }}</h2>
             <h4 class="text-center text-muted mb-4">{{ user.role }}</h4>
 
             <div class="form-form">

@@ -28,9 +28,9 @@ Appointments
                             <div class="appointment-time">{{ appointment.date|time:"g:i A" }}</div>
                             <div class="appointment-details">
                                 {% if user.role == 'DOCTOR' %}
-                                    <p>Patient: {{ appointment.patient.get_full_name }}</p>
+                                    <p>Patient: {{ appointment.patient.name }}</p>
                                 {% else %}
-                                    <p>Doctor: {{ appointment.doctor.get_full_name }}</p>
+                                    <p>Doctor: {{ appointment.doctor.name }}</p>
                                 {% endif %}
                                 <p>Reason: {{ appointment.reason }}</p>
                             </div>
