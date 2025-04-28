@@ -121,7 +121,6 @@ def group_appointments_by_date(appointments):
 
 
 @login_required()
-@permission_required('appointments.view_appointment', raise_exception=True)
 def GetAppointment(request):
     curr_user = request.user
     
