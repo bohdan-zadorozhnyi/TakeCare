@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, PatientProfile, DoctorProfile, AdminProfile, DoctorCategory
+from .models import User, PatientProfile, DoctorProfile, AdminProfile
+from referrals.models import DoctorCategory
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
 import re

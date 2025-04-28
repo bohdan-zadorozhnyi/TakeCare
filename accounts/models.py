@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group, Permission
 from django.db import models
-from referrals.models import DoctorCategory
 import uuid
 
 class UserManager(BaseUserManager):
@@ -60,6 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ]
 
 class DoctorProfile(models.Model):
+    from referrals.models import DoctorCategory
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='doctor_profile')
     license_uri = models.URLField(unique=True)
