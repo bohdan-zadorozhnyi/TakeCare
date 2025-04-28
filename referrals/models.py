@@ -1,5 +1,7 @@
 from django.db import models
 import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class DoctorCategory(models.TextChoices):
     DERMATOLOGIST = 'DERMATOLOGIST', 'Dermatologist'
@@ -16,7 +18,7 @@ class DoctorCategory(models.TextChoices):
 
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    patient = models.ForeignKey('accounts.PatientProfile', on_delete=models.CASCADE)
+    patient = models.ForeignKey(User, limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
     issue_date = models.DateField()
     expiration_date = models.DateField()
