@@ -46,9 +46,28 @@
                         <div class="label-wrapper">Address:</div>
                         <div class="value">{{ user.address }}</div>
                     </div>
+
+                    {% if user.role == 'DOCTOR' and profile%}
+                    <div class="form-group mb-3">
+                        <div class="label-wrapper">Specialization:</div>
+                        <div class="value">{{ profile.get_specialization_display }}</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="label-wrapper">License URI:</div>
+                        <div class="value"><a href="{{ profile.license_uri }}">{{ profile.license_uri }}</a></div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="label-wrapper">Work Address:</div>
+                        <div class="value">{{ profile.work_address }}</div>
+                    </div>
+                    {% elif user.role == 'PATIENT' and profile %}
+                    {% elif user.role == 'ADMIN' and profile %}
+                    {% endif %}
                 </div>
 
-                {% if is_own_profile %}
+                {% if is_own_profile or viewer_is_admin %}
                     <div class="d-flex justify-content-center mt-4 button-wrapper">
                         <a href="{% url 'edit_profile' user.id %}">
                             <button class="btn btn-primary submit-btn">Edit Profile</button>

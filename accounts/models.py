@@ -2,7 +2,6 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 import uuid
 
-
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -52,3 +51,30 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        permissions = [
+            ("block_user", "Can block or unblock a user"),
+            ("list_user", "Can see the whole or partial list of all users"),
+        ]
+
+class DoctorProfile(models.Model):
+    from referrals.models import DoctorCategory
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='doctor_profile')
+    license_uri = models.URLField(unique=True)
+    specialization = models.CharField(
+        max_length=50,
+        choices=DoctorCategory.choices,
+        default=DoctorCategory.PEDIATRICIAN,
+    )
+    work_address = models.TextField()
+
+
+class PatientProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='patient_profile')
+
+class AdminProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='admin_profile')

@@ -2,6 +2,8 @@ from django.db import models
 from accounts.models import User
 from referrals.models import Referral, DoctorCategory
 import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class AppointmentStatus(models.TextChoices):
@@ -26,6 +28,6 @@ class Appointment(models.Model):
     referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f"Appointment with {self.appointment_slot.doctor} on {self.appointment_slot.date}"
+        return f"Appointment with {self.appointment_slot.doctor.user} on {self.appointment_slot.date}"
 
 

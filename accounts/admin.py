@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 from django.utils.translation import gettext_lazy as _
-from .forms import SignUpForm
+from .forms import AdminCreateUserForm
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    add_form = SignUpForm
+    add_form = AdminCreateUserForm
     model = User
     list_display = ('email', 'name', 'role', 'is_staff')
     list_filter = ('role', 'is_active', 'is_staff')

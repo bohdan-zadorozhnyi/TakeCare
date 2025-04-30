@@ -1,18 +1,18 @@
 from django.db import models
-from accounts.models import User
 import uuid
+from accounts.models import User
 
 class DoctorCategory(models.TextChoices):
-    DERMATOLOGIST = "Dermatologist"
-    NEUROLOGIST = "Neurologist"
-    PEDIATRICIAN = "Pediatrician"
-    CARDIOLOGIST = "Cardiologist"
-    GASTROENTEROLOGIST = "Gastroenterologist"
-    OPHTHALMOLOGIST = "Ophthalmologist"
-    ENDOCRINOLOGIST = "Endocrinologist"
-    FAMILY_MEDICINE = "Family medicine"
-    GENERAL_SURGERY = "General surgery"
-    NEPHROLOGIST = "Nephrologist"
+    DERMATOLOGIST = 'DERMATOLOGIST', 'Dermatologist'
+    NEUROLOGIST = 'NEUROLOGIST', 'Neurologist'
+    PEDIATRICIAN = 'PEDIATRICIAN', 'Pediatrician'
+    CARDIOLOGIST = 'CARDIOLOGIST', 'Cardiologist'
+    GASTROENTEROLOGIST = 'GASTROENTEROLOGIST', 'Gastroenterologist'
+    OPHTHALMOLOGIST = 'OPHTHALMOLOGIST', 'Ophthalmologist'
+    ENDOCRINOLOGIST = 'ENDOCRINOLOGIST', 'Endocrinologist'
+    FAMILY_MEDICINE = 'FAMILY_MEDICINE', 'Family Medicine'
+    GENERAL_SURGERY = 'GENERAL_SURGERY', 'General Surgery'
+    NEPHROLOGIST = 'NEPHROLOGIST', 'Nephrologist'
 
 
 class Referral(models.Model):
@@ -24,4 +24,4 @@ class Referral(models.Model):
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"
+        return f"Referral for {self.patient.user.name} to {self.get_specialist_type_display()}"

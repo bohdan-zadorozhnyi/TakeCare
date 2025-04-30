@@ -1,6 +1,7 @@
 from django.db import models
-from accounts.models import User
 import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class Prescription(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

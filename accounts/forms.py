@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, PatientProfile, DoctorProfile, AdminProfile
+from referrals.models import DoctorCategory
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import Group
 import re
 import datetime
 
@@ -9,7 +11,7 @@ class CustomLoginForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=255)
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
 
-class SignUpForm(UserCreationForm):
+class CustomUserCreationForm(UserCreationForm):
     """ Custom sign-up form for the User model """
 
     email = forms.EmailField(label='Email', max_length=75)
@@ -76,12 +78,54 @@ class SignUpForm(UserCreationForm):
         user.birth_date = self.cleaned_data["birth_date"]
         user.gender = self.cleaned_data["gender"]
         user.address = self.cleaned_data["address"]
-        #user.role = self.cleaned_data["role"]
 
         if commit:
             user.save()
+            group = Group.objects.get(name=user.role)
+            user.groups.add(group)
+
         return user
 
+class AdminCreateUserForm(CustomUserCreationForm):
+    role = forms.ChoiceField(choices=[
+        ('DOCTOR', 'Doctor'),
+        ('PATIENT', 'Patient'),
+        ('ADMIN', 'Administrator'),
+    ])
+    license_uri = forms.URLField(required=False)
+    specialization = forms.ChoiceField(
+        choices=DoctorCategory.choices,
+        required=False
+    )
+    work_address = forms.CharField(max_length=100, required=False)
+
+    class Meta(CustomUserCreationForm.Meta):
+        fields = CustomUserCreationForm.Meta.fields + ('role',)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = self.cleaned_data['role']
+        if user.role == 'ADMIN':
+            user.is_staff = True
+            user.is_superuser = True
+        if commit:
+            user.save()
+            group = Group.objects.get(name=user.role)
+            user.groups.add(group)
+
+            if user.role == 'DOCTOR':
+                DoctorProfile.objects.create(
+                    user=user,
+                    license_uri=self.cleaned_data['license_uri'],
+                    specialization=self.cleaned_data['specialization'],
+                    work_address=self.cleaned_data['work_address']
+                )
+            elif user.role == 'PATIENT':
+                PatientProfile.objects.create(user=user)
+            elif user.role == 'ADMIN':
+                AdminProfile.objects.create(user=user)
+
+        return user
 
 class EditUserProfileForm(forms.ModelForm):
     email = forms.EmailField(label='Email', max_length=75)
@@ -95,6 +139,13 @@ class EditUserProfileForm(forms.ModelForm):
     gender = forms.ChoiceField(label='Gender', choices=[('MALE', 'Male'), ('FEMALE', 'Female'), ('OTHER', 'Other')])
     address = forms.CharField(label='Address', max_length=255, min_length=5)
 
+    specialization = forms.ChoiceField(
+        choices=DoctorCategory.choices,
+        required=False
+    )
+    license_uri = forms.URLField(max_length=100, required=False)
+    work_address = forms.CharField(max_length=100, required=False)
+
     class Meta:
         model = User
         fields = ['name', 'email', 'phone_number', 'personal_id', 'birth_date', 'gender', 'address', 'personal_id', 'avatar']
@@ -103,3 +154,25 @@ class EditUserProfileForm(forms.ModelForm):
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
             'avatar': forms.FileInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.profile = kwargs.pop('profile', None)
+        super().__init__(*args, **kwargs)
+
+        if self.profile and isinstance(self.profile, DoctorProfile):
+            self.fields['specialization'].initial = self.profile.specialization
+            self.fields['license_uri'].initial = self.profile.license_uri
+            self.fields['work_address'].initial = self.profile.work_address
+
+    def save(self, commit=True):
+
+        if self.profile and isinstance(self.profile, DoctorProfile):
+            self.profile.specialization = self.cleaned_data['specialization']
+            self.profile.license_uri = self.cleaned_data['license_uri']
+            self.profile.work_address = self.cleaned_data['work_address']
+            if commit:
+                self.profile.save()
+
+        user = super().save(commit=commit)
+
+        return user

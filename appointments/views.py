@@ -5,20 +5,23 @@ from .models import AppointmentSlot, Appointment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from collections import defaultdict
 from notifications.models import Notification
-from django.db.models import IntegerField, DateTimeField
-from django.db.models import Q, ExpressionWrapper, F
+from accounts.models import PatientProfile, DoctorProfile, AdminProfile
+from django.contrib.auth.decorators import permission_required, login_required
+from django.db.models import IntegerField, DateTimeField, Q, ExpressionWrapper, F
 from django.db.models.functions import Cast
 from datetime import datetime, timedelta
 from referrals.models import Referral
 
+
 User = get_user_model()
 
-@login_required
+@login_required()
+@permission_required('appointments.add_appointment', raise_exception=True)
 def CreateAppointment(request):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
         return render(request, "appointments/error.html", {'error_message': "Only doctors can create appointments"})
-    
+
     if request.method == 'GET':
         return render(request, 'appointments/create_appointment.html')
     
@@ -58,7 +61,7 @@ def CreateAppointment(request):
             if current_slot is not None:
                 raise ValueError("Cannot create an appointment slot. This time is already used in some other timeslot")
             
-            AppointmentSlot.objects.create(
+            appointment = AppointmentSlot.objects.create(
                 doctor=curr_user,
                 date=appointment_start_datetime,
                 duration=duration,
@@ -116,7 +119,8 @@ def group_appointments_by_date(appointments):
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     return grouped_appointments
 
-@login_required
+
+@login_required()
 def GetAppointment(request):
     curr_user = request.user
     
@@ -164,7 +168,8 @@ def GetAppointment(request):
     
     return render(request, 'appointments/list.html', context)
 
-@login_required
+@login_required()
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     
@@ -193,11 +198,11 @@ def CancelAppointment(request, appointment_id):
     except AppointmentSlot.DoesNotExist:
         return render(request, 'appointments/not_found.html')
 
-
 @login_required
+@permission_required('appointments.add_appointment', raise_exception=True)
 def BookAppointment(request, appointment_id):
     curr_user = request.user
-    
+
     if curr_user.role != "PATIENT":
         return render(request, 'appointments/error.html', {'error_message': "You can't do this!"})
 
@@ -229,14 +234,15 @@ def BookAppointment(request, appointment_id):
             appointment_slot.status = "Booked"
             appointment_slot.save()
             
-            Notification.objects.create(
+
+            doctor_notification = Notification.objects.create(
                 receiver=appointment_slot.doctor,
                 message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.first_name} {curr_user.last_name}."
             )
             
             Notification.objects.create(
                 receiver=curr_user,
-                message=f"Your appointment with Dr. {appointment_slot.doctor.first_name} {appointment_slot.doctor.last_name} on {appointment_slot.date} has been confirmed."
+                message=f"Your appointment with Dr. {appointment_slot.doctor.user.first_name} {appointment_slot.doctor.user.last_name} on {appointment_slot.date} has been confirmed."
             )
             
             return render(request, 'appointments/booking_success.html', {'appointment': appointment})

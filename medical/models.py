@@ -1,6 +1,7 @@
 from django.db import models
-from accounts.models import User
 import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class MedicalRecord(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -13,4 +14,4 @@ class MedicalRecord(models.Model):
     file = models.FileField(upload_to="medical_records/")
 
     def __str__(self):
-        return f"Medical Record for {self.patient.name}"
+        return f"Medical Record for {self.patient.user.name}"
