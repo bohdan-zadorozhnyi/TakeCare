@@ -155,7 +155,14 @@ def dashboard_view(request):
             'today': today,
         })
     elif user.role == 'ADMIN':
-        return render(request, 'accounts/dashboard/admin_dashboard.html')
+        total_users = User.objects.count()
+        total_doctors = User.objects.filter(role='DOCTOR').count()
+
+
+        return render(request, 'accounts/dashboard/admin_dashboard.html', {
+            'total_users': total_users,
+            'total_doctors': total_doctors,
+        })
 
     return redirect('home')
 
