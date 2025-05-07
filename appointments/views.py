@@ -11,6 +11,9 @@ from django.db.models import IntegerField, DateTimeField, Q, ExpressionWrapper, 
 from django.db.models.functions import Cast
 from datetime import datetime, timedelta
 from referrals.models import Referral
+from django.contrib.auth.decorators import user_passes_test
+
+from django.utils import timezone
 
 
 User = get_user_model()
@@ -255,9 +258,92 @@ def BookAppointment(request, appointment_id):
 def doctors_list(request):
     doctors = User.objects.filter(role='DOCTOR').order_by('name')
 
+    paginator = Paginator(doctors, 10)
+
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'appointments/doctors/doctors_list.html', {
         'page_obj': page_obj
     })
+
+
+@login_required
+def appointment_list(request):
+    if request.user.role == 'DOCTOR':
+        appointments = Appointment.objects.filter(appointment_slot__doctor=request.user, appointment_slot__status="Booked")
+    else:
+        appointments = Appointment.objects.filter(patient=request.user)
+
+    show_upcoming = request.GET.get('upcoming') == 'true'
+    show_past = request.GET.get('past') == 'true'
+    search_id = request.GET.get('search', '').strip()
+    search_name = None
+
+    today = timezone.now().date()
+    if show_upcoming and not show_past:
+        appointments = appointments.filter(appointment_slot__date__gte=today)
+    elif show_past and not show_upcoming:
+        appointments = appointments.filter(appointment_slot__date__lt=today)
+
+    if search_id:
+        try:
+            if request.user.role == 'DOCTOR':
+                search_user = User.objects.get(id=search_id, role='PATIENT')
+                appointments = appointments.filter(patient=search_user)
+                search_name = search_user.name
+            else:
+                search_user = User.objects.get(id=search_id, role='DOCTOR')
+                appointments = appointments.filter(appointment_slot__doctor=search_user)
+                search_name = search_user.name
+        except User.DoesNotExist:
+            pass
+    today = timezone.now()
+    appointments = appointments.order_by('appointment_slot__date')
+
+    return render(request, 'appointments/appointment_list.html', {
+        'appointments': appointments,
+        'filters': {
+            'upcoming': show_upcoming,
+            'past': show_past,
+            'search': search_id,
+            'search_name': search_name,
+        },
+        'today': today,
+    })
+
+def is_doctor(user):
+    return user.is_authenticated and user.role == 'DOCTOR'
+
+@login_required
+@user_passes_test(is_doctor)
+def search_patients(request):
+    search_term = request.GET.get('term', '')
+    if len(search_term) < 2:
+        return JsonResponse({'results': []})
+
+    patients = User.objects.filter(
+        Q(role='PATIENT') &
+        Q(name__icontains=search_term)
+    ).values('id', 'name')[:10]
+
+    results = [{'id': p['id'], 'text': p['name']} for p in patients]
+    return JsonResponse({'results': results})
+
+
+@login_required
+def search_users(request):
+    search_term = request.GET.get('term', '')
+    role = request.GET.get('role', '')
+
+    if len(search_term) < 2 or role not in ['DOCTOR', 'PATIENT']:
+        return JsonResponse({'results': []})
+
+    users = User.objects.filter(
+        role=role,
+        name__icontains=search_term
+    ).values('id', 'name')[:10]
+
+    results = [{'id': str(user['id']), 'text': user['name']} for user in users]
+    return JsonResponse({'results': results})
+

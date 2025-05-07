@@ -131,6 +131,8 @@ def edit_profile(request, user_id):
 @login_required
 def dashboard_view(request):
     user: User = request.user
+
+    today = timezone.now()
     if user.role == 'PATIENT':
         upcoming_appointments = Appointment.objects.filter(
             patient=user,
@@ -143,15 +145,24 @@ def dashboard_view(request):
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': upcoming_appointments,
             'prescriptions': active_prescriptions,
+            'today': today,
         })
     elif user.role == 'DOCTOR':
         appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
 
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
             'appointments': appointments,
+            'today': today,
         })
     elif user.role == 'ADMIN':
-        return render(request, 'accounts/dashboard/admin_dashboard.html')
+        total_users = User.objects.count()
+        total_doctors = User.objects.filter(role='DOCTOR').count()
+
+
+        return render(request, 'accounts/dashboard/admin_dashboard.html', {
+            'total_users': total_users,
+            'total_doctors': total_doctors,
+        })
 
     return redirect('home')
 

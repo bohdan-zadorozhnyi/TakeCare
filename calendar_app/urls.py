@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+
 urlpatterns = [
     path('', views.calendar_view, name='calendar_view'),
     path('api/appointments/', views.get_appointments_json, name='get_appointments_json'),

@@ -3,18 +3,18 @@
         <ul class="nav flex-column">
             <li><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
             {% if request.user.role == 'DOCTOR' %}
-                <li><a href="{% url 'appointment' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+                <li><a href="{% url 'appointments:appointment_list' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
                 <li><a href="{% url 'calendar_view' %}"><i class="fas fa-calendar-alt"></i> Calendar</a></li>
                 <li><a href="{% url 'prescriptions:prescription_list' %}"><i class="fas fa-prescription-bottle-alt"></i> Prescriptions</a></li>
                 <li><a href="#"><i class="fas fa-file-medical"></i> Referrals</a></li>
             {% elif request.user.role == 'PATIENT' %}
-                <li><a href="{% url 'appointment' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+                <li><a href="{% url 'appointments:appointment_list' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
                 <li><a href="{% url 'calendar_view' %}"><i class="fas fa-calendar-alt"></i> Calendar</a></li>
-                <li><a href="{% url 'doctors_list' %}"><i class="fas fa-user-doctor"></i> Doctors</a></li>
+                <li><a href="{% url 'appointments:doctors_list' %}"><i class="fas fa-user-doctor"></i> Doctors</a></li>
                 <li><a href="{% url 'prescriptions:prescription_list' %}"><i class="fas fa-pills"></i> My Prescriptions</a></li>
                 <li><a href="#"><i class="fas fa-file-medical-alt"></i> My Referrals</a></li>
             {% elif request.user.role == 'ADMIN' %}
-                <li><a href="#"><i class="fas fa-users-cog"></i> User Management</a></li>
+                <li><a href="{% url 'users_list' %}"><i class="fas fa-users-cog"></i> User Management</a></li>
                 <li><a href="{% url 'calendar_view' %}"><i class="fas fa-calendar-alt"></i> Calendar</a></li>
                 <li><a href="#"><i class="fas fa-clipboard-list"></i> System Logs</a></li>
             {% endif %}
