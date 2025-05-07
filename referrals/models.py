@@ -1,7 +1,8 @@
 from django.db import models
 import uuid
-from django.contrib.auth import get_user_model
-User = get_user_model()
+# Remove direct user model import that creates circular dependency
+# from django.contrib.auth import get_user_model
+# User = get_user_model()
 
 class DoctorCategory(models.TextChoices):
     DERMATOLOGIST = 'DERMATOLOGIST', 'Dermatologist'
@@ -18,8 +19,9 @@ class DoctorCategory(models.TextChoices):
 
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    issuing_doctor = models.ForeignKey(User, related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE, null=True)  # Renamed from doctor to issuing_doctor
-    patient = models.ForeignKey(User, related_name="referrals_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    # Use string references to break circular dependency
+    issuing_doctor = models.ForeignKey('accounts.User', related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE, null=True)
+    patient = models.ForeignKey('accounts.User', related_name="referrals_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
     notes = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
