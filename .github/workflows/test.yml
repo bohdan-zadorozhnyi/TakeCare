@@ -15,34 +15,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       
-      - name: Create .env file
+      - name: Create .env file from example
         run: |
-          echo "# Django settings" > .env
-          echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci-cd" >> .env
-          echo "DJANGO_DEBUG=True" >> .env
-          echo "" >> .env
-          echo "# Database configuration" >> .env
-          echo "POSTGRES_DB=takecare" >> .env
-          echo "POSTGRES_USER=postgres" >> .env
-          echo "POSTGRES_PASSWORD=postgres" >> .env
-          echo "POSTGRES_HOST=db" >> .env
-          echo "POSTGRES_PORT=5432" >> .env
-          echo "" >> .env
-          echo "# Redis configuration" >> .env
-          echo "REDIS_HOST=redis" >> .env
-          echo "REDIS_PORT=6379" >> .env
-          echo "" >> .env
-          echo "# Superuser Settings" >> .env
-          echo "DJANGO_SUPERUSER_EMAIL=admin@example.com" >> .env
-          echo "DJANGO_SUPERUSER_PASSWORD=admin123" >> .env
-          echo "" >> .env
-          echo "# Application Settings" >> .env
-          echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
-          echo "TIME_ZONE=UTC" >> .env
-          echo "" >> .env
-          echo "# Development Settings" >> .env
-          echo "PYTHONDONTWRITEBYTECODE=1" >> .env
-          echo "PYTHONUNBUFFERED=1" >> .env
+          # Copy the example file
+          cp .env.example .env
+          
+          # Modify specific values for CI environment if needed
+          sed -i 's/replace_with_your_secure_secret_key/django-insecure-test-key-for-ci-cd/' .env
+          
+          # Display the .env file for debugging (remove sensitive values in production)
+          echo "Created .env file with the following contents:"
+          cat .env
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
