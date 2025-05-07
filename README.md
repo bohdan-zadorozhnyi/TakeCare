@@ -76,6 +76,12 @@ Default superuser credentials:
    - Grant all privileges on the database to the user
 
 5. Set up environment variables:
+   Copy the example environment file and customize it:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+   Alternatively, you can set environment variables manually:
    ```bash
    export POSTGRES_DB=takecare
    export POSTGRES_USER=postgres
@@ -105,6 +111,17 @@ Default superuser credentials:
 10. The application will be available at http://localhost:8000
 
 Note: Daphne is required for WebSocket support used by the real-time chat feature.
+
+## Environment Variables
+
+The project uses `.env` files to manage environment variables. We have provided a `.env.example` file that shows the required variables. Copy this to `.env` and customize it with your values.
+
+Key environment variables include:
+- `DJANGO_SECRET_KEY`: Secret key for Django security
+- `DJANGO_DEBUG`: Set to True for development, False for production
+- `POSTGRES_*`: Database connection settings
+- `REDIS_HOST`: Redis connection settings
+- `EMAIL_*`: Email configuration (for production)
 
 ## Conventions
 
