@@ -47,7 +47,8 @@ def CreateAppointment(request):
             referal_type = request.POST.get('referal_type')
             
             
-            appointment_start_datetime = datetime.fromisoformat(datetime_str)
+            # Make sure we create a timezone-aware datetime
+            appointment_start_datetime = timezone.make_aware(datetime.fromisoformat(datetime_str))
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
             current_slot = AppointmentSlot.objects.annotate(
@@ -220,10 +221,11 @@ def BookAppointment(request, appointment_id):
         if request.method == "POST":
             available_referral = None
             if appointment_slot.referal_type:
+                # Use timezone.now() instead of datetime.now() for timezone awareness
                 available_referral = Referral.objects.filter(Q(patient=curr_user) &
                                                         Q(specialist_type=appointment_slot.referal_type) &
                                                         Q(is_used=False) &
-                                                        Q(expiration_date_gte=datetime.now().date())).first()
+                                                        Q(expiration_date_gte=timezone.now().date())).first()
                 if available_referral is None:
                     return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
                 available_referral.is_used=True
