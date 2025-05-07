@@ -50,22 +50,17 @@ jobs:
       - name: Start Docker Compose and check if it builds successfully
         run: |
           docker compose build
-          # Start the containers in detached mode
           docker compose up -d
           
-          # Wait for the containers to initialize
           echo "Waiting for containers to start up..."
           sleep 30
           
-          # Check if all containers are running
           CONTAINERS_RUNNING=$(docker compose ps -q | wc -l)
           echo "Number of running containers: $CONTAINERS_RUNNING"
           
-          # Check if the web container is running and healthy
           WEB_STATUS=$(docker compose ps -q web | xargs docker inspect -f '{{.State.Status}}')
           echo "Web container status: $WEB_STATUS"
           
-          # Try to access the web application (may need adjustment depending on how your app responds)
           echo "Testing web application response..."
           MAX_RETRIES=5
           RETRY_COUNT=0
@@ -81,11 +76,9 @@ jobs:
             sleep 10
           done
           
-          # Print container logs for debugging
           echo "Web container logs:"
           docker compose logs web
           
-          # Check if all tests passed
           if [ "$WEB_STATUS" = "running" ] && [ "$WEB_OK" = "true" ]; then
             echo "✅ TEST PASSED: Container is running successfully and web application responds!"
             docker compose down
