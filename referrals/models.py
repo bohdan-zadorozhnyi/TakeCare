@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
-from accounts.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class DoctorCategory(models.TextChoices):
     DERMATOLOGIST = 'DERMATOLOGIST', 'Dermatologist'
@@ -17,11 +18,29 @@ class DoctorCategory(models.TextChoices):
 
 class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    patient = models.ForeignKey(User, limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
+    issuing_doctor = models.ForeignKey(User, related_name="referrals_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE, null=True)  # Renamed from doctor to issuing_doctor
+    patient = models.ForeignKey(User, related_name="referrals_as_patient", limit_choices_to={'role': 'PATIENT'}, on_delete=models.CASCADE)
     specialist_type = models.CharField(max_length=50, choices=DoctorCategory.choices)
+    notes = models.TextField(blank=True, null=True)
     issue_date = models.DateField()
     expiration_date = models.DateField()
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Referral for {self.patient.user.name} to {self.get_specialist_type_display()}"
+        return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"
+
+
+class ReferralDetails(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    referral = models.ForeignKey(Referral, related_name='details', on_delete=models.CASCADE)
+    diagnosis = models.CharField(max_length=255)
+    priority = models.CharField(max_length=20, choices=[
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+        ('URGENT', 'Urgent')
+    ], default='MEDIUM')
+    additional_info = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Details for {self.referral.get_specialist_type_display()} referral"
