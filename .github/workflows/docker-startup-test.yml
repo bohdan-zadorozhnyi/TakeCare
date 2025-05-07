@@ -1,0 +1,50 @@
+name: Docker Startup Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-docker-startup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create .env file from example
+        run: |
+          # Copy the example file
+          cp .env.example .env
+          
+          # Modify specific values for CI environment if needed
+          sed -i 's/replace_with_your_secure_secret_key/django-insecure-test-key-for-ci-cd/' .env
+          
+          # Display the .env file for debugging (remove sensitive values in production)
+          echo "Created .env file with the following contents:"
+          cat .env
+      
+      - name: Start containers
+        run: docker compose up -d
+      
+      - name: Wait for containers to initialize
+        run: sleep 20
+      
+      - name: Check container status
+        run: |
+          if docker compose ps | grep -q "Exit"; then
+            echo "❌ TEST FAILED: Some containers exited with error"
+            docker compose ps
+            docker compose logs
+            exit 1
+          else
+            echo "✅ TEST PASSED: All containers started successfully!"
+            docker compose ps
+          fi
+      
+      - name: Clean up
+        run: docker compose down
+        if: always()  # Run this step even if previous steps fail

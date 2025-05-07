@@ -1,0 +1,75 @@
+name: Docker Container Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Create .env file from example
+        run: |
+          # Copy the example file
+          cp .env.example .env
+          
+          # Modify specific values for CI environment if needed
+          sed -i 's/replace_with_your_secure_secret_key/django-insecure-test-key-for-ci-cd/' .env
+          
+          # Display the .env file for debugging (remove sensitive values in production)
+          echo "Created .env file with the following contents:"
+          cat .env
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Start Docker Compose and check if it builds successfully
+        run: |
+          docker compose build
+          docker compose up -d
+          
+          echo "Waiting for containers to start up..."
+          sleep 30
+          
+          CONTAINERS_RUNNING=$(docker compose ps -q | wc -l)
+          echo "Number of running containers: $CONTAINERS_RUNNING"
+          
+          WEB_STATUS=$(docker compose ps -q web | xargs docker inspect -f '{{.State.Status}}')
+          echo "Web container status: $WEB_STATUS"
+          
+          echo "Testing web application response..."
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          WEB_OK=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ | grep -q '200\|302\|301\|401\|403'; then
+              WEB_OK=true
+              break
+            fi
+            echo "Waiting for web application to respond... (attempt $((RETRY_COUNT+1))/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT+1))
+            sleep 10
+          done
+          
+          echo "Web container logs:"
+          docker compose logs web
+          
+          if [ "$WEB_STATUS" = "running" ] && [ "$WEB_OK" = "true" ]; then
+            echo "✅ TEST PASSED: Container is running successfully and web application responds!"
+            docker compose down
+            exit 0
+          else
+            echo "❌ TEST FAILED: Container did not start properly or web application did not respond"
+            echo "Full container logs:"
+            docker compose logs
+            docker compose down
+            exit 1
+          fi
