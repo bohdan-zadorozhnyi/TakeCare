@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}
+Book Appointment
+{% endblock %}
+
+{% block content %}
+<div class="appointments-container">
+    <div class="appointments-header">
+        <h1>Book Appointment</h1>
+    </div>
+    
+    <div class="appointment-card">
+        <div class="appointment-details">
+            <!-- Doctor Information Block -->
+            <div class="info-block">
+                <h5 class="block-title">Doctor Information</h5>
+                <div class="block-content">
+                    <p><strong>Name:</strong> Dr. {{ appointment.doctor.name }}</p>
+                    <p><strong>Specialty:</strong> {{ appointment.doctor.specialty }}</p>
+                </div>
+            </div>
+
+            <!-- Appointment Details Block -->
+            <div class="info-block">
+                <h5 class="block-title">Appointment Details</h5>
+                <div class="block-content">
+                    <p><strong>Date:</strong> {{ appointment.date|date:"F d, Y" }}</p>
+                    <p><strong>Time:</strong> {{ appointment.date|date:"g:i A" }}</p>
+                    <p><strong>Duration:</strong> {{ appointment.duration }} minutes</p>
+                </div>
+            </div>
+
+            <!-- Location Block -->
+            <div class="info-block">
+                <h5 class="block-title">Location</h5>
+                <div class="block-content">
+                    <p>{{ appointment.location }}</p>
+                </div>
+            </div>
+
+            <!-- Description Block (if exists) -->
+            {% if appointment.description %}
+            <div class="info-block">
+                <h5 class="block-title">Description</h5>
+                <div class="block-content">
+                    <p>
+                        {{ appointment.description }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Booking Form -->
+            <form method="post" action="{% url 'book_appointment' appointment.id %}">
+                {% csrf_token %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> By booking this appointment, you confirm that you will be available at the scheduled time.
+                </div>
+                
+                <div class="appointment-actions">
+                    <a href="{% url 'appointment' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Confirm Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .appointments-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .appointments-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .appointment-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .appointment-details {
+        flex-grow: 1;
+    }
+    
+    .info-block {
+        margin-bottom: 25px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    
+    .info-block:last-child {
+        border-bottom: none;
+    }
+    
+    .block-title {
+        color: #007bff;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    
+    .block-content {
+        padding-left: 10px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+    
+    .appointment-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .appointment-actions .btn {
+        margin-left: 10px;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+    }
+    
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+    
+    .alert-info {
+        color: #0c5460;
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,353 @@
+/* General styling */
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto Condensed', 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+
+.take {
+    font-weight: bold;
+    color: #5981f3;
+    font-size: 1.5rem;
+}
+.take:hover {
+    text-decoration: none;
+}
+.care {
+    font-weight: bold;
+    color: black;
+    font-size: 1.5rem;
+}
+.care:hover {
+    text-decoration: none;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    background-color: #f7fcff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    height: 100vh;
+}
+
+/* Horizontal Navigation Bar (Top) */
+header {
+    background-color: #ffffff;
+    border: 1px solid #f7fcff;
+    color: #3a3a3a;
+    width: 100%;
+    padding: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10; /* Ensure the header stays on top */
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #ffffff;
+    color: #3a3a3a;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 0;
+}
+
+.left-nav {
+    display: flex;
+    align-items: center;
+}
+
+.left-nav a {
+    display: block;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar ul {
+    display: flex;
+    list-style: none;
+}
+
+.navbar li {
+    margin: 0 10px;
+}
+
+.navbar a {
+    color: #3a3a3a;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+
+
+/* Left Navigation Bar (Vertical) */
+.vertical-nav {
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    width: auto;
+    background-color: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    transition: width 0.3s ease; /* Optional: smooth transition when toggling */
+}
+
+/* Ensuring that the entire sidebar collapses */
+.vertical-nav.collapsed {
+    width: 0;
+    visibility: hidden;
+    padding: 0;
+}
+
+/* This handles the content inside the sidebar when collapsed */
+.vertical-nav.collapsed .top-nav,
+.vertical-nav.collapsed .bottom-nav {
+    display: none;
+}
+
+/* Top Navigation */
+.top-nav {
+    flex-grow: 1;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    margin-top: auto;
+    margin-bottom: 4rem;
+    border-top: 2px solid #f7fcff;
+}
+
+/* Navigation List Styling */
+.vertical-nav ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* Individual Navigation Items */
+.vertical-nav li {
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Link Styling */
+.vertical-nav li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px 12px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Hover Effect */
+.vertical-nav li a:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.vertical-nav li a i {
+    margin-right: 8px;
+    min-width: 20px;
+}
+.content-wrapper {
+    overflow: hidden;
+    padding: 0;
+}
+/* Main Content Area */
+.main-content {
+    flex-grow: 1;
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
+    padding-left: 1rem;
+}
+.scrollable-content {
+            height: 100%;
+            overflow-y: auto;
+            padding: 0;
+        }
+/* Footer */
+footer {
+    background-color: #ffffff;
+    color: #3a3a3a;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+.avatar {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 0;
+}
+.horizontal-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Form Section on the Left */
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* default one column */
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr); /* two columns on medium and up */
+    }
+}
+
+/* Image Section on the Right */
+.image-container {
+    flex: 1;
+    max-width: 50%;
+}
+
+.image-container img {
+    width: 80%;
+    height: auto; /* Make sure the image scales correctly */
+}
+
+.form-container h1 {
+    text-align: left;
+    margin-bottom: 20px;
+    color: #5981f3;
+}
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #5981f3;
+}
+.form-container h3 {
+    text-align: left;
+    margin-bottom: 20px;
+    color: #717171;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label, .label-wrapper {
+    color: #717171;
+}
+
+.value {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #9e9e9e;
+    background-color: #ffffff;
+    color: #9e9e9e;
+    box-sizing: border-box;
+    border-radius: 0;
+    cursor: default;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #9e9e9e;
+    box-sizing: border-box;
+}
+.form-control {
+    background-color: #121417;
+    border: 1px solid #717171;
+    color: #717171;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    resize: vertical;
+    height: 6em;
+    margin: 15px 15px 0 0;
+}
+
+input[type="file"].form-control-file {
+    background-color: #121417;
+    border: 1px solid #717171;
+    color: #717171;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+}
+
+
+.button-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.button-wrapper a {
+    flex: 1;
+    width: 100%;
+}
+.submit-btn, .cancel-btn {
+    background-color: #5981f3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 16px;
+    cursor: pointer;
+    flex: 1;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.submit-btn:hover {
+    background-color: #0042ff;
+}
+
+/* Cancel Button Specific Styles */
+.cancel-btn {
+    background-color: #f44336;
+}
+
+.cancel-btn:hover {
+    background-color: #d32f2f;
+}
+
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}

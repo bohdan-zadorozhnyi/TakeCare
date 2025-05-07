@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Prescription List
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Prescriptions</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex gap-2 align-items-center">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text border-end-0 bg-white d-flex align-items-center" style="margin-top: 15px;">
+                    <i class="fas fa-search text-muted" style="font-size: 0.75rem; margin-top: 0px;"></i>
+                </span>
+                <input type="text" class="form-control form-control-sm border-start-0" id="medicationSearch" placeholder="Search by medication name...">
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            {% if user.role == 'DOCTOR' %}
+                <a href="{% url 'prescriptions:create_prescription' %}" class="btn btn-primary">Create New Prescription</a>
+            {% endif %}
+            <button class="btn btn-secondary filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterMenu" aria-expanded="false" aria-controls="filterMenu">
+                <i class="fas fa-filter filter-icon"></i>
+                <i class="fas fa-times close-icon d-none"></i>
+                Filter
+            </button>
+        </div>
+    </div>
+
+    <div class="collapse mb-3" id="filterMenu">
+        <div class="card card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search {% if user.role == 'DOCTOR' %}patient{% else %}doctor{% endif %}</label>
+                    <select class="form-control" id="search" name="search">
+                        {% if filters.search %}
+                            <option value="{{ filters.search }}" selected>{{ filters.search_name }}</option>
+                        {% endif %}
+                    </select>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                        <a href="{% url 'prescriptions:prescription_list' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="active" name="active" value="true" {% if filters.active %}checked{% endif %}>
+                            <label class="form-check-label" for="active">
+                                Show active prescriptions
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="expired" name="expired" value="true" {% if filters.expired %}checked{% endif %}>
+                            <label class="form-check-label" for="expired">
+                                Show expired prescriptions
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% include 'prescriptions/_prescription_list.html' with title="My Prescriptions"%}
+
+</div>
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    /* Search input styling */
+    .input-group {
+        width: 250px;
+    }
+
+    .input-group-text {
+        padding: 0;
+        height: 31px;
+        width: 31px;
+        display: inline-flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    #medicationSearch {
+        background-color: #fff;
+        font-size: 0.875rem;
+        height: 31px;
+        padding: 0.25rem 0.75rem;
+        border-color: #dee2e6;
+    }
+
+    #medicationSearch:focus {
+        box-shadow: none;
+    }
+
+    .input-group-text,
+    #medicationSearch {
+        border-color: #dee2e6;
+    }
+
+    .input-group:focus-within .input-group-text,
+    .input-group:focus-within #medicationSearch {
+        border-color: #86b7fe;
+    }
+
+    /* Select2 styling */
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        padding: 6px 12px !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+        background-color: #fff !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 24px !important;
+        color: #495057 !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+
+    .select2-dropdown {
+        border-color: #ced4da !important;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+    }
+
+
+    /* Filter toggle icon styles */
+    .filter-toggle[aria-expanded="true"] .filter-icon {
+        display: none;
+    }
+
+    .filter-toggle[aria-expanded="true"] .close-icon {
+        display: inline-block !important;
+    }
+
+    .filter-toggle[aria-expanded="false"] .filter-icon {
+        display: inline-block;
+    }
+
+    .filter-toggle[aria-expanded="false"] .close-icon {
+        display: none !important;
+    }
+
+    /* Smooth collapse animation */
+    .collapse {
+        transition: height 0.35s ease;
+    }
+
+    .collapsing {
+        transition: height 0.35s ease;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('#search').select2({
+        placeholder: 'Search for a {% if user.role == "DOCTOR" %}patient{% else %}doctor{% endif %}...',
+        allowClear: true,
+        ajax: {
+            url: '{% url "prescriptions:search_users" %}',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    term: params.term,
+                    role: '{% if user.role == "DOCTOR" %}PATIENT{% else %}DOCTOR{% endif %}'
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: data.results
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 2
+    });
+
+    // Handle collapse state
+    const filterMenu = document.getElementById('filterMenu');
+    filterMenu.addEventListener('hidden.bs.collapse shown.bs.collapse', function () {
+        document.querySelector('.filter-toggle').blur();
+    });
+
+    // Dynamic medication search
+    let searchTimeout;
+    const prescriptionsList = $('#prescriptionsList');
+    const medicationSearch = $('#medicationSearch');
+
+function renderPrescription(prescription, userRole, today) {
+    const isExpired = prescription.is_expired;
+    const mutedClass = isExpired ? 'text-muted' : '';
+    const buttonClass = isExpired ? 'bg-secondary' : 'bg-primary';
+
+    const statusBadge = isExpired
+        ? '<span class="badge bg-secondary d-flex align-items-center px-3 py-2 fw-bold fs-6">Expired</span>'
+        : '<span class="badge bg-success d-flex align-items-center px-3 py-2 fw-bold fs-6">Active</span>';
+
+    const medications = prescription.medications.length
+        ? prescription.medications.map(med =>
+            `<span>${med.name} (${med.dosage})</span>`).join(', ')
+        : '<p>No medications listed</p>';
+
+    const formattedDate = new Date(prescription.issue_date).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let name = '';
+    let avatarImg = '';
+
+    if (prescription.doctor_avatar_url) {
+        avatarImg = `<img src="${prescription.doctor_avatar_url}" alt="Doctor Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
+    }
+    if (prescription.doctor_name) {
+        name = `Dr. ${prescription.doctor_name}`;
+    }
+    if (prescription.patient_avatar_url) {
+        avatarImg = `<img src="${prescription.patient_avatar_url}" alt="Patient Avatar" class="rounded-circle" style="width: 30px; height: 30px; margin-right: 10px;">`;
+    }
+    if (prescription.patient_name) {
+        name = prescription.patient_name;
+    }
+
+    return `
+        <tr class="d-flex flex-column flex-sm-row">
+            <td class="col-12 col-sm-2 d-flex align-items-center ${mutedClass}">
+                ${avatarImg}${name}
+            </td>
+            <td class="col-12 col-sm-3 ${mutedClass}">
+                ${medications}
+            </td>
+            <td class="col-12 col-sm-2 d-flex align-items-center ${mutedClass}">
+                ${formattedDate}
+            </td>
+            <td class="col-12 col-sm-2 d-flex align-items-center">
+                ${statusBadge}
+            </td>
+            <td class="col-12 col-sm-3 d-flex align-items-center ${mutedClass}">
+                <a href="/prescriptions/${prescription.id}/" class="btn btn-sm ${buttonClass} btn-outline-light w-100 w-sm-auto">
+                    View Details
+                </a>
+            </td>
+        </tr>
+    `;
+}
+
+    medicationSearch.on('input', function() {
+        clearTimeout(searchTimeout);
+        const searchTerm = $(this).val().trim();
+        const activeFilter = $('#active').prop('checked');
+        const expiredFilter = $('#expired').prop('checked');
+
+        searchTimeout = setTimeout(function() {
+            if (searchTerm.length === 0) {
+                location.reload();
+                return;
+            }
+
+            $.get('{% url "prescriptions:search_prescriptions" %}', {
+                term: searchTerm,
+                active: activeFilter ? 'true' : 'false',
+                expired: expiredFilter ? 'true' : 'false'
+            })
+            .done(function(data) {
+                console.log(prescriptionsList.find('.list-group-item'));
+                prescriptionsList.find('.list-group-item').addClass('hiding');
+                setTimeout(function() {
+                    prescriptionsList.empty();
+                    if (data.prescriptions.length > 0) {
+                        data.prescriptions.forEach(function(prescription) {
+                            console.log(prescription);
+                            prescriptionsList.append(renderPrescription(prescription));
+                        });
+                    } else {
+                        prescriptionsList.html('<div class="alert alert-info">No prescriptions found.</div>');
+                    }
+                }, 300);
+            });
+        }, 300);
+    });
+
+    // Also trigger search when filters change
+    $('#active, #expired').on('change', function() {
+        if (medicationSearch.val().trim().length > 0) {
+            medicationSearch.trigger('input');
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

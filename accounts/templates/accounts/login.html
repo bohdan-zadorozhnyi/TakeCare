@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block right-nav %}
+{% endblock %}
+
+{% block vertical-nav %}
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center align-items-center">
+        <!-- Left Section: Form and Content -->
+        <div class="col-md-6 form-container">
+            <h1>Care made simple-<br>your health, your way</h1>
+            <h3>Welcome back! Please, login to your account.<br>
+                Don't have an account? <a href={% url 'register' %}>Sign Up</a> </h3>
+
+            <form method="POST" class="form-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_email">Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="form-group">
+                    <label for="id_password">Password</label>
+                    {{ form.password }}
+                </div>
+                {% if form.password.errors %}
+                    <div class="error-message">
+                        {% for error in form.password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if form.non_field_errors %}
+                    <div class="error-message">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <p><a href={% url 'password_reset' %}>Forgot password?</a></p>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+
+        <!-- Right Section: Image -->
+        <div class="col-md-6 image-container d-none d-md-block">
+            {% load static %}
+            <img src="{% static 'img/doctors.jpg' %}" alt="Your Image">
+        </div>
+
+        </div>
+    </div>
+{% endblock %}

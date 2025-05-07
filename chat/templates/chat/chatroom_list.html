@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Chat
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="sidebar-header">
+            <h2>Chats</h2>
+            <button id="newChatButton" class="btn btn-primary">New Chat</button>
+        </div>
+
+        <div id="newChatForm" class="chat-form" style="display: none;">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.participant.label_tag }}
+                    {{ form.participant }}
+                </div>
+                <button type="submit" class="btn btn-success">Start Chat</button>
+                <button type="button" class="btn btn-secondary" id="cancelChat">Cancel</button>
+            </form>
+        </div>
+
+        <div class="chatroom-list">
+            {% if chatrooms %}
+                {% for chatroom in chatrooms %}
+                    <div class="chatroom-item {% if chatroom.id == active_chat_id %}active{% endif %}">
+                        <a href="{% url 'chatroom_detail' room_id=chatroom.id %}" class="chat-link">
+                            <h3>{{ chatroom.name }}</h3>
+                            <p class="chat-preview">Click to view conversation</p>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-chats">No chats available. Start a new conversation!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chat-main">
+        <div class="mobile-chat-header d-md-none">
+            <button class="btn btn-light btn-sm toggle-sidebar" id="toggleSidebar">
+                <i class="fas fa-arrow-left"></i> Back to chats
+            </button>
+        </div>
+        {% if not chatrooms %}
+            <div class="no-chat-selected">
+                <h2>Welcome to Chat</h2>
+                <p>Select a user to start a conversation</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/chat/chat-list.js' %}"></script>
+{% endblock %}
