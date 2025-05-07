@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Set POSTGRES_HOST to 'db' if not explicitly set in environment variables
+# 'db' is the service name in docker-compose.yml
+: "${POSTGRES_HOST:=db}"
+
 until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q'; do
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1

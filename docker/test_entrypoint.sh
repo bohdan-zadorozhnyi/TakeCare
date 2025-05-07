@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Explicitly ensure that POSTGRES_HOST is set to 'db' for Docker networking
+export POSTGRES_HOST=db
+
 echo "Waiting for PostgreSQL..."
 while ! pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER; do
     sleep 1
@@ -18,6 +21,17 @@ export DJANGO_DB_NAME=migrate_db
 # Apply all migrations to the migration database to get a proper schema
 echo "Applying all migrations to migration database..."
 POSTGRES_DB=migrate_db python manage.py migrate --noinput
+
+# Create a superuser for tests if environment variables are set
+if [[ -n "$DJANGO_SUPERUSER_EMAIL" && -n "$DJANGO_SUPERUSER_PASSWORD" ]]; then
+    echo "Creating superuser for testing..."
+    POSTGRES_DB=migrate_db python manage.py shell -c "
+from django.contrib.auth import get_user_model;
+User = get_user_model();
+if not User.objects.filter(email='$DJANGO_SUPERUSER_EMAIL').exists():
+    User.objects.create_superuser('$DJANGO_SUPERUSER_EMAIL', '$DJANGO_SUPERUSER_PASSWORD')
+"
+fi
 
 # Now create a test database based on the schema of the properly migrated database
 echo "Creating test database from migration database schema..."

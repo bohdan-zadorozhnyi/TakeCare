@@ -1,0 +1,69 @@
+name: Docker Startup Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-docker-startup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          # Django settings
+          DJANGO_SECRET_KEY=django-insecure-test-key-for-ci-cd
+          DJANGO_DEBUG=True
+          
+          # Database configuration
+          POSTGRES_DB=takecare
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres
+          POSTGRES_HOST=db
+          POSTGRES_PORT=5432
+          
+          # Redis configuration
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          
+          # Superuser Settings
+          DJANGO_SUPERUSER_EMAIL=admin@example.com
+          DJANGO_SUPERUSER_PASSWORD=admin123
+          
+          # Application Settings
+          ALLOWED_HOSTS=localhost,127.0.0.1
+          TIME_ZONE=UTC
+          
+          # Development Settings
+          PYTHONDONTWRITEBYTECODE=1
+          PYTHONUNBUFFERED=1
+          EOF
+      
+      - name: Start containers
+        run: docker-compose up -d
+      
+      - name: Wait for containers to initialize
+        run: sleep 20
+      
+      - name: Check container status
+        run: |
+          if docker-compose ps | grep -q "Exit"; then
+            echo "❌ TEST FAILED: Some containers exited with error"
+            docker-compose ps
+            docker-compose logs
+            exit 1
+          else
+            echo "✅ TEST PASSED: All containers started successfully!"
+            docker-compose ps
+          fi
+      
+      - name: Clean up
+        run: docker-compose down
+        if: always()  # Run this step even if previous steps fail
