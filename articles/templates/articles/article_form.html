@@ -24,3 +24,16 @@
     </form>
 </div>
 {% endblock %}
+{% block extra_css %}
+<style>
+    input[type="text"],
+    textarea,
+    select {
+        background-color: #ffffff !important;
+        color: #000000;
+    }
+    textarea.form-control {
+    height: 200px;  /* or any other height */
+}
+</style>
+{% endblock %}
