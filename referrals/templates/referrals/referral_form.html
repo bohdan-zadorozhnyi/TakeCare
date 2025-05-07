@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Referral{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .formset-item {
+        border: 1px solid #e9ecef;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+    }
+    .delete-row {
+        color: white;
+        background-color: #dc3545;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        border: 1px solid #dc3545;
+        transition: all 0.15s ease-in-out;
+        display: inline-block;
+    }
+    .delete-row:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+    .add-row {
+        color: #28a745;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create Referral</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="referral-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.patient.id_for_label }}">Patient</label>
+                            {{ form.patient }}
+                            {% if form.patient.errors %}
+                            <div class="text-danger">{{ form.patient.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.specialist_type.id_for_label }}">Specialist Type</label>
+                            {{ form.specialist_type }}
+                            {% if form.specialist_type.errors %}
+                            <div class="text-danger">{{ form.specialist_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.expiration_date.id_for_label }}">Expiration Date</label>
+                            {{ form.expiration_date }}
+                            {% if form.expiration_date.errors %}
+                            <div class="text-danger">{{ form.expiration_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.notes.id_for_label }}">Notes</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr>
+                        <h5>Referral Details</h5>
+                        
+                        {% if details_formset.non_form_errors %}
+                        <div class="alert alert-danger">
+                            {{ details_formset.non_form_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        {{ details_formset.management_form }}
+                        <div id="details-formset">
+                            {% for form in details_formset %}
+                            <div class="formset-item detail-form">
+                                {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                                {% endif %}
+                                
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.diagnosis.id_for_label }}">Diagnosis</label>
+                                    {{ form.diagnosis }}
+                                    {% if form.diagnosis.errors %}
+                                    <div class="text-danger">{{ form.diagnosis.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.priority.id_for_label }}">Priority</label>
+                                    {{ form.priority }}
+                                    {% if form.priority.errors %}
+                                    <div class="text-danger">{{ form.priority.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.additional_info.id_for_label }}">Additional Information</label>
+                                    {{ form.additional_info }}
+                                    {% if form.additional_info.errors %}
+                                    <div class="text-danger">{{ form.additional_info.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-right">
+                                    {% if details_formset.can_delete %}
+                                    <button type="button" class="delete-row">
+                                        <i class="fas fa-trash"></i> Delete this detail
+                                    </button>
+                                    {{ form.DELETE.as_hidden }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <button type="button" id="add-detail" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus-circle"></i> Add Another Detail
+                            </button>
+                        </div>
+                        
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary px-5">Create Referral</button>
+                            <a href="{% url 'referrals:referral_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for patient field
+        var patientSelect = $('#{{ form.patient.id_for_label }}');
+        patientSelect.select2({
+            ajax: {
+                url: '{% url "referrals:search_patients" %}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        term: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            placeholder: 'Search for a patient...'
+        });
+        
+        // Fix for Select2 and form submission 
+        $('#referral-form').on('submit', function(e) {
+            // Get the Select2 selected data
+            var selectedPatient = patientSelect.select2('data')[0];
+            
+            if (selectedPatient) {
+                // Check if the option exists in the actual select
+                if (patientSelect.find('option[value="' + selectedPatient.id + '"]').length === 0) {
+                    // Manually add the option to the select element
+                    var newOption = new Option(selectedPatient.text, selectedPatient.id, true, true);
+                    patientSelect.append(newOption);
+                }
+                
+                // Ensure the value is selected in the actual select element
+                patientSelect.val(selectedPatient.id);
+            }
+            
+            // Ensure all detail forms have their fields enabled
+            $('.detail-form:hidden').find(':input').prop('disabled', false);
+            
+            console.log("Form submitting with patient ID:", patientSelect.val());
+            
+            // Continue with form submission
+            return true;
+        });
+        
+        // Handle dynamically removing detail forms
+        function setupDeleteButtons() {
+            $('.delete-row').click(function() {
+                const formCount = parseInt($('#id_details-TOTAL_FORMS').val());
+                
+                // If we have more than one form, we can remove it visually
+                if (formCount > 1) {
+                    // Get the parent form item
+                    const formItem = $(this).closest('.detail-form');
+                    
+                    // Check if this is a form that already exists in the database
+                    const deletedInput = formItem.find('input[name$="-DELETE"]');
+                    if (deletedInput.length) {
+                        // Mark it for deletion in the backend, but hide it visually
+                        deletedInput.prop('checked', true);
+                        formItem.slideUp(300, function() {
+                            $(this).hide();
+                        });
+                    } else {
+                        // For new forms that aren't yet in the database, we can just remove them
+                        formItem.slideUp(300, function() {
+                            $(this).remove();
+                            // We don't need to decrement TOTAL_FORMS because Django will ignore empty forms
+                        });
+                    }
+                } else {
+                    // If it's the last form, just clear the values instead of removing it
+                    const formItem = $(this).closest('.detail-form');
+                    formItem.find('input[type=text], textarea, select').val('');
+                    alert('At least one detail is required. You can clear the fields instead.');
+                }
+            });
+        }
+        
+        // Setup delete buttons for initial forms
+        setupDeleteButtons();
+        
+        // Modified add-detail handler
+        $('#add-detail').off('click').on('click', function() {
+            const totalForms = $('#id_details-TOTAL_FORMS');
+            const currentForms = parseInt(totalForms.val());
+            const newForm = $('.detail-form:first').clone(true);
+            
+            // Update form IDs and clear values
+            newForm.find(':input:not([type=button]):not([type=submit]):not([type=reset])').each(function() {
+                const name = $(this).attr('name').replace('-0-', `-${currentForms}-`);
+                const id = 'id_' + name;
+                $(this).attr({'name': name, 'id': id}).val('').prop('checked', false);
+            });
+            
+            newForm.find('label').each(function() {
+                const newFor = $(this).attr('for').replace('-0-', `-${currentForms}-`);
+                $(this).attr('for', newFor);
+            });
+            
+            // Clear any error messages
+            newForm.find('.text-danger').remove();
+            
+            // Add the new form to the page
+            $('#details-formset').append(newForm);
+            totalForms.val(currentForms + 1);
+            
+            // Setup delete button for the newly added form
+            setupDeleteButtons();
+        });
+    });
+</script>
+{% endblock %}
