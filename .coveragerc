@@ -1,0 +1,25 @@
+[run]
+source = .
+omit = 
+    */migrations/*
+    manage.py
+    */wsgi.py
+    */asgi.py
+    */settings.py
+    */tests/*
+    */tests.py
+    */admin.py
+    */apps.py
+    */urls.py
+    */viewsets.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __str__
+    def __repr__
+    pass
+    raise NotImplementedError
+    if settings.DEBUG
+    class .*Admin
+    @admin\.register

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Referral Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .referral-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    .detail-box {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .priority-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.2rem;
+        margin-left: 0.5rem;
+    }
+    .priority-high {
+        background-color: #dc3545;
+        color: white;
+    }
+    .priority-medium {
+        background-color: #fd7e14;
+        color: white;
+    }
+    .priority-low {
+        background-color: #28a745;
+        color: white;
+    }
+    .priority-urgent {
+        background-color: #dc3545;
+        color: white;
+        font-weight: bold;
+    }
+    .notes-box {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        white-space: pre-line;
+    }
+    .status-badge {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.2rem;
+    }
+    .badge-used {
+        background-color: #6c757d;
+        color: white;
+    }
+    .badge-expired {
+        background-color: #dc3545;
+        color: white;
+    }
+    .badge-active {
+        background-color: #28a745;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="referral-header">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Referral to {{ referral.get_specialist_type_display }}</h3>
+                <div>
+                    {% if referral.is_used %}
+                        <span class="status-badge badge-used">Used</span>
+                    {% elif referral.expiration_date < today %}
+                        <span class="status-badge badge-expired">Expired</span>
+                    {% else %}
+                        <span class="status-badge badge-active">Active</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Patient:</strong> {{ referral.patient.name }}</p>
+                    <p class="mb-1"><strong>Doctor:</strong> {{ referral.issuing_doctor.name }}</p>
+                    <p class="mb-0"><strong>Specialist Type:</strong> {{ referral.get_specialist_type_display }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Issue Date:</strong> {{ referral.issue_date|date:"F d, Y" }}</p>
+                    <p class="mb-1"><strong>Expiration Date:</strong> {{ referral.expiration_date|date:"F d, Y" }}</p>
+                    <p class="mb-0"><strong>Status:</strong> 
+                        {% if referral.is_used %}
+                            Used
+                        {% elif referral.expiration_date < today %}
+                            Expired
+                        {% else %}
+                            Active
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <h5 class="mb-3">Referral Details</h5>
+            
+            {% for detail in referral.details.all %}
+            <div class="detail-box">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Diagnosis: {{ detail.diagnosis }}
+                        <span class="priority-badge priority-{{ detail.priority|lower }}">
+                            {{ detail.get_priority_display }}
+                        </span>
+                    </h6>
+                </div>
+                
+                {% if detail.additional_info %}
+                <p class="mb-0"><strong>Additional Information:</strong></p>
+                <div class="notes-box">{{ detail.additional_info }}</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="alert alert-info">No specific details provided for this referral.</div>
+            {% endfor %}
+            
+            <h5 class="mb-3 mt-4">Notes</h5>
+            <div class="notes-box">
+                {{ referral.notes|default:"No notes provided." }}
+            </div>
+            
+            {% if user == referral.patient and not referral.is_used and referral.expiration_date >= today %}
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="mark_used" value="true">
+                <div class="alert alert-warning">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Click the button when you use this referral at a specialist appointment.</span>
+                        <button type="submit" class="btn btn-warning">Mark as Used</button>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+            
+            {% if user == referral.issuing_doctor %}
+            <div class="mt-4 d-flex justify-content-between">
+                <a href="{% url 'referrals:referral_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Referrals
+                </a>
+                
+                <form method="post" action="{% url 'referrals:delete_referral' referral.id %}" 
+                      onsubmit="return confirm('Are you sure you want to delete this referral?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Referral
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="mt-4">
+                <a href="{% url 'referrals:referral_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Referrals
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

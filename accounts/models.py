@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group, Permission
 from django.db import models
 import uuid
+from referrals.models import DoctorCategory
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -19,6 +20,13 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('name', 'Admin User')
+        extra_fields.setdefault('phone_number', '0000000000')
+        extra_fields.setdefault('personal_id', 'admin-id-0000')
+        extra_fields.setdefault('birth_date', '2000-01-01')
+        extra_fields.setdefault('gender', 'Other')
+        extra_fields.setdefault('address', 'Admin Address')
+        extra_fields.setdefault('role', 'ADMIN')
 
         return self.create_user(email, password, **extra_fields)
 
@@ -59,7 +67,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         ]
 
 class DoctorProfile(models.Model):
-    from referrals.models import DoctorCategory
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='doctor_profile')
     license_uri = models.URLField(unique=True)
