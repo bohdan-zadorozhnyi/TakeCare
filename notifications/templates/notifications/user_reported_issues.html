@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Reported Issues{% endblock %}
+
+{% block extra_css %}
+<style>
+  .issue-card {
+    margin-bottom: 15px;
+    border-left: 4px solid #ddd;
+  }
+  .issue-CRITICAL { border-left-color: #dc3545; }
+  .issue-HIGH { border-left-color: #fd7e14; }
+  .issue-MEDIUM { border-left-color: #0dcaf0; }
+  .issue-LOW { border-left-color: #198754; }
+  
+  .issue-status {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+  
+  .issue-resolved {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+  
+  .issue-pending {
+    background-color: #fff3cd;
+    color: #664d03;
+  }
+  
+  .issue-details {
+    white-space: pre-line;
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .issue-details.expanded {
+    max-height: none;
+  }
+  
+  .issue-details:not(.expanded):after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  }
+  
+  .toggle-details {
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #0d6efd;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1>My Reported Issues</h1>
+      <p class="text-muted">Track the status of technical issues you've reported</p>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'notifications:report_issue' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-2"></i>Report New Issue
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      {% if issues %}
+        {% for issue in issues %}
+          <div class="card issue-card issue-{{ issue.severity }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <strong>#{{ forloop.counter }}</strong> 
+                <span class="ms-2">{{ issue.created_at|date:"M j, Y g:i A" }}</span>
+              </div>
+              <span class="issue-status {% if issue.resolved %}issue-resolved{% else %}issue-pending{% endif %}">
+                {% if issue.resolved %}Resolved{% else %}Pending{% endif %}
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <div>
+                  <span class="badge bg-{{ issue.severity|lower }}">{{ issue.get_severity_display }}</span>
+                </div>
+              </div>
+              
+              <div class="issue-details" id="issue-{{ issue.id }}">
+                {{ issue.description|linebreaksbr }}
+              </div>
+              <div class="text-end mt-2">
+                <span class="toggle-details" data-id="{{ issue.id }}">Show More</span>
+              </div>
+              
+              {% if issue.resolved %}
+              <div class="mt-3 pt-3 border-top">
+                <h6>Resolution</h6>
+                <div>
+                  <strong>Resolved on:</strong> {{ issue.resolved_at|date:"M j, Y g:i A" }}
+                </div>
+                <div>
+                  <strong>Resolved by:</strong> {{ issue.resolved_by.name }}
+                </div>
+                {% if issue.resolution_notes %}
+                <div class="mt-2">
+                  <strong>Resolution Notes:</strong>
+                  <p class="mb-0">{{ issue.resolution_notes|linebreaksbr }}</p>
+                </div>
+                {% endif %}
+              </div>
+              {% endif %}
+              
+              <div class="mt-3 text-muted">
+                <small>
+                  {% if issue.browser %}<div><strong>Browser:</strong> {{ issue.browser }}</div>{% endif %}
+                  {% if issue.operating_system %}<div><strong>OS:</strong> {{ issue.operating_system }}</div>{% endif %}
+                  {% if issue.url %}<div><strong>URL:</strong> {{ issue.url }}</div>{% endif %}
+                </small>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        
+        {% if issues.paginator.num_pages > 1 %}
+        <nav aria-label="Issue pagination" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if issues.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; First</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ issues.previous_page_number }}">Previous</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#">&laquo; First</a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#">Previous</a>
+              </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+              <a class="page-link" href="#">
+                Page {{ issues.number }} of {{ issues.paginator.num_pages }}
+              </a>
+            </li>
+            
+            {% if issues.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ issues.next_page_number }}">Next</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ issues.paginator.num_pages }}">Last &raquo;</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#">Next</a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#">Last &raquo;</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      {% else %}
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h4>No Reported Issues</h4>
+            <p class="mb-4">You haven't reported any technical issues yet.</p>
+            <a href="{% url 'notifications:report_issue' %}" class="btn btn-primary">
+              <i class="fas fa-plus-circle me-2"></i>Report an Issue
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle issue details expand/collapse
+    document.querySelectorAll('.toggle-details').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        const issueId = this.dataset.id;
+        const detailsElement = document.getElementById(`issue-${issueId}`);
+        
+        if (detailsElement.classList.contains('expanded')) {
+          detailsElement.classList.remove('expanded');
+          this.textContent = 'Show More';
+        } else {
+          detailsElement.classList.add('expanded');
+          this.textContent = 'Show Less';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

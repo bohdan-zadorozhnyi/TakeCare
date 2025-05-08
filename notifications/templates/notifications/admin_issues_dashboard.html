@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Technical Issues Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .issue-severity-LOW { border-left: 4px solid #198754; }
+  .issue-severity-MEDIUM { border-left: 4px solid #0dcaf0; }
+  .issue-severity-HIGH { border-left: 4px solid #fd7e14; }
+  .issue-severity-CRITICAL { border-left: 4px solid #dc3545; }
+  
+  .issue-resolved { opacity: 0.7; }
+  
+  .stat-card {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stat-unresolved {
+    background-color: #f8f9fa;
+    border-left: 4px solid #0d6efd;
+  }
+  
+  .stat-critical {
+    background-color: #fff5f5;
+    border-left: 4px solid #dc3545;
+  }
+  
+  .stat-high {
+    background-color: #fff8f0;
+    border-left: 4px solid #fd7e14;
+  }
+  
+  .stat-resolved {
+    background-color: #f0fff4;
+    border-left: 4px solid #198754;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .issue-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+  
+  .issue-description {
+    white-space: pre-line;
+  }
+  
+  .issue-item {
+    transition: all 0.2s ease;
+  }
+  
+  .issue-item:hover {
+    background-color: #f8f9fa;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1>Technical Issues Dashboard</h1>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stat-card stat-unresolved">
+        <div class="stat-number">{{ total_unresolved }}</div>
+        <div class="stat-label">Unresolved Issues</div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="stat-card stat-critical">
+        <div class="stat-number">{{ critical_count }}</div>
+        <div class="stat-label">Critical Issues</div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="stat-card stat-high">
+        <div class="stat-number">{{ high_count }}</div>
+        <div class="stat-label">High Priority Issues</div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="stat-card stat-resolved">
+        <div class="stat-number">{{ total_resolved }}</div>
+        <div class="stat-label">Resolved Issues</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="row mb-3">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Filter Issues</h5>
+        </div>
+        <div class="card-body">
+          <form action="{% url 'notifications:admin_issues_dashboard' %}" method="get" class="row g-3">
+            <div class="col-md-4">
+              <label for="status" class="form-label">Status</label>
+              <select class="form-select" id="status" name="status">
+                <option value="all" {% if active_status == 'all' %}selected{% endif %}>All Issues</option>
+                <option value="unresolved" {% if active_status == 'unresolved' %}selected{% endif %}>Unresolved</option>
+                <option value="resolved" {% if active_status == 'resolved' %}selected{% endif %}>Resolved</option>
+              </select>
+            </div>
+            
+            <div class="col-md-4">
+              <label for="severity" class="form-label">Severity</label>
+              <select class="form-select" id="severity" name="severity">
+                <option value="all" {% if active_severity == 'all' %}selected{% endif %}>All Severities</option>
+                {% for severity_code, severity_name in severity_choices %}
+                <option value="{{ severity_code }}" {% if active_severity == severity_code %}selected{% endif %}>{{ severity_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary">Apply Filters</button>
+              <a href="{% url 'notifications:admin_issues_dashboard' %}" class="btn btn-outline-secondary ms-2">Clear Filters</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issues Table -->
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Technical Issues</h5>
+        </div>
+        <div class="card-body p-0">
+          {% if issues %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Severity</th>
+                  <th>Description</th>
+                  <th>Reported By</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for issue in issues %}
+                <tr class="issue-item {% if issue.resolved %}issue-resolved{% endif %} issue-severity-{{ issue.severity }}">
+                  <td>{{ issue.id|truncatechars:8 }}</td>
+                  <td>
+                    <span class="badge bg-{% if issue.severity == 'CRITICAL' %}danger{% elif issue.severity == 'HIGH' %}warning{% elif issue.severity == 'MEDIUM' %}info{% else %}success{% endif %}">
+                      {{ issue.get_severity_display }}
+                    </span>
+                  </td>
+                  <td>{{ issue.description|truncatechars:50 }}</td>
+                  <td>{{ issue.reporter.name }}</td>
+                  <td>{{ issue.created_at|date:"M j, Y" }}</td>
+                  <td>
+                    {% if issue.resolved %}
+                    <span class="badge bg-success">Resolved</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Unresolved</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary view-issue-btn" data-bs-toggle="modal" data-bs-target="#issueModal" 
+                      data-id="{{ issue.id }}"
+                      data-description="{{ issue.description }}"
+                      data-severity="{{ issue.get_severity_display }}"
+                      data-reporter="{{ issue.reporter.name }}"
+                      data-created="{{ issue.created_at|date:'M j, Y g:i A' }}"
+                      data-browser="{{ issue.browser|default:'' }}"
+                      data-os="{{ issue.operating_system|default:'' }}"
+                      data-url="{{ issue.url|default:'' }}"
+                      data-resolved="{{ issue.resolved|yesno:'true,false' }}"
+                      {% if issue.resolved %}
+                      data-resolved-by="{{ issue.resolved_by.name }}"
+                      data-resolved-at="{{ issue.resolved_at|date:'M j, Y g:i A' }}"
+                      data-resolution-notes="{{ issue.resolution_notes|default:'' }}"
+                      {% endif %}
+                    >
+                      View
+                    </button>
+                    
+                    {% if not issue.resolved %}
+                    <button type="button" class="btn btn-sm btn-success resolve-issue-btn" data-bs-toggle="modal" data-bs-target="#resolveModal" data-id="{{ issue.id }}">
+                      Resolve
+                    </button>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center p-4">
+            <p class="mb-0">No issues found matching your filters.</p>
+          </div>
+          {% endif %}
+        </div>
+        
+        {% if issues.paginator.num_pages > 1 %}
+        <div class="card-footer">
+          <nav aria-label="Issue pagination">
+            <ul class="pagination justify-content-center mb-0">
+              {% if issues.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.severity %}&severity={{ request.GET.severity }}{% endif %}">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ issues.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.severity %}&severity={{ request.GET.severity }}{% endif %}">Previous</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">&laquo; First</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Previous</a>
+                </li>
+              {% endif %}
+              
+              <li class="page-item disabled">
+                <a class="page-link" href="#">
+                  Page {{ issues.number }} of {{ issues.paginator.num_pages }}
+                </a>
+              </li>
+              
+              {% if issues.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ issues.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.severity %}&severity={{ request.GET.severity }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ issues.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.severity %}&severity={{ request.GET.severity }}{% endif %}">Last &raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Next</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Last &raquo;</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Detail Modal -->
+<div class="modal fade" id="issueModal" tabindex="-1" aria-labelledby="issueModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="issueModalLabel">Issue Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="issue-detail-content">
+          <h5 id="issueModalSeverity" class="mb-3"></h5>
+          
+          <div class="issue-meta mb-3">
+            <div><strong>Reported by:</strong> <span id="issueModalReporter"></span></div>
+            <div><strong>Date:</strong> <span id="issueModalDate"></span></div>
+            <div id="issueModalBrowserContainer" style="display: none;">
+              <strong>Browser:</strong> <span id="issueModalBrowser"></span>
+            </div>
+            <div id="issueModalOSContainer" style="display: none;">
+              <strong>Operating System:</strong> <span id="issueModalOS"></span>
+            </div>
+            <div id="issueModalURLContainer" style="display: none;">
+              <strong>URL:</strong> <a id="issueModalURL" href="#"></a>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h6>Description</h6>
+            <div id="issueModalDescription" class="issue-description p-3 bg-light rounded"></div>
+          </div>
+          
+          <div id="issueModalResolutionContainer" class="mb-3" style="display: none;">
+            <h6>Resolution</h6>
+            <div class="issue-meta mb-2">
+              <div><strong>Resolved by:</strong> <span id="issueModalResolvedBy"></span></div>
+              <div><strong>Resolved on:</strong> <span id="issueModalResolvedDate"></span></div>
+            </div>
+            <div id="issueModalResolutionNotes" class="issue-description p-3 bg-light rounded"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button id="modalResolveBtn" type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveModal">Resolve Issue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Resolve Issue Modal -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="resolveModalLabel">Resolve Issue</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="resolveForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p>Are you sure you want to mark this issue as resolved?</p>
+          <div class="mb-3">
+            <label for="resolution_notes" class="form-label">Resolution Notes</label>
+            <textarea class="form-control" id="resolution_notes" name="resolution_notes" rows="4" placeholder="Describe how you resolved this issue..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Resolve Issue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle issue detail modal
+    const issueModal = document.getElementById('issueModal');
+    const viewButtons = document.querySelectorAll('.view-issue-btn');
+    
+    viewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const description = this.dataset.description;
+        const severity = this.dataset.severity;
+        const reporter = this.dataset.reporter;
+        const created = this.dataset.created;
+        const browser = this.dataset.browser;
+        const os = this.dataset.os;
+        const url = this.dataset.url;
+        const resolved = this.dataset.resolved === 'true';
+        
+        // Populate modal
+        document.getElementById('issueModalSeverity').textContent = severity + " Priority Issue";
+        document.getElementById('issueModalReporter').textContent = reporter;
+        document.getElementById('issueModalDate').textContent = created;
+        document.getElementById('issueModalDescription').textContent = description;
+        
+        // Handle optional fields
+        document.getElementById('issueModalBrowserContainer').style.display = browser ? 'block' : 'none';
+        document.getElementById('issueModalBrowser').textContent = browser;
+        
+        document.getElementById('issueModalOSContainer').style.display = os ? 'block' : 'none';
+        document.getElementById('issueModalOS').textContent = os;
+        
+        document.getElementById('issueModalURLContainer').style.display = url ? 'block' : 'none';
+        const urlElem = document.getElementById('issueModalURL');
+        urlElem.textContent = url;
+        urlElem.href = url;
+        
+        // Resolution info
+        const resolutionContainer = document.getElementById('issueModalResolutionContainer');
+        const resolveBtn = document.getElementById('modalResolveBtn');
+        
+        if (resolved) {
+          resolutionContainer.style.display = 'block';
+          document.getElementById('issueModalResolvedBy').textContent = this.dataset.resolvedBy;
+          document.getElementById('issueModalResolvedDate').textContent = this.dataset.resolvedAt;
+          document.getElementById('issueModalResolutionNotes').textContent = this.dataset.resolutionNotes || 'No notes provided.';
+          resolveBtn.style.display = 'none';
+        } else {
+          resolutionContainer.style.display = 'none';
+          resolveBtn.style.display = 'block';
+          resolveBtn.setAttribute('data-id', id);
+        }
+      });
+    });
+    
+    // Handle resolve modal
+    const resolveButtons = document.querySelectorAll('.resolve-issue-btn, #modalResolveBtn');
+    
+    resolveButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const resolveForm = document.getElementById('resolveForm');
+        resolveForm.action = `/notifications/admin/issues/${id}/resolve/`;
+      });
+    });
+  });
+</script>
+{% endblock %}

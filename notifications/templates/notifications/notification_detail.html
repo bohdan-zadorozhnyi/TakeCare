@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notification Details{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notification-card {
+    border-left: 5px solid #ddd;
+  }
+  .notification-LOW { border-left-color: #198754; }
+  .notification-MEDIUM { border-left-color: #0dcaf0; }
+  .notification-HIGH { border-left-color: #fd7e14; }
+  .notification-CRITICAL { border-left-color: #dc3545; }
+  
+  .notification-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  .notification-content {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    white-space: pre-line;
+  }
+  .badge-TECHNICAL_ISSUE { background-color: #dc3545; color: white; }
+  .badge-SYSTEM { background-color: #6c757d; color: white; }
+  .badge-APPOINTMENT { background-color: #0dcaf0; color: dark; }
+  .badge-PRESCRIPTION { background-color: #198754; color: white; }
+  .badge-MESSAGE { background-color: #0d6efd; color: white; }
+  .badge-ADMIN { background-color: #6610f2; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row mb-3">
+    <div class="col">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'notifications:list' %}">Notifications</a></li>
+          <li class="breadcrumb-item active">Details</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-10 col-lg-8 mx-auto">
+      <div class="card notification-card notification-{{ notification.severity }}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            {% if notification.subject %}{{ notification.subject }}{% else %}{{ notification.get_notification_type_display }}{% endif %}
+          </h5>
+          <span class="badge badge-{{ notification.notification_type }}">{{ notification.get_notification_type_display }}</span>
+        </div>
+        
+        <div class="card-body">
+          <div class="notification-meta">
+            <div><strong>Received:</strong> {{ notification.created_at|date:"F j, Y g:i A" }}</div>
+            {% if notification.sender %}
+            <div><strong>From:</strong> {{ notification.sender.name }}</div>
+            {% endif %}
+            <div><strong>Status:</strong> {{ notification.get_status_display }}</div>
+            {% if notification.status == 'READ' and notification.read_at %}
+            <div><strong>Read:</strong> {{ notification.read_at|date:"F j, Y g:i A" }}</div>
+            {% endif %}
+            <div><strong>Priority:</strong> {{ notification.get_severity_display }}</div>
+          </div>
+          
+          <div class="notification-content">
+            {% if notification.is_encrypted %}
+              <div class="alert alert-warning">
+                <i class="fas fa-lock"></i> This message contains encrypted content for your security.
+              </div>
+            {% endif %}
+            
+            {{ notification.message|linebreaksbr }}
+          </div>
+          
+          {% if notification.related_object %}
+          <div class="mt-4">
+            {% if notification.notification_type == 'APPOINTMENT' %}
+              <a href="{% url 'appointments:detail' notification.related_object.id %}" class="btn btn-primary">
+                View Appointment
+              </a>
+            {% elif notification.notification_type == 'PRESCRIPTION' %}
+              <a href="{% url 'prescriptions:detail' notification.related_object.id %}" class="btn btn-primary">
+                View Prescription
+              </a>
+            {% elif notification.notification_type == 'TECHNICAL_ISSUE' and request.user.role == 'ADMIN' %}
+              <a href="{% url 'notifications:admin_issues_dashboard' %}?id={{ notification.related_object.id }}" class="btn btn-primary">
+                View Issue
+              </a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        
+        <div class="card-footer">
+          <a href="{% url 'notifications:list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Notifications
+          </a>
+          
+          {% if notification.status != 'READ' %}
+          <button id="markAsRead" class="btn btn-outline-primary ms-2" data-id="{{ notification.id }}">
+            Mark as Read
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if notification.status != 'READ' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const markAsReadBtn = document.getElementById('markAsRead');
+    
+    if (markAsReadBtn) {
+      markAsReadBtn.addEventListener('click', function() {
+        const notificationId = this.dataset.id;
+        
+        fetch(`/notifications/${notificationId}/mark-read/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Update UI to indicate read status
+            this.remove();
+            
+            const statusElement = document.querySelector('.notification-meta div:nth-child(3)');
+            statusElement.innerHTML = '<strong>Status:</strong> Read';
+            
+            // Add read timestamp
+            const metaDiv = document.querySelector('.notification-meta');
+            const readAtElement = document.createElement('div');
+            const now = new Date();
+            readAtElement.innerHTML = '<strong>Read:</strong> ' + now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            metaDiv.insertBefore(readAtElement, metaDiv.children[4]);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      });
+    }
+    
+    // Helper function to get CSRF cookie
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

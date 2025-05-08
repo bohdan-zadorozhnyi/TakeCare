@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notification-item {
+    border-left: 4px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+  }
+  .notification-item:hover {
+    background-color: #f8f9fa;
+  }
+  .notification-unread {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-left-color: #0d6efd;
+  }
+  .notification-read {
+    opacity: 0.7;
+  }
+  .notification-critical {
+    border-left-color: #dc3545;
+  }
+  .notification-high {
+    border-left-color: #fd7e14;
+  }
+  .notification-medium {
+    border-left-color: #0dcaf0;
+  }
+  .notification-low {
+    border-left-color: #198754;
+  }
+  .notification-timestamp {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+  .notification-subject {
+    font-weight: bold;
+  }
+  .notification-footer {
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
+  .badge-TECHNICAL_ISSUE { background-color: #dc3545; color: white; }
+  .badge-SYSTEM { background-color: #6c757d; color: white; }
+  .badge-APPOINTMENT { background-color: #0dcaf0; color: dark; }
+  .badge-PRESCRIPTION { background-color: #198754; color: white; }
+  .badge-MESSAGE { background-color: #0d6efd; color: white; }
+  .badge-ADMIN { background-color: #6610f2; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1>Notifications</h1>
+      <p class="text-muted">You have {{ unread_count }} unread notifications</p>
+    </div>
+    <div class="col-auto d-flex align-items-center">
+      {% if unread_count > 0 %}
+      <button id="markAllRead" class="btn btn-outline-primary">Mark all as read</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>All Notifications</span>
+          <div>
+            <a href="{% url 'notifications:list' %}" class="btn btn-sm {% if not request.GET.status %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+            <a href="{% url 'notifications:list' %}?status=DELIVERED" class="btn btn-sm {% if request.GET.status == 'DELIVERED' %}btn-primary{% else %}btn-outline-primary{% endif %}">Unread</a>
+            <a href="{% url 'notifications:list' %}?status=READ" class="btn btn-sm {% if request.GET.status == 'READ' %}btn-primary{% else %}btn-outline-primary{% endif %}">Read</a>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          {% if notifications %}
+            <div class="list-group list-group-flush">
+              {% for notification in notifications %}
+                <div class="notification-item {% if notification.status != 'READ' %}notification-unread{% else %}notification-read{% endif %} notification-{{ notification.severity|lower }}" data-id="{{ notification.id }}">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="notification-subject">
+                        {% if notification.subject %}{{ notification.subject }}{% else %}{{ notification.get_notification_type_display }}{% endif %}
+                      </div>
+                      <div class="notification-timestamp">
+                        {{ notification.created_at|date:"M j, Y g:i A" }}
+                      </div>
+                    </div>
+                    <span class="badge badge-{{ notification.notification_type }}">{{ notification.get_notification_type_display }}</span>
+                  </div>
+                  
+                  <div class="notification-content mt-2">
+                    {% if notification.is_encrypted %}
+                      <em>This notification contains encrypted content.</em>
+                    {% else %}
+                      {{ notification.message|truncatechars:150 }}
+                    {% endif %}
+                  </div>
+                  
+                  <div class="notification-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'notifications:detail' notification.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    {% if notification.status != 'READ' %}
+                    <button class="mark-read-btn btn btn-sm btn-link" data-id="{{ notification.id }}">Mark as read</button>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center p-4">
+              <p class="mb-0">You don't have any notifications.</p>
+            </div>
+          {% endif %}
+        </div>
+        
+        {% if notifications.paginator.num_pages > 1 %}
+        <div class="card-footer">
+          <nav aria-label="Notification pagination">
+            <ul class="pagination justify-content-center mb-0">
+              {% if notifications.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ notifications.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">&laquo; First</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Previous</a>
+                </li>
+              {% endif %}
+              
+              <li class="page-item disabled">
+                <a class="page-link" href="#">
+                  Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
+                </a>
+              </li>
+              
+              {% if notifications.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ notifications.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ notifications.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last &raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Next</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">Last &raquo;</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col">
+      <h5>Having problems with the platform?</h5>
+      <a href="{% url 'notifications:report_issue' %}" class="btn btn-outline-danger">Report a Technical Issue</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'notifications:my_reported_issues' %}" class="btn btn-outline-secondary">My Reported Issues</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Mark single notification as read
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const notificationId = this.dataset.id;
+        const notificationItem = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+        
+        fetch(`/notifications/${notificationId}/mark-read/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Update the UI
+            notificationItem.classList.remove('notification-unread');
+            notificationItem.classList.add('notification-read');
+            this.remove();
+            
+            // Update unread count
+            updateUnreadCount();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      });
+    });
+    
+    // Mark all as read
+    const markAllBtn = document.getElementById('markAllRead');
+    if (markAllBtn) {
+      markAllBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        fetch('/notifications/mark-all-read/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Update the UI - reload the page
+            window.location.reload();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      });
+    }
+    
+    // Helper function to get CSRF cookie
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    
+    // Function to update unread count
+    function updateUnreadCount() {
+      fetch('/notifications/unread-count/')
+        .then(response => response.json())
+        .then(data => {
+          const countElement = document.querySelector('.text-muted');
+          if (countElement) {
+            countElement.textContent = `You have ${data.count} unread notifications`;
+            
+            // Hide "Mark all as read" button if no unread notifications
+            if (data.count === 0 && markAllBtn) {
+              markAllBtn.style.display = 'none';
+            }
+          }
+        });
+    }
+  });
+</script>
+{% endblock %}
