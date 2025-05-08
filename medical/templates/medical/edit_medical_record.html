@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Medical Record{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-primary text-white py-3 px-4">
+            <h4 class="mb-0">Edit Medical Record</h4>
+        </div>
+        <div class="card-body px-4 py-4">
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    Please correct the errors below.
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-group mb-3">
+                            <div class="label-wrapper">
+                                {{ field.label_tag }}
+                                {% if field.field.required %}<span class="required">*</span>{% endif %}
+                            </div>
+                            <div class="value-wrapper">
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="error-message">
+                                        {% for error in field.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,4 +14,4 @@ class MedicalRecord(models.Model):
     file = models.FileField(upload_to="medical_records/")
 
     def __str__(self):
-        return f"Medical Record for {self.patient.user.name}"
+        return f"Medical Record for {self.patient.name}"

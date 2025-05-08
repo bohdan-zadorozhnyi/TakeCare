@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Medical Records{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Medical Records</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="input-group input-group-sm" style="width: 250px;">
+        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+        <input type="text" class="form-control" id="recordSearch" placeholder="Search by condition, notes...">
+    </div>
+
+    <div class="d-flex gap-2">
+            {% if user.role == 'DOCTOR' %}
+                <a href="{% url 'medical:create_medical_record' %}" class="btn btn-primary btn-sm">Create New Record</a>
+            {% endif %}
+            <button class="btn btn-secondary btn-sm filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterMenu" aria-expanded="false" aria-controls="filterMenu">
+                <i class="fas fa-filter filter-icon"></i>
+                <i class="fas fa-times close-icon d-none"></i>
+                Filter
+            </button>
+        </div>
+    </div>
+
+    <div class="collapse mb-3" id="filterMenu">
+        <div class="card card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" id="date_from" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" id="date_to" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="condition" class="form-label">Condition</label>
+                    <input type="text" id="condition" name="condition" class="form-control form-control-sm" value="{{ filters.condition }}">
+                </div>
+                <div class="col-12 d-flex justify-content-end mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm me-2">Apply</button>
+                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="recordsList">
+        {% if medical_records %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Patient</th>
+                            <th scope="col">Doctor</th>
+                            <th scope="col">Condition</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in medical_records %}
+                            <tr>
+                                <td>{{ record.date|date:"Y-m-d H:i" }}</td>
+                                <td>{{ record.patient.name }}</td>
+                                <td>{{ record.doctor.name }}</td>
+                                <td>{{ record.condition|truncatewords:5 }}</td>
+                                <td>
+                                    <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-sm btn-outline-info">
+                                        View
+                                    </a>
+
+                                    {% if user == record.doctor or user.role == 'ADMIN' %}
+                                        <a href="{% url 'medical:delete_medical_record' record.pk %}"
+                                           class="btn btn-sm btn-outline-danger ms-1"
+                                           onclick="return confirm('Are you sure you want to delete this medical record?');">
+                                            Delete
+                                        </a>
+                                        <a href="{% url 'medical:edit_medical_record' record.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">No medical records found.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+    .filter-toggle[aria-expanded="true"] .filter-icon {
+    display: none;
+    }
+    .filter-toggle[aria-expanded="true"] .close-icon {
+        display: inline-block !important;
+    }
+    .filter-toggle[aria-expanded="false"] .filter-icon {
+        display: inline-block;
+    }
+    .filter-toggle[aria-expanded="false"] .close-icon {
+        display: none !important;
+    }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('recordSearch').addEventListener('input', function () {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('#recordsList tbody tr').forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            row.style.display = rowText.includes(term) ? '' : 'none';
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const filterMenu = document.getElementById('filterMenu');
+    filterMenu.addEventListener('hidden.bs.collapse', () => {
+        document.querySelector('.filter-toggle .filter-icon').classList.remove('d-none');
+        document.querySelector('.filter-toggle .close-icon').classList.add('d-none');
+    });
+    filterMenu.addEventListener('shown.bs.collapse', () => {
+        document.querySelector('.filter-toggle .filter-icon').classList.add('d-none');
+        document.querySelector('.filter-toggle .close-icon').classList.remove('d-none');
+    });
+});
+</script>
+{% endblock %}
