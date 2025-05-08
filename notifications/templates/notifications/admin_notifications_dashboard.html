@@ -1,0 +1,852 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notification Management{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card {
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+  .stat-card .card-body {
+    padding: 20px;
+  }
+  .stat-card .stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+  .stat-card .stat-label {
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+  .stat-card.system {
+    border-left: 4px solid #0d6efd;
+  }
+  .stat-card.broadcast {
+    border-left: 4px solid #6f42c1;
+  }
+  .stat-card.total {
+    border-left: 4px solid #20c997;
+  }
+  
+  .notification-row {
+    transition: background-color 0.2s;
+  }
+  .notification-row:hover {
+    background-color: rgba(0,0,0,0.02);
+  }
+  .notification-row td {
+    vertical-align: middle;
+  }
+  
+  .type-badge.SYSTEM { background-color: #0d6efd; }
+  .type-badge.APPOINTMENT { background-color: #20c997; }
+  .type-badge.BROADCAST { background-color: #6f42c1; }
+  .type-badge.MEDICAL { background-color: #dc3545; }
+  .type-badge.PRESCRIPTION { background-color: #fd7e14; }
+  .type-badge.CHAT { background-color: #0dcaf0; }
+  .type-badge.ARTICLE { background-color: #198754; }
+  
+  .tab-pane {
+    padding: 20px 0;
+  }
+  
+  .select2-container {
+    width: 100% !important;
+  }
+  
+  .preview-card {
+    max-width: 400px;
+    margin-bottom: 0;
+    border-left: 4px solid #6f42c1;
+  }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1>Notification Management</h1>
+      <p class="text-muted">Send and manage notifications to users</p>
+    </div>
+  </div>
+  
+  <!-- Stats row -->
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="stat-card system">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="stat-number">{{ system_count }}</div>
+              <div class="stat-label">System Notifications</div>
+            </div>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-cogs fa-2x text-primary"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="stat-card broadcast">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="stat-number">{{ broadcast_count }}</div>
+              <div class="stat-label">Broadcast Messages</div>
+            </div>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-bullhorn fa-2x text-purple"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="stat-card total">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="stat-number">{{ total_count }}</div>
+              <div class="stat-label">Total Notifications</div>
+            </div>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-bell fa-2x text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tabs navigation -->
+  <ul class="nav nav-tabs" id="notificationTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="send-tab" data-bs-toggle="tab" data-bs-target="#send" type="button" role="tab" aria-controls="send" aria-selected="true">Send Notification</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">Notification History</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab" aria-controls="templates" aria-selected="false">Templates</button>
+    </li>
+  </ul>
+  
+  <!-- Tab content -->
+  <div class="tab-content" id="notificationTabsContent">
+    <!-- Send Notification Tab -->
+    <div class="tab-pane fade show active" id="send" role="tabpanel" aria-labelledby="send-tab">
+      <div class="row">
+        <div class="col-lg-7">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Send New Notification</h5>
+            </div>
+            <div class="card-body">
+              <form id="sendNotificationForm" method="post" action="{% url 'notifications:admin_send_notification' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="notificationType" class="form-label">Notification Type</label>
+                  <select class="form-select" id="notificationType" name="notification_type" required>
+                    <option value="" selected disabled>Select notification type</option>
+                    {% for value, name in notification_types %}
+                      <option value="{{ value }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label">Recipients</label>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="recipient_type" id="allUsers" value="all" checked>
+                    <label class="form-check-label" for="allUsers">
+                      All Users
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="recipient_type" id="userRoles" value="roles">
+                    <label class="form-check-label" for="userRoles">
+                      By Role
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="recipient_type" id="specificUsers" value="specific">
+                    <label class="form-check-label" for="specificUsers">
+                      Specific Users
+                    </label>
+                  </div>
+                </div>
+                
+                <div id="roleSelection" class="mb-3 d-none">
+                  <label for="roles" class="form-label">Select Roles</label>
+                  <select class="form-select roles-select" id="roles" name="roles" multiple>
+                    {% for role in user_roles %}
+                      <option value="{{ role.id }}">{{ role.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div id="userSelection" class="mb-3 d-none">
+                  <label for="users" class="form-label">Select Users</label>
+                  <select class="form-select users-select" id="users" name="users" multiple>
+                    {% for user in all_users %}
+                      <option value="{{ user.id }}">{{ user.name }} ({{ user.email }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="notificationTitle" class="form-label">Title</label>
+                  <input type="text" class="form-control" id="notificationTitle" name="title" placeholder="Enter notification title" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="notificationContent" class="form-label">Message</label>
+                  <textarea class="form-control" id="notificationContent" name="message" rows="5" placeholder="Enter notification message" required></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="isUrgent" name="is_urgent">
+                    <label class="form-check-label" for="isUrgent">Mark as Urgent</label>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="sendEmail" name="send_email">
+                    <label class="form-check-label" for="sendEmail">Also Send as Email</label>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <a href="#" class="btn btn-outline-secondary" id="previewBtn">
+                    <i class="fas fa-eye me-2"></i>Preview
+                  </a>
+                </div>
+                
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Send Notification
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-5 mt-4 mt-lg-0">
+          <div class="sticky-top" style="top: 20px;">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Preview</h5>
+              </div>
+              <div class="card-body">
+                <div id="previewSection">
+                  <div class="card preview-card">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-purple me-2">BROADCAST</span>
+                        <span class="text-muted small">Just now</span>
+                        <span class="badge bg-danger ms-auto" id="previewUrgent" style="display:none;">URGENT</span>
+                      </div>
+                      <h5 class="card-title" id="previewTitle">Notification Title</h5>
+                      <p class="card-text" id="previewContent">Your notification content will appear here.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Templates</h5>
+              </div>
+              <div class="card-body">
+                <div class="list-group">
+                  {% for template in templates %}
+                    <a href="#" class="list-group-item list-group-item-action template-item" 
+                       data-title="{{ template.title }}" 
+                       data-content="{{ template.content }}"
+                       data-type="{{ template.notification_type }}">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ template.title }}</h6>
+                        <small class="text-muted">{{ template.notification_type }}</small>
+                      </div>
+                      <p class="mb-1 small text-truncate">{{ template.content }}</p>
+                    </a>
+                  {% empty %}
+                    <div class="text-center py-3">
+                      <p class="text-muted mb-0">No templates available</p>
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#saveTemplateModal">
+                    <i class="fas fa-save me-1"></i> Save Current as Template
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notification History Tab -->
+    <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h5 class="mb-0">Recent Notifications</h5>
+            </div>
+            <div class="col-auto">
+              <div class="input-group">
+                <input type="text" class="form-control form-control-sm" id="searchNotifications" placeholder="Search...">
+                <button class="btn btn-outline-secondary btn-sm" type="button">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          {% if notifications %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Sent By</th>
+                  <th>Sent At</th>
+                  <th>Recipients</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for notification in notifications %}
+                <tr class="notification-row">
+                  <td>
+                    <span class="badge type-badge {{ notification.notification_type }}">{{ notification.get_notification_type_display }}</span>
+                    {% if notification.is_urgent %}<span class="badge bg-danger ms-1">URGENT</span>{% endif %}
+                  </td>
+                  <td class="text-truncate" style="max-width: 300px;">{{ notification.title }}</td>
+                  <td>
+                    {{ notification.sender.name }}
+                    <small class="text-muted d-block">{{ notification.sender.email }}</small>
+                  </td>
+                  <td>{{ notification.created_at|date:"M j, Y" }}<br><small class="text-muted">{{ notification.created_at|time:"g:i A" }}</small></td>
+                  <td>
+                    {% if notification.is_broadcast %}
+                      <span class="badge bg-purple">Broadcast</span>
+                    {% else %}
+                      {{ notification.recipient_count }} users
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-secondary view-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#viewNotificationModal" 
+                            data-id="{{ notification.id }}"
+                            data-title="{{ notification.title }}"
+                            data-message="{{ notification.message }}"
+                            data-type="{{ notification.get_notification_type_display }}"
+                            data-urgent="{{ notification.is_urgent }}"
+                            data-created="{{ notification.created_at|date:"M j, Y g:i A" }}"
+                            data-sender="{{ notification.sender.name }}">
+                      View
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary resend-btn"
+                            data-id="{{ notification.id }}"
+                            data-title="{{ notification.title }}"
+                            data-message="{{ notification.message }}"
+                            data-type="{{ notification.notification_type }}"
+                            data-urgent="{{ notification.is_urgent }}">
+                      Resend
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          {% if notifications.paginator.num_pages > 1 %}
+          <div class="card-footer">
+            <nav aria-label="Notification pagination">
+              <ul class="pagination justify-content-center mb-0">
+                {% if notifications.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1">&laquo; First</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ notifications.previous_page_number }}">Previous</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#">&laquo; First</a>
+                  </li>
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#">Previous</a>
+                  </li>
+                {% endif %}
+                
+                <li class="page-item disabled">
+                  <a class="page-link" href="#">
+                    Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
+                  </a>
+                </li>
+                
+                {% if notifications.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ notifications.next_page_number }}">Next</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ notifications.paginator.num_pages }}">Last &raquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#">Next</a>
+                  </li>
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#">Last &raquo;</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+          
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+            <h4>No Notifications</h4>
+            <p class="text-muted">No notifications have been sent yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Templates Tab -->
+    <div class="tab-pane fade" id="templates" role="tabpanel" aria-labelledby="templates-tab">
+      <div class="row mb-4">
+        <div class="col">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+            <i class="fas fa-plus me-2"></i>Create New Template
+          </button>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h5 class="mb-0">Saved Templates</h5>
+            </div>
+            <div class="col-auto">
+              <div class="input-group">
+                <input type="text" class="form-control form-control-sm" id="searchTemplates" placeholder="Search...">
+                <button class="btn btn-outline-secondary btn-sm" type="button">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          {% if templates %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Content</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for template in templates %}
+                <tr>
+                  <td>{{ template.name }}</td>
+                  <td>
+                    <span class="badge type-badge {{ template.notification_type }}">{{ template.get_notification_type_display }}</span>
+                  </td>
+                  <td class="text-truncate" style="max-width: 200px;">{{ template.title }}</td>
+                  <td class="text-truncate" style="max-width: 300px;">{{ template.content }}</td>
+                  <td>{{ template.created_at|date:"M j, Y" }}</td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary use-template-btn" 
+                            data-template-id="{{ template.id }}"
+                            data-template-title="{{ template.title }}"
+                            data-template-content="{{ template.content }}"
+                            data-template-type="{{ template.notification_type }}">
+                      Use
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-template-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteTemplateModal"
+                            data-template-id="{{ template.id }}"
+                            data-template-name="{{ template.name }}">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+            <h4>No Templates</h4>
+            <p class="text-muted">You haven't created any notification templates yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Notification Modal -->
+<div class="modal fade" id="viewNotificationModal" tabindex="-1" aria-labelledby="viewNotificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewNotificationModalLabel">Notification Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between mb-3">
+          <span class="badge" id="viewNotificationType"></span>
+          <span class="badge bg-danger" id="viewNotificationUrgent" style="display: none;">URGENT</span>
+        </div>
+        <div class="mb-3">
+          <strong>Title:</strong>
+          <p id="viewNotificationTitle"></p>
+        </div>
+        <div class="mb-3">
+          <strong>Message:</strong>
+          <p id="viewNotificationMessage"></p>
+        </div>
+        <div class="mb-3">
+          <strong>Sent by:</strong>
+          <p id="viewNotificationSender"></p>
+        </div>
+        <div class="mb-3">
+          <strong>Sent on:</strong>
+          <p id="viewNotificationCreated"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Template Modal -->
+<div class="modal fade" id="saveTemplateModal" tabindex="-1" aria-labelledby="saveTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="saveTemplateModalLabel">Save as Template</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'notifications:save_template' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="templateName" class="form-label">Template Name</label>
+            <input type="text" class="form-control" id="templateName" name="name" required>
+          </div>
+          
+          <input type="hidden" id="saveTemplateTitle" name="title">
+          <input type="hidden" id="saveTemplateContent" name="content">
+          <input type="hidden" id="saveTemplateType" name="notification_type">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Template</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create Template Modal -->
+<div class="modal fade" id="createTemplateModal" tabindex="-1" aria-labelledby="createTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createTemplateModalLabel">Create New Template</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'notifications:create_template' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newTemplateName" class="form-label">Template Name</label>
+            <input type="text" class="form-control" id="newTemplateName" name="name" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newTemplateType" class="form-label">Notification Type</label>
+            <select class="form-select" id="newTemplateType" name="notification_type" required>
+              <option value="" selected disabled>Select notification type</option>
+              {% for value, name in notification_types %}
+                <option value="{{ value }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newTemplateTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="newTemplateTitle" name="title" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newTemplateContent" class="form-label">Content</label>
+            <textarea class="form-control" id="newTemplateContent" name="content" rows="5" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Template</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Template Modal -->
+<div class="modal fade" id="deleteTemplateModal" tabindex="-1" aria-labelledby="deleteTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteTemplateModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="deleteTemplateForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p>Are you sure you want to delete the template "<span id="deleteTemplateName"></span>"?</p>
+          <p class="text-danger">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete Template</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.roles-select').select2({
+      placeholder: "Select user roles",
+      allowClear: true
+    });
+    
+    $('.users-select').select2({
+      placeholder: "Search and select users",
+      allowClear: true
+    });
+    
+    // Handle recipient type selection
+    document.querySelectorAll('input[name="recipient_type"]').forEach(input => {
+      input.addEventListener('change', function() {
+        const roleDiv = document.getElementById('roleSelection');
+        const userDiv = document.getElementById('userSelection');
+        
+        if (this.value === 'roles') {
+          roleDiv.classList.remove('d-none');
+          userDiv.classList.add('d-none');
+        } else if (this.value === 'specific') {
+          roleDiv.classList.add('d-none');
+          userDiv.classList.remove('d-none');
+        } else {
+          roleDiv.classList.add('d-none');
+          userDiv.classList.add('d-none');
+        }
+      });
+    });
+    
+    // Preview notification
+    document.getElementById('previewBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('notificationTitle').value || 'Notification Title';
+      const content = document.getElementById('notificationContent').value || 'Your notification content will appear here.';
+      const isUrgent = document.getElementById('isUrgent').checked;
+      
+      document.getElementById('previewTitle').textContent = title;
+      document.getElementById('previewContent').textContent = content;
+      
+      if (isUrgent) {
+        document.getElementById('previewUrgent').style.display = '';
+      } else {
+        document.getElementById('previewUrgent').style.display = 'none';
+      }
+    });
+    
+    // Use template
+    document.querySelectorAll('.template-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const title = this.getAttribute('data-title');
+        const content = this.getAttribute('data-content');
+        const type = this.getAttribute('data-type');
+        
+        document.getElementById('notificationTitle').value = title;
+        document.getElementById('notificationContent').value = content;
+        document.getElementById('notificationType').value = type;
+        
+        // Update preview
+        document.getElementById('previewTitle').textContent = title;
+        document.getElementById('previewContent').textContent = content;
+      });
+    });
+    
+    // Use template button
+    document.querySelectorAll('.use-template-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const title = this.getAttribute('data-template-title');
+        const content = this.getAttribute('data-template-content');
+        const type = this.getAttribute('data-template-type');
+        
+        // Switch to send tab
+        document.getElementById('send-tab').click();
+        
+        // Fill in form
+        document.getElementById('notificationTitle').value = title;
+        document.getElementById('notificationContent').value = content;
+        document.getElementById('notificationType').value = type;
+        
+        // Update preview
+        document.getElementById('previewTitle').textContent = title;
+        document.getElementById('previewContent').textContent = content;
+      });
+    });
+    
+    // Save current as template
+    document.getElementById('saveTemplateModal').addEventListener('show.bs.modal', function() {
+      const title = document.getElementById('notificationTitle').value;
+      const content = document.getElementById('notificationContent').value;
+      const type = document.getElementById('notificationType').value;
+      
+      document.getElementById('saveTemplateTitle').value = title;
+      document.getElementById('saveTemplateContent').value = content;
+      document.getElementById('saveTemplateType').value = type;
+    });
+    
+    // View notification
+    document.getElementById('viewNotificationModal').addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const title = button.getAttribute('data-title');
+      const message = button.getAttribute('data-message');
+      const type = button.getAttribute('data-type');
+      const urgent = button.getAttribute('data-urgent') === 'True';
+      const created = button.getAttribute('data-created');
+      const sender = button.getAttribute('data-sender');
+      
+      document.getElementById('viewNotificationTitle').textContent = title;
+      document.getElementById('viewNotificationMessage').textContent = message;
+      document.getElementById('viewNotificationCreated').textContent = created;
+      document.getElementById('viewNotificationSender').textContent = sender;
+      
+      const typeElem = document.getElementById('viewNotificationType');
+      typeElem.textContent = type;
+      typeElem.classList.forEach(cls => {
+        if (cls.startsWith('bg-')) {
+          typeElem.classList.remove(cls);
+        }
+      });
+      
+      // Set color based on type
+      if (type === 'SYSTEM') typeElem.classList.add('bg-primary');
+      else if (type === 'BROADCAST') typeElem.classList.add('bg-purple');
+      else if (type === 'APPOINTMENT') typeElem.classList.add('bg-success');
+      else if (type === 'MEDICAL') typeElem.classList.add('bg-danger');
+      else if (type === 'PRESCRIPTION') typeElem.classList.add('bg-warning');
+      else if (type === 'CHAT') typeElem.classList.add('bg-info');
+      else if (type === 'ARTICLE') typeElem.classList.add('bg-success');
+      else typeElem.classList.add('bg-secondary');
+      
+      if (urgent) {
+        document.getElementById('viewNotificationUrgent').style.display = '';
+      } else {
+        document.getElementById('viewNotificationUrgent').style.display = 'none';
+      }
+    });
+    
+    // Resend notification
+    document.querySelectorAll('.resend-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const title = this.getAttribute('data-title');
+        const message = this.getAttribute('data-message');
+        const type = this.getAttribute('data-type');
+        const urgent = this.getAttribute('data-urgent') === 'True';
+        
+        // Switch to send tab
+        document.getElementById('send-tab').click();
+        
+        // Fill in form
+        document.getElementById('notificationTitle').value = title;
+        document.getElementById('notificationContent').value = message;
+        document.getElementById('notificationType').value = type;
+        document.getElementById('isUrgent').checked = urgent;
+        
+        // Update preview
+        document.getElementById('previewTitle').textContent = title;
+        document.getElementById('previewContent').textContent = message;
+        
+        if (urgent) {
+          document.getElementById('previewUrgent').style.display = '';
+        } else {
+          document.getElementById('previewUrgent').style.display = 'none';
+        }
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+      });
+    });
+    
+    // Delete template
+    document.getElementById('deleteTemplateModal').addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const templateId = button.getAttribute('data-template-id');
+      const templateName = button.getAttribute('data-template-name');
+      
+      document.getElementById('deleteTemplateName').textContent = templateName;
+      document.getElementById('deleteTemplateForm').action = `/notifications/admin/templates/${templateId}/delete/`;
+    });
+  });
+</script>
+{% endblock %}
