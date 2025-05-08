@@ -1,56 +1,181 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Doctors List
-{% endblock %}
+{% block title %}Find a Doctor{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Doctors List</h2>
+<div class="container mt-4">
+    <h2 class="mb-4">Find a Doctor</h2>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get">
+                <div class="d-flex gap-3 align-items-end">
+                    <!-- Search Field -->
+                    <div class="flex-grow-1">
+                        <label for="search" class="form-label mb-2">Doctor Name</label>
+                        <input type="text" class="form-control bg-white" id="search" name="search" 
+                               value="{{ filters.search }}" placeholder="Search by name">
+                    </div>
+                    
+                    <!-- Specialization Filter -->
+                    <div class="flex-grow-1">
+                        <label for="specialization" class="form-label mb-2" style="margin-top: -0.5rem">Specialization</label>
+                        <select class="form-select bg-white" id="specialization" name="specialization">
+                            <option value="">Select specialization</option>
+                            {% for value, label in specializations %}
+                                <option value="{{ value }}" {% if filters.specialization == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Date Filter -->
+                    <div class="flex-grow-1">
+                        <label for="date" class="form-label mb-2">Available Date</label>
+                        <input type="date" class="form-control bg-white" id="date" name="date" 
+                               value="{{ filters.date }}" min="{{ today|date:'Y-m-d' }}">
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="flex-grow-1">
+                        <label class="form-label mb-2">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
-        {% for doctor in page_obj %}
-            {% include 'appointments/doctors/doctor_card.html' with doctor=doctor %}
-        {% empty %}
-            <p>No doctors found.</p>
-        {% endfor %}
+    <!-- Doctors List -->
+    <div class="row">
+        {% if page_obj %}
+            {% for doctor in page_obj %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ doctor.name }}</h5>
+                            <p class="card-text">
+                                <strong>Specialization:</strong> {{ doctor.doctor_profile.get_specialization_display }}<br>
+                                <strong>Location:</strong> {{ doctor.address }}<br>
+                                {% if doctor.doctor_profile.description %}
+                                    <strong>About:</strong> {{ doctor.doctor_profile.description }}
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'appointments:doctors_available_appointments' doctor.id %}" 
+                               class="btn btn-primary">View Available Slots</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No doctors found matching your criteria.
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Pagination -->
-    <nav aria-label="Doctors pagination" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                        &laquo;
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&laquo;</span>
-                </li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- First Page -->
+                {% if page_obj.number > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
                 {% endif %}
-            {% endfor %}
 
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                        &raquo;
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&raquo;</span>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
+                <!-- Previous Page -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next Page -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Last Page -->
+                {% if page_obj.number < page_obj.paginator.num_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} doctors
+                </small>
+            </div>
+        </nav>
+    {% endif %}
 </div>
+
+<style>
+    .card {
+        transition: transform 0.2s;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .form-control, .form-select {
+        border: 1px solid #ced4da;
+        padding: 0.375rem 0.75rem;
+        height: 38px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        height: 38px;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.875rem;
+        display: block;
+    }
+    .gap-3 {
+        gap: 1rem !important;
+    }
+</style>
 {% endblock %}

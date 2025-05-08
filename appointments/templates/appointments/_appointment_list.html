@@ -75,7 +75,7 @@
 
                                         <a href="{% url "appointment_detail" appointment.id %}" class="btn btn-sm  btn-outline-light {% if appointment.appointment_slot.date > today %}w-50 bg-primary{% else %}w-100 bg-secondary{% endif %}">View</a>
                                         {% if appointment.appointment_slot.date > today %}
-                                        <a href="#" class="btn btn-sm bg-danger btn-outline-light w-50">Cancel</a>
+                                        <a href="{% url 'appointments:cancel_appointment' appointment.id %}" class="btn btn-sm bg-danger btn-outline-light w-50">Cancel</a>
                                         {% endif %}
                                     </div>
                                 </div>
