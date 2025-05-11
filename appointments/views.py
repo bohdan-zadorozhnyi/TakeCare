@@ -48,7 +48,8 @@ def CreateAppointment(request, only_ids = False):
             referal_type = request.POST.get('referal_type') or None  # Convert empty string to None
             
             
-            appointment_start_datetime = datetime.fromisoformat(datetime_str)
+            # Make sure we create a timezone-aware datetime
+            appointment_start_datetime = timezone.make_aware(datetime.fromisoformat(datetime_str))
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
             current_slot = AppointmentSlot.objects.annotate(
@@ -229,6 +230,7 @@ def BookAppointment(request, appointment_id, user_id_var = None):
         if request.method == "POST":
             available_referral = None
             if appointment_slot.referal_type:
+                # Use timezone.now() instead of datetime.now() for timezone awareness
                 available_referral = Referral.objects.filter(Q(patient=curr_user) &
                                                         Q(specialist_type=appointment_slot.referal_type) &
                                                         Q(is_used=False) &
