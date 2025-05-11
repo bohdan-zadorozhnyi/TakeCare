@@ -101,7 +101,7 @@
 <div id="appointmentModal" class="modal">
     <div class="modal-content">
         <h2>Create New Appointment Slot</h2>
-        <form id="appointmentForm" method="post" action="{% url 'create_appointment' %}" style="margin-top: 10px;">
+        <form id="appointmentForm" method="post" action="{% url 'appointments:create_appointment' %}" style="margin-top: 10px;">
             {% csrf_token %}
 
             <!-- Date, Time, Duration -->
@@ -116,13 +116,51 @@
                 </div>
                 <div>
                     <label for="appointmentDuration">Duration:</label>
-                    <select id="appointmentDuration" name="duration"  required>
+                    <select id="appointmentDuration" name="duration" required>
                         <option value="15">15 minutes</option>
                         <option value="30" selected>30 minutes</option>
                         <option value="45">45 minutes</option>
                         <option value="60">1 hour</option>
+                        <option value="90">1 hour 30 minutes</option>
+                        <option value="120">2 hours</option>
                     </select>
                 </div>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+                <label for="appointmentLocation">Location:</label>
+                <input type="text" id="appointmentLocation" name="location" list="locations" placeholder="Enter location">
+                <datalist id="locations">
+                    {% for location in doctor_locations %}
+                        <option value="{{ location }}">{{ location }}</option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <!-- Patient Selection -->
+            <div class="form-group">
+                <label for="appointmentPatient">Patient (optional):</label>
+                <select id="appointmentPatient" name="patient">
+                    <option value="">No specific patient</option>
+                    {% for patient in patients %}
+                        <option value="{{ patient.id }}">{{ patient.get_full_name|default:patient.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Referral Type -->
+            <div class="form-group">
+                <label for="referal_type">Referral Type (if required):</label>
+                <select id="referal_type" name="referal_type">
+                    <option value="">No referral required</option>
+                    <option value="CARDIOLOGIST">Cardiologist</option>
+                    <option value="DERMATOLOGIST">Dermatologist</option>
+                    <option value="NEUROLOGIST">Neurologist</option>
+                    <option value="ORTHOPEDIST">Orthopedist</option>
+                    <option value="PEDIATRICIAN">Pediatrician</option>
+                    <option value="PSYCHIATRIST">Psychiatrist</option>
+                </select>
             </div>
 
             <!-- Recurring Appointment -->
@@ -130,18 +168,17 @@
                 <label class="checkbox-container" style="display: flex; flex-direction: row; flex-grow: 1; justify-content: space-between;">
                     Make this a recurring appointment
                     <input type="checkbox" id="isRecurring" name="is_recurring">
-                    
                 </label>
                 <div id="recurringOptions" style="display: none;">
                     <select class="radio-container" name="recurring_type">
-                        <option  value="daily"> Daily</option>
-                        <option value="weekly"> Weekly</option>
-                        <option value="biweekly"> Every two weeks</option>
-                        <option value="monthly"> Monthly</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="biweekly">Every two weeks</option>
+                        <option value="monthly">Monthly</option>
                     </select>
                     <div class="form-group">
                         <label for="recurringCount">Number of occurrences:</label>
-                        <input type="number" id="recurringCount" name="recurring_count" min="1" max="52" value="4">
+                        <input type="number" id="recurringCount" name="recurring_count" min="2" max="52" value="4">
                     </div>
                 </div>
             </div>
@@ -149,13 +186,13 @@
             <!-- Description -->
             <div class="form-group">
                 <label for="appointmentDescription">Description:</label>
-                <textarea id="appointmentDescription" name="description"></textarea>
+                <textarea id="appointmentDescription" name="description" rows="3"></textarea>
             </div>
 
             <!-- Buttons -->
             <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
                 <button type="submit" class="btn btn-primary">Create Appointment</button>
-                <a href="{% url 'appointment' %}" class="btn btn-danger" id="cancelBtn">Cancel</a>
+                <a href="{% url 'appointments:appointment_list' %}" class="btn btn-danger" id="cancelBtn">Cancel</a>
             </div>
         </form>
     </div>
@@ -175,8 +212,10 @@
             recurringOptions.style.display = this.checked ? 'block' : 'none';
         };
     
-        // Combine date + time into datetime before submit
-        document.getElementById('appointmentForm').onsubmit = function () {
+        // Handle form submission
+        document.getElementById('appointmentForm').onsubmit = function(e) {
+            e.preventDefault();
+            
             const date = document.getElementById('appointmentDate').value;
             const time = document.getElementById('appointmentTime').value;
     
@@ -187,9 +226,10 @@
                 datetimeInput.name = 'datetime';
                 datetimeInput.value = datetime;
                 this.appendChild(datetimeInput);
+                
+                // Submit the form
+                this.submit();
             }
-    
-            return true;
         };
     });
 </script>

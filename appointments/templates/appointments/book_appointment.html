@@ -52,14 +52,14 @@ Book Appointment
             {% endif %}
 
             <!-- Booking Form -->
-            <form method="post" action="{% url 'book_appointment' appointment.id %}">
+            <form method="post" action="{% url 'appointments:book_appointment' appointment.id %}">
                 {% csrf_token %}
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> By booking this appointment, you confirm that you will be available at the scheduled time.
                 </div>
                 
                 <div class="appointment-actions">
-                    <a href="{% url 'appointment' %}" class="btn btn-secondary">
+                    <a href="{% url 'appointments:appointment' %}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancel
                     </a>
                     <button type="submit" class="btn btn-primary">
