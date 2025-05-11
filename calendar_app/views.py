@@ -261,7 +261,7 @@ def update_calendar_settings(request):
     return redirect('calendar_view')
 
 @login_required
-# @require_POST
+@require_POST
 def add_calendar_slot(request):
     """Add a new appointment slot to the calendar"""
     # Only doctors can create slots
