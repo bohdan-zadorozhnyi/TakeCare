@@ -3,9 +3,10 @@
 {% block title %}
     Create new appointment slots
 {% endblock %}
-{% block content %}
+
+{% block extra_css %}
 <style>
-    /* Buttons */
+
     .btn-primary, .btn-danger {
         padding: 10px 20px;
         border: none;
@@ -98,7 +99,9 @@
         margin-right: 6px;
     }
 </style>
-<div id="appointmentModal" class="modal">
+{% endblock %}
+{% block content %}
+
     <div class="modal-content">
         <h2>Create New Appointment Slot</h2>
         <form id="appointmentForm" method="post" action="{% url 'appointments:create_appointment' %}" style="margin-top: 10px;">
@@ -196,8 +199,10 @@
             </div>
         </form>
     </div>
-</div>
 
+{% endblock %}
+
+{% block extra_js %} 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Set today's date as minimum

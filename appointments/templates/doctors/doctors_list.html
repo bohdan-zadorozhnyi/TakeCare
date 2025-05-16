@@ -11,17 +11,17 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get">
-                <div class="d-flex gap-3 align-items-end">
+                <div class="d-flex flex-row gap-3">
                     <!-- Search Field -->
-                    <div class="flex-grow-1">
+                    <div class="d-flex flex-column flex-grow-1 justify-content-between">
                         <label for="search" class="form-label mb-2">Doctor Name</label>
                         <input type="text" class="form-control bg-white" id="search" name="search" 
                                value="{{ filters.search }}" placeholder="Search by name">
                     </div>
                     
                     <!-- Specialization Filter -->
-                    <div class="flex-grow-1">
-                        <label for="specialization" class="form-label mb-2" style="margin-top: -0.5rem">Specialization</label>
+                    <div class="d-flex flex-column flex-grow-1 justify-content-between">
+                        <label for="specialization" class="form-label mb-2">Specialization</label>
                         <select class="form-select bg-white" id="specialization" name="specialization">
                             <option value="">Select specialization</option>
                             {% for value, label in specializations %}
@@ -33,14 +33,20 @@
                     </div>
                     
                     <!-- Date Filter -->
-                    <div class="flex-grow-1">
-                        <label for="date" class="form-label mb-2">Available Date</label>
-                        <input type="date" class="form-control bg-white" id="date" name="date" 
+                    <div class="d-flex flex-column flex-grow-1 justify-content-between">
+                        <label for="start_date" class="form-label mb-2">Available Start Date</label>
+                        <input type="date" class="form-control bg-white" id="start_date" name="start_date" 
+                               value="{{ filters.date }}" min="{{ today|date:'Y-m-d' }}">
+                    </div>
+
+                    <div class="d-flex flex-column flex-grow-1 justify-content-between">
+                        <label for="end_date" class="form-label mb-2">Available End Date</label>
+                        <input type="date" class="form-control bg-white" id="end_date" name="end_date" 
                                value="{{ filters.date }}" min="{{ today|date:'Y-m-d' }}">
                     </div>
                     
                     <!-- Submit Button -->
-                    <div class="flex-grow-1">
+                    <div class="d-flex flex-column flex-grow-1 justify-content-between">
                         <label class="form-label mb-2">&nbsp;</label>
                         <button type="submit" class="btn btn-primary w-100">Search</button>
                     </div>
