@@ -28,6 +28,6 @@ class Appointment(models.Model):
     referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f"Appointment with {self.appointment_slot.doctor.user} on {self.appointment_slot.date}"
+        return f"Appointment with {self.appointment_slot.doctor} on {self.appointment_slot.date}"
 
 
