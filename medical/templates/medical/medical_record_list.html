@@ -7,12 +7,16 @@
 <div class="container mt-4">
     <h2>Medical Records</h2>
     <div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="input-group input-group-sm" style="width: 250px;">
-        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-        <input type="text" class="form-control" id="recordSearch" placeholder="Search by condition, notes...">
-    </div>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text border-end-0 bg-white d-flex align-items-center" style="margin-top: 15px;">
+                    <i class="fas fa-search text-muted" style="font-size: 0.75rem;"></i>
+                </span>
+                <input type="text" class="form-control form-control-sm" id="recordSearch" placeholder="Search by condition, notes...">
+            </div>
+        </div>
 
-    <div class="d-flex gap-2">
+        <div class="d-flex gap-2">
             {% if user.role == 'DOCTOR' %}
                 <a href="{% url 'medical:create_medical_record' %}" class="btn btn-primary btn-sm">Create New Record</a>
             {% endif %}
@@ -24,9 +28,15 @@
         </div>
     </div>
 
-    <div class="collapse mb-3" id="filterMenu">
+     <div class="collapse mb-3" id="filterMenu">
         <div class="card card-body">
             <form method="get" class="row g-3">
+                <label for="search" class="form-label">Search {% if user.role == 'DOCTOR' %}patient{% else %}doctor{% endif %}</label>
+                    <select class="form-control" id="search" name="search">
+                        {% if filters.search %}
+                            <option value="{{ filters.search }}" selected>{{ filters.search_name }}</option>
+                        {% endif %}
+                    </select>
                 <div class="col-md-4">
                     <label for="date_from" class="form-label">From Date</label>
                     <input type="date" id="date_from" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}">
@@ -49,42 +59,31 @@
 
     <div id="recordsList">
         {% if medical_records %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th scope="col">Date</th>
-                            <th scope="col">Patient</th>
-                            <th scope="col">Doctor</th>
-                            <th scope="col">Condition</th>
-                            <th scope="col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for record in medical_records %}
-                            <tr>
-                                <td>{{ record.date|date:"Y-m-d H:i" }}</td>
-                                <td>{{ record.patient.name }}</td>
-                                <td>{{ record.doctor.name }}</td>
-                                <td>{{ record.condition|truncatewords:5 }}</td>
-                                <td>
-                                    <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-sm btn-outline-info">
-                                        View
+            <div class="list-group">
+                {% for record in medical_records %}
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <div>
+                                <h5 class="mb-1">{{ record.patient.name }}</h5>
+                                <h6 class="text-muted">{{ record.doctor.name }} - {{ record.date|date:"Y-m-d H:i" }}</h6>
+                                <p class="mb-1 mt-2 condition-text">{{ record.condition }}</p>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-sm btn-outline-info mb-1">
+                                    View
+                                </a>
+                                {% if user == record.doctor or user.role == 'ADMIN' %}
+                                    <a href="{% url 'medical:delete_medical_record' record.pk %}"
+                                       class="btn btn-sm btn-outline-danger mb-1"
+                                       onclick="return confirm('Are you sure you want to delete this medical record?');">
+                                        Delete
                                     </a>
-
-                                    {% if user == record.doctor or user.role == 'ADMIN' %}
-                                        <a href="{% url 'medical:delete_medical_record' record.pk %}"
-                                           class="btn btn-sm btn-outline-danger ms-1"
-                                           onclick="return confirm('Are you sure you want to delete this medical record?');">
-                                            Delete
-                                        </a>
-                                        <a href="{% url 'medical:edit_medical_record' record.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    <a href="{% url 'medical:edit_medical_record' record.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         {% else %}
             <div class="alert alert-info">No medical records found.</div>
@@ -95,41 +94,133 @@
 
 {% block extra_css %}
     <style>
-    .filter-toggle[aria-expanded="true"] .filter-icon {
-    display: none;
-    }
-    .filter-toggle[aria-expanded="true"] .close-icon {
-        display: inline-block !important;
-    }
-    .filter-toggle[aria-expanded="false"] .filter-icon {
-        display: inline-block;
-    }
-    .filter-toggle[aria-expanded="false"] .close-icon {
-        display: none !important;
-    }
+        .filter-toggle[aria-expanded="true"] .filter-icon {
+            display: none;
+        }
+        .filter-toggle[aria-expanded="true"] .close-icon {
+            display: inline-block !important;
+        }
+        .filter-toggle[aria-expanded="false"] .filter-icon {
+            display: inline-block;
+        }
+        .filter-toggle[aria-expanded="false"] .close-icon {
+            display: none !important;
+        }
+
+        .list-group-item {
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .list-group-item .btn {
+            width: 100%;
+        }
+
+        .list-group-item .d-flex {
+            justify-content: space-between;
+        }
+
+        .list-group-item h5, .list-group-item h6 {
+            margin-bottom: 0.5rem;
+        }
+
+        .condition-text {
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .input-group {
+            width: 250px;
+        }
+
+        .input-group-text {
+            padding: 0;
+            height: 31px;
+            width: 31px;
+            display: inline-flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        #recordSearch {
+            background-color: #fff !important;
+            font-size: 0.875rem;
+            height: 31px;
+            padding: 0.25rem 0.75rem;
+            border: 1px solid #ced4da;
+            box-shadow: none;
+        }
+
+        #recordSearch:focus {
+            background-color: #fff !important;
+            box-shadow: none !important;
+            border-color: #86b7fe !important;
+        }
+
+        .form-control {
+            border-radius: 0.25rem;
+        }
+
+        /* Smooth collapse animation */
+        .collapse {
+            transition: height 0.35s ease;
+        }
+
+        .collapsing {
+            transition: height 0.35s ease;
+        }
     </style>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.getElementById('recordSearch').addEventListener('input', function () {
-        const term = this.value.toLowerCase();
-        document.querySelectorAll('#recordsList tbody tr').forEach(row => {
-            const rowText = row.innerText.toLowerCase();
-            row.style.display = rowText.includes(term) ? '' : 'none';
-        });
-    });
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#search').select2({
+                placeholder: 'Search for a {% if user.role == "DOCTOR" %}patient{% else %}doctor{% endif %}...',
+                allowClear: true,
+                ajax: {
+                    url: '{% url "prescriptions:search_users" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term,
+                            role: '{% if user.role == "DOCTOR" %}PATIENT{% else %}DOCTOR{% endif %}'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2
+            });
 
-    document.addEventListener('DOMContentLoaded', function () {
-    const filterMenu = document.getElementById('filterMenu');
-    filterMenu.addEventListener('hidden.bs.collapse', () => {
-        document.querySelector('.filter-toggle .filter-icon').classList.remove('d-none');
-        document.querySelector('.filter-toggle .close-icon').classList.add('d-none');
-    });
-    filterMenu.addEventListener('shown.bs.collapse', () => {
-        document.querySelector('.filter-toggle .filter-icon').classList.add('d-none');
-        document.querySelector('.filter-toggle .close-icon').classList.remove('d-none');
-    });
-});
-</script>
+            document.getElementById('recordSearch').addEventListener('input', function () {
+                const term = this.value.toLowerCase();
+                document.querySelectorAll('#recordsList .list-group-item').forEach(item => {
+                    const itemText = item.innerText.toLowerCase();
+                    item.style.display = itemText.includes(term) ? '' : 'none';
+                });
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterMenu = document.getElementById('filterMenu');
+                filterMenu.addEventListener('hidden.bs.collapse', () => {
+                    document.querySelector('.filter-toggle .filter-icon').classList.remove('d-none');
+                    document.querySelector('.filter-toggle .close-icon').classList.add('d-none');
+                });
+                filterMenu.addEventListener('shown.bs.collapse', () => {
+                    document.querySelector('.filter-toggle .filter-icon').classList.add('d-none');
+                    document.querySelector('.filter-toggle .close-icon').classList.remove('d-none');
+                });
+            });
+        })
+    </script>
 {% endblock %}

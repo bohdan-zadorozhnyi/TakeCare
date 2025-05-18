@@ -111,8 +111,8 @@ def delete_medical_record(request, pk):
 def search_medical_record(request):
     search_term = request.GET.get('term', '').strip()
     filter_condition = request.GET.get('filter_condition', '').strip()
-    sort_by = request.GET.get('sort_by', 'date')  # default sort field
-    order = request.GET.get('order', 'desc')      # default sort direction
+    sort_by = request.GET.get('sort_by', 'date')
+    order = request.GET.get('order', 'desc')
 
     if request.user.role == 'DOCTOR':
         records = MedicalRecord.objects.filter(doctor=request.user)
@@ -148,6 +148,22 @@ def search_medical_record(request):
         })
 
     return JsonResponse({'medical_records': results})
+
+@login_required
+def search_users(request):
+    search_term = request.GET.get('term', '')
+    role = request.GET.get('role', '')
+
+    if len(search_term) < 2 or role not in ['DOCTOR', 'PATIENT']:
+        return JsonResponse({'results': []})
+
+    users = User.objects.filter(
+        role=role,
+        name__icontains=search_term
+    ).values('id', 'name')[:10]
+
+    results = [{'id': str(user['id']), 'text': user['name']} for user in users]
+    return JsonResponse({'results': results})
 
 
 @login_required

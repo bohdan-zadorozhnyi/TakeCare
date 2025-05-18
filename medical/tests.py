@@ -15,14 +15,26 @@ class MedicalRecordTests(TestCase):
             email='doc@example.com',
             password='password123',
             role='DOCTOR',
-            name='Dr. Andrei'
+            name='Dr. Andrei',
+            birth_date='1980-05-15',
+            phone_number='1234567890',
+            personal_id='doctor-id-001',
+            gender='Male',
+            address='123 Doctor St, Clinic City',
         )
+
         self.patient = User.objects.create_user(
             email='patient@example.com',
             password='password123',
             role='PATIENT',
-            name='John Doe'
+            name='John Doe',
+            birth_date='1990-06-20',
+            phone_number='0987654321',
+            personal_id='patient-id-001',
+            gender='Male',
+            address='456 Patient Rd, Health City',
         )
+
         self.record = MedicalRecord.objects.create(
             doctor=self.doctor,
             patient=self.patient,

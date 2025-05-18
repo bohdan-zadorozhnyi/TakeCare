@@ -11,5 +11,5 @@ urlpatterns = [
     path('search/medical/', views.search_medical_record, name='search_medical_record'),
     path('search-patients/', views.search_patients, name='search_patients'),
     path('<uuid:pk>/edit/', views.edit_medical_record, name='edit_medical_record'),
-    #path('search-users/', views.search_users, name='search_users'),
+    path('search-users/', views.search_users, name='search_users'),
 ]
