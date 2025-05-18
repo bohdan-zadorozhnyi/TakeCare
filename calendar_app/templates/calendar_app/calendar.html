@@ -22,9 +22,11 @@
                 </select>
                 
                 {% if user_role == "DOCTOR" %}
-                <button id="add-slot-btn" class="btn btn-primary add-slot-btn">
-                    <i class="fas fa-plus"></i> Add Slot
-                </button>
+                    <a href="{% url 'appointments:create_appointment' %}">
+                        <button id="add-slot-btn" class="btn btn-primary add-slot-btn">
+                            <i class="fas fa-plus"></i> Add Slot
+                        </button>
+                    </a>
                 {% endif %}
             </div>
             
@@ -81,8 +83,8 @@
     </div>
 </div>
 
-<!-- Add Slot Modal -->
-<div id="add-slot-modal" class="settings-modal">
+<!-- Add  Modal -->
+<div id="add-Slotslot-modal" class="settings-modal">
     <div class="settings-content">
         <div class="modal-header">
             <h2>Create Appointment Slot</h2>

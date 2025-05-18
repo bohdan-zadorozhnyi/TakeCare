@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 from django.db.models import IntegerField, DateTimeField, Q, ExpressionWrapper, F
 from django.db.models.functions import Cast
 from datetime import datetime, timedelta
-from referrals.models import Referral, DoctorCategory
+from referrals.models import Referral
 from django.contrib.auth.decorators import user_passes_test
 from django.utils import timezone
 from django.http import JsonResponse
@@ -19,14 +19,14 @@ from django.http import JsonResponse
 User = get_user_model()
 
 @login_required()
-@permission_required('appointments.add_appointment', raise_exception=True)
+#@permission_required('appointments.add_appointment', raise_exception=True)
 def CreateAppointment(request, only_ids = False):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
-        return render(request, "appointments/error.html", {'error_message': "Only doctors can create appointments"})
+        return render(request, "error.html", {'error_message': "Only doctors can create appointments"})
 
     if request.method == 'GET':
-        return render(request, 'appointments/create_appointment.html')
+        return render(request, 'create_appointment.html')
     
     elif request.method == 'POST':
         try:
@@ -57,14 +57,16 @@ def CreateAppointment(request, only_ids = False):
                     F('date') + Cast(F('duration'), IntegerField()) * timedelta(minutes=1),
                     output_field=DateTimeField()
                 )
-            ).filter(Q(
+            ).filter((Q(
                 Q(date__gt=appointment_start_datetime) & Q(end_time__lt=appointment_end_datetime))
             | Q(
                 Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_start_datetime))
             | Q(
-                Q(date__gt=appointment_start_datetime) & Q(end_time__gt=appointment_end_datetime)
-            )).first()
+                Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_end_datetime)
+            )) & Q(doctor=curr_user)).first()
             if current_slot:
+                print(current_slot.doctor)
+                print(current_slot.date)
                 raise ValueError("Cannot create an appointment slot. This time is already used in some other timeslot")
             ids = []
             appointment = AppointmentSlot.objects.create(
@@ -102,7 +104,7 @@ def CreateAppointment(request, only_ids = False):
                     ids.append(appointment.id)
             if only_ids:
                 return ids
-            return render(request, 'create_appointment.html')
+            return render(request, 'appointment_list.html')
             
         except Exception as e:
             print(f"Error creating appointment: {e}")
@@ -178,10 +180,10 @@ def GetAppointment(request):
         'has_appointments': len(grouped_appointments) > 0
     }
     
-    return render(request, 'appointments/list.html', context)
+    return render(request, 'list.html', context)
 
 @login_required()
-@permission_required('appointments.delete_appointment', raise_exception=True)
+#@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     
@@ -203,29 +205,29 @@ def CancelAppointment(request, appointment_id):
                 appointment.referral.save()
                 Notification.objects.create(receiver=chosen_appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
         else:
-            return render(request, 'appointments/error.html', {'error_message': "You don't have right to do this!"})
+            return render(request, 'error.html', {'error_message': "You don't have right to do this!"})
         chosen_appointment_slot.status = 'Cancelled'
         chosen_appointment_slot.save()
     except AppointmentSlot.DoesNotExist:
-        return render(request, 'appointments/not_found.html')
+        return render(request, 'not_found.html')
 
 @login_required
-@permission_required('appointments.add_appointment', raise_exception=True)
+#@permission_required('appointments.add_appointment', raise_exception=True)
 def BookAppointment(request, appointment_id, user_id_var = None):
     curr_user = request.user
 
     if curr_user.role != "PATIENT":
-        return render(request, 'appointments/error.html', {'error_message': "You can't do this!"})
+        return render(request, 'error.html', {'error_message': "You can't do this!"})
     user_id = curr_user.id
     if user_id_var:
         user_id = user_id_var
     try:
         appointment_slot = AppointmentSlot.objects.get(id=appointment_id, status='Available')
         if not appointment_slot:
-            return render(request, "appointments/error.html", {'error_message': "No slot available"})
+            return render(request, "error.html", {'error_message': "No slot available"})
         
         if request.method == "GET":
-            return render(request, 'appointments/book_appointment.html', {'appointment': appointment_slot})
+            return render(request, 'book_appointment.html', {'appointment': appointment_slot})
         
         if request.method == "POST":
             available_referral = None
@@ -236,12 +238,12 @@ def BookAppointment(request, appointment_id, user_id_var = None):
                                                         Q(is_used=False) &
                                                         Q(expiration_date__gte=datetime.now().date())).first()
                 if available_referral is None:
-                    return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
+                    return render(request, 'error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
                 available_referral.is_used=True
                 available_referral.save()
             patient = User.objects.filter(id = user_id).first()
             if patient is None:
-                return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
+                return render(request, 'error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
             appointment = Appointment.objects.create(
                 patient=patient,
                 appointment_slot=appointment_slot,
@@ -262,10 +264,10 @@ def BookAppointment(request, appointment_id, user_id_var = None):
                 message=f"Your appointment with Dr. {appointment_slot.doctor.user.name} on {appointment_slot.date} has been confirmed."
             )
             
-            return render(request, 'appointments/booking_success.html', {'appointment': appointment})
+            return render(request, 'booking_success.html', {'appointment': appointment})
             
     except AppointmentSlot.DoesNotExist:
-        return render(request, 'appointments/not_found.html')
+        return render(request, 'not_found.html')
 
 
 @login_required
@@ -286,16 +288,21 @@ def doctors_list(request):
         doctors = doctors.filter(doctor_profile__specialization=specialization)
 
     # Filter by available date
-    available_date = request.GET.get('date', '')
-    if available_date:
-        try:
-            date = datetime.strptime(available_date, '%Y-%m-%d').date()
-            doctors = doctors.filter(
-                appointments_as_doctor__date__date=date,
-                appointments_as_doctor__status='Available'
-            ).distinct()
-        except ValueError:
-            pass
+    available_start_date = request.GET.get('start_date', '')
+    available_end_date = request.GET.get('end_date', '')
+    if available_start_date:
+        start_date = datetime.strptime(available_start_date, '%Y-%m-%d').date()
+    else:
+        start_date = datetime.now().date()
+    if available_end_date:
+        end_date = datetime.strptime(available_end_date, '%Y-%m-%d').date()
+    else:
+        end_date = datetime.max.date()
+    doctors = doctors.filter(
+        appointments_as_doctor__date__date__gte=start_date,
+        appointments_as_doctor__date__date__lte=end_date,
+        appointments_as_doctor__status='Available'
+    ).distinct()
 
     # Get specialization choices from the model
     specializations = DoctorCategory.choices
@@ -314,12 +321,13 @@ def doctors_list(request):
         'filters': {
             'search': search_query,
             'specialization': specialization,
-            'date': available_date,
+            'start_date': start_date,
+            'end_date': end_date
         },
         'today': timezone.now().date(),
     }
 
-    return render(request, 'appointments/doctors/doctors_list.html', context)
+    return render(request, 'doctors/doctors_list.html', context)
 
 
 @login_required
@@ -355,7 +363,7 @@ def appointment_list(request):
     today = timezone.now()
     appointments = appointments.order_by('appointment_slot__date')
 
-    return render(request, 'appointments/appointment_list.html', {
+    return render(request, 'appointment_list.html', {
         'appointments': appointments,
         'filters': {
             'upcoming': show_upcoming,
@@ -370,7 +378,7 @@ def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
 
 @login_required
-@user_passes_test(is_doctor)
+#@user_passes_test(is_doctor)
 def search_patients(request):
     search_term = request.GET.get('term', '')
     if len(search_term) < 2:
@@ -402,7 +410,7 @@ def search_users(request):
     return JsonResponse({'results': results})
 
 @login_required
-@user_passes_test(lambda u: u.role == 'PATIENT')
+#@user_passes_test(lambda u: u.role == 'PATIENT')
 def doctor_available_appointments(request, doctor_id):
     """
     View to list all available appointments for a specific doctor.
@@ -446,6 +454,6 @@ def doctor_available_appointments(request, doctor_id):
         'has_appointments': len(grouped_appointments) > 0
     }
 
-    return render(request, 'appointments/doctor_available_appointments.html', context)
+    return render(request, 'doctor_available_appointments.html', context)
 
 
