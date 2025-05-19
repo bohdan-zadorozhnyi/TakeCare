@@ -4,12 +4,12 @@
             <h5 class="card-title mb-0">{{ user.name }}</h5>
         </div>
         <div>
-            <a href="{% url 'admin_edit_user' user.id %}" class="btn btn-primary">Edit</a>
-            <a href="{% url 'admin_block_unblock_user' user.id %}" class="btn btn-primary">
+            <a href="{% url 'accounts:admin_edit_user' user.id %}" class="btn btn-primary">Edit</a>
+            <a href="{% url 'accounts:admin_block_unblock_user' user.id %}" class="btn btn-primary">
                     {% if user.is_active %}Block{% else %}Unblock{% endif %}
             </a>
-            <a href="{% url 'admin_delete_user' user.id %}" class="btn btn-primary">Delete</a>
-            <a href="{% url 'view_profile' user.id %}" class="btn btn-primary">View Profile</a>
+            <a href="{% url 'accounts:admin_delete_user' user.id %}" class="btn btn-primary">Delete</a>
+            <a href="{% url 'accounts:view_profile' user.id %}" class="btn btn-primary">View Profile</a>
         </div>
     </div>
 </div>

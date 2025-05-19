@@ -25,8 +25,20 @@ def CreateAppointment(request, only_ids = False):
     if curr_user.role != 'DOCTOR':
         return render(request, "error.html", {'error_message': "Only doctors can create appointments"})
 
+    # Get doctor's specialization for display
+    doctor_specialization = None
+    try:
+        doctor_profile = curr_user.doctor_profile
+        doctor_specialization = doctor_profile.get_specialization_display()
+    except:
+        pass
+        
     if request.method == 'GET':
-        return render(request, 'create_appointment.html')
+        context = {
+            'doctor_specialization': doctor_specialization,
+            'doctor_locations': [curr_user.address] if curr_user.address else []
+        }
+        return render(request, 'create_appointment.html', context)
     
     elif request.method == 'POST':
         try:
@@ -44,8 +56,19 @@ def CreateAppointment(request, only_ids = False):
             is_recurring = request.POST.get('is_recurring') == 'on'
             recurring_type = request.POST.get('recurring_type', '')
             recurring_count = int(request.POST.get('recurring_count', 1))
-            referal_type = request.POST.get('referal_type')
-            referal_type = request.POST.get('referal_type') or None  # Convert empty string to None
+            
+            # Get referral_required checkbox value
+            referral_required = request.POST.get('referral_required') == 'on'
+            
+            # Get doctor's specialization from their profile if referral is required
+            referal_type = None
+            if referral_required:
+                try:
+                    doctor_profile = curr_user.doctor_profile
+                    referal_type = doctor_profile.specialization
+                except:
+                    # If no doctor profile found, no referral will be required
+                    pass
             
             
             # Make sure we create a timezone-aware datetime
@@ -218,32 +241,69 @@ def BookAppointment(request, appointment_id, user_id_var = None):
 
     if curr_user.role != "PATIENT":
         return render(request, 'error.html', {'error_message': "You can't do this!"})
+    
     user_id = curr_user.id
     if user_id_var:
         user_id = user_id_var
+    
     try:
         appointment_slot = AppointmentSlot.objects.get(id=appointment_id, status='Available')
         if not appointment_slot:
             return render(request, "error.html", {'error_message': "No slot available"})
         
+        # Make sure doctor has a profile
+        doctor = appointment_slot.doctor
+        if not hasattr(doctor, 'doctor_profile'):
+            from accounts.models import DoctorProfile
+            # Default to CARDIOLOGIST if no profile exists
+            DoctorProfile.objects.get_or_create(
+                user=doctor,
+                defaults={
+                    'specialization': 'CARDIOLOGIST',
+                    'work_address': doctor.address,
+                    'license_uri': 'https://license.example.org/' + str(doctor.id)
+                }
+            )
+        
         if request.method == "GET":
-            return render(request, 'book_appointment.html', {'appointment': appointment_slot})
+            # Ensure we're loading the doctor with profile for proper display
+            doctor = appointment_slot.doctor
+            # Prefetch the doctor profile to avoid potential issues
+            return render(request, 'book_appointment.html', {
+                'appointment': appointment_slot
+            })
         
         if request.method == "POST":
             available_referral = None
             if appointment_slot.referal_type:
-                # Use timezone.now() instead of datetime.now() for timezone awareness
-                available_referral = Referral.objects.filter(Q(patient=curr_user) &
-                                                        Q(specialist_type=appointment_slot.referal_type) &
-                                                        Q(is_used=False) &
-                                                        Q(expiration_date__gte=datetime.now().date())).first()
+                # Check for valid referrals
+                available_referral = Referral.objects.filter(
+                    Q(patient=curr_user) &
+                    Q(specialist_type=appointment_slot.referal_type) &
+                    Q(is_used=False) &
+                    Q(expiration_date__gte=timezone.now().date())
+                ).first()
+                
                 if available_referral is None:
-                    return render(request, 'error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
-                available_referral.is_used=True
+                    # Get the doctor's specialization for display
+                    doctor_specialization = None
+                    try:
+                        doctor_profile = doctor.doctor_profile
+                        doctor_specialization = doctor_profile.get_specialization_display()
+                    except:
+                        doctor_specialization = "specialist"
+
+                    return render(request, 'error_referral.html', {
+                        'doctor_specialization': doctor_specialization
+                    })
+                
+                available_referral.is_used = True
                 available_referral.save()
-            patient = User.objects.filter(id = user_id).first()
+            
+            patient = User.objects.filter(id=user_id).first()
             if patient is None:
-                return render(request, 'error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
+                return render(request, 'error.html', {'error_message': "Invalid patient information"})
+
             appointment = Appointment.objects.create(
                 patient=patient,
                 appointment_slot=appointment_slot,
@@ -252,16 +312,17 @@ def BookAppointment(request, appointment_id, user_id_var = None):
 
             appointment_slot.status = "Booked"
             appointment_slot.save()
-            
 
-            doctor_notification = Notification.objects.create(
+            # Notify the doctor
+            Notification.objects.create(
                 receiver=appointment_slot.doctor,
                 message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.name}."
             )
             
+            # Notify the patient
             Notification.objects.create(
                 receiver=curr_user,
-                message=f"Your appointment with Dr. {appointment_slot.doctor.user.name} on {appointment_slot.date} has been confirmed."
+                message=f"Your appointment with Dr. {appointment_slot.doctor.name} on {appointment_slot.date} has been confirmed."
             )
             
             return render(request, 'booking_success.html', {'appointment': appointment})
