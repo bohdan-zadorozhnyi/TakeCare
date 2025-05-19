@@ -122,7 +122,11 @@ def referral_detail(request, pk):
         messages.success(request, 'Referral marked as used.')
         return redirect('referrals:referral_detail', pk=referral.pk)
         
-    return render(request, 'referrals/referral_detail.html', {'referral': referral})
+    today = timezone.now().date()
+    return render(request, 'referrals/referral_detail.html', {
+        'referral': referral,
+        'today': today
+    })
 
 @login_required
 @user_passes_test(is_doctor)

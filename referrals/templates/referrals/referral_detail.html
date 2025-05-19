@@ -134,16 +134,17 @@
             </div>
             
             {% if user == referral.patient and not referral.is_used and referral.expiration_date >= today %}
-            <form method="post" class="mt-4">
-                {% csrf_token %}
-                <input type="hidden" name="mark_used" value="true">
-                <div class="alert alert-warning">
+            <!-- Book Appointment Button -->
+            <div class="mt-4">
+                <div class="alert alert-info">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span>Click the button when you use this referral at a specialist appointment.</span>
-                        <button type="submit" class="btn btn-warning">Mark as Used</button>
+                        <span>Find available appointments with a {{ referral.get_specialist_type_display }} specialist.</span>
+                        <a href="{% url 'appointments:doctors_list' %}?specialization={{ referral.specialist_type }}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Book Appointment
+                        </a>
                     </div>
                 </div>
-            </form>
+            </div>
             {% endif %}
             
             {% if user == referral.issuing_doctor %}

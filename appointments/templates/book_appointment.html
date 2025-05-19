@@ -17,7 +17,13 @@ Book Appointment
                 <h5 class="block-title">Doctor Information</h5>
                 <div class="block-content">
                     <p><strong>Name:</strong> Dr. {{ appointment.doctor.name }}</p>
-                    <p><strong>Specialty:</strong> {{ appointment.doctor.specialty }}</p>
+                    <p><strong>Specialty:</strong> 
+                        {% if appointment.doctor.doctor_profile %}
+                            {{ appointment.doctor.doctor_profile.get_specialization_display }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </p>
                 </div>
             </div>
 
@@ -36,6 +42,24 @@ Book Appointment
                 <h5 class="block-title">Location</h5>
                 <div class="block-content">
                     <p>{{ appointment.location }}</p>
+                </div>
+            </div>
+
+            <!-- Referral Requirements Block -->
+            <div class="info-block">
+                <h5 class="block-title">Referral Requirements</h5>
+                <div class="block-content">
+                    {% if appointment.referal_type %}
+                        <p class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Referral Required:</strong> You need a valid referral to a <strong>{{ appointment.get_referal_type_display_safe }}</strong> specialist to book this appointment.
+                        </p>
+                    {% else %}
+                        <p class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>No Referral Needed:</strong> You can book this appointment without a referral.
+                        </p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -59,7 +83,7 @@ Book Appointment
                 </div>
                 
                 <div class="appointment-actions">
-                    <a href="{% url 'appointments:appointment' %}" class="btn btn-secondary">
+                    <a href="javascript:history.back()" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancel
                     </a>
                     <button type="submit" class="btn btn-primary">
@@ -171,5 +195,17 @@ Book Appointment
         background-color: #d1ecf1;
         border-color: #bee5eb;
     }
+    
+    .alert-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+    }
+    
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
 </style>
-{% endblock %} 
+{% endblock %}

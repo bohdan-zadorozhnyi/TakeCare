@@ -7,8 +7,8 @@ from TakeCare import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('TakeCare.api')),
-    path('accounts/', include('accounts.urls')),
-    path('', include('core.urls')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('', include('core.urls', namespace='core')),
     path('', include('appointments.urls')),
     path('chat/', include('chat.urls')),
     path('prescriptions/', include('prescriptions.urls')),

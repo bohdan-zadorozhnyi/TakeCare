@@ -6,6 +6,36 @@
 
 {% block extra_css %}
 <style>
+    /* Right-align checkboxes in a cleaner way for all browsers */
+    .checkbox-content {
+        display: flex !important;
+        align-items: center !important;
+        font-size: 0.95rem;
+        color: #575757;
+        padding: 0;
+        flex: 0 1 auto !important;
+        white-space: nowrap !important;
+        order: 1 !important;
+    }
+    
+    /* Prevent resizing of date and time fields across browsers */
+    input[type="date"],
+    input[type="time"] {
+        resize: none !important;
+        overflow: hidden !important;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* Hide resize handles in webkit browsers */
+    input[type="date"]::-webkit-resizer,
+    input[type="time"]::-webkit-resizer,
+    input[type="date"]::-webkit-inner-spin-button,
+    input[type="time"]::-webkit-inner-spin-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
 
     .btn-primary, .btn-danger {
         padding: 10px 20px;
@@ -54,7 +84,7 @@
     }
 
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     /* Inputs, select, textarea */
@@ -65,12 +95,22 @@
     select,
     textarea {
         width: 100%;
-        padding: 10px 12px;
-        font-size: 1rem;
+        padding: 6px 10px;
+        font-size: 0.95rem;
         border: 1px solid #ccc;
         border-radius: 6px;
         box-sizing: border-box;
         transition: border-color 0.3s;
+        background-color: white;
+        height: 40px;
+    }
+    
+    /* Ensure date and time fields are not resizable */
+    input[type="date"],
+    input[type="time"] {
+        resize: none;
+        appearance: none;
+        -webkit-appearance: none;
     }
 
     input:focus,
@@ -82,19 +122,71 @@
 
     textarea {
         resize: vertical;
-        min-height: 100px;
+        min-height: 70px;
+        height: auto;
     }
 
     /* Checkbox & Radio styling */
-    .checkbox-container,
-    .radio-container {
-        margin-bottom: 10px;
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 8px 16px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        height: 40px;
+        box-sizing: border-box;
+        position: relative;
     }
-
+    
+    .checkbox-group:hover {
+        border-color: #007bff;
+    }
+    
+    .checkbox-label {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 0;
+        cursor: pointer;
+        width: 100% !important;
+        font-weight: 400;
+        padding: 0;
+    }
+    
+    .checkbox-input {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-left: 15px !important;
+        margin-right: 0 !important;
+        order: 2 !important;
+    }
+    
+    .checkbox-description {
+        margin-top: 4px;
+        color: #6c757d;
+        font-size: 0.8rem;
+        padding-left: 4px;
+    }
+    
+    .warning-text {
+        color: #dc3545;
+    }
+    
+    .radio-container {
+        margin: 15px 0;
+        padding: 10px 0;
+        border-top: 1px solid #eee;
+    }
+    
     .radio-container label {
         margin-right: 20px;
     }
-
+    
     .radio-container input {
         margin-right: 6px;
     }
@@ -103,100 +195,298 @@
 {% block content %}
 
     <div class="modal-content">
-        <h2>Create New Appointment Slot</h2>
-        <form id="appointmentForm" method="post" action="{% url 'appointments:create_appointment' %}" style="margin-top: 10px;">
+        <div class="form-header">
+            <h2 style="font-size: 1.75rem; margin-bottom: 5px;">Create New Appointment Slot</h2>
+            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 0;">Fill in the details below to create a new appointment slot</p>
+        </div>
+        <form id="appointmentForm" method="post" action="{% url 'appointments:create_appointment' %}">
+            <style>
+                .form-header {
+                    margin-bottom: 25px;
+                    padding-bottom: 15px;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                
+                .form-header h2 {
+                    color: #007bff;
+                    margin-bottom: 8px;
+                }
+                
+                .form-group label, .field-label {
+                    font-weight: 500;
+                    margin-bottom: 6px;
+                    display: block;
+                    font-size: 0.9rem;
+                }
+                
+                .form-control {
+                    transition: border-color 0.3s, box-shadow 0.3s;
+                    background-color: white !important;
+                    height: 40px;
+                }
+                
+                .form-control:focus {
+                    border-color: #007bff;
+                    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                }
+                
+                textarea.form-control {
+                    height: auto;
+                    min-height: 60px;
+                }
+                
+                /* Make date and time fields not resizable */
+                input[type="date"].form-control,
+                input[type="time"].form-control {
+                    resize: none;
+                    height: 40px !important;
+                }
+            </style>
             {% csrf_token %}
 
             <!-- Date, Time, Duration -->
-            <div class="form-row">
-                <div>
-                    <label for="appointmentDate">Date:</label>
-                    <input type="date" id="appointmentDate" name="date" required>
-                </div>
-                <div>
-                    <label for="appointmentTime">Time:</label>
-                    <input type="time" id="appointmentTime" name="time" required>
-                </div>
-                <div>
-                    <label for="appointmentDuration">Duration:</label>
-                    <select id="appointmentDuration" name="duration" required>
-                        <option value="15">15 minutes</option>
-                        <option value="30" selected>30 minutes</option>
-                        <option value="45">45 minutes</option>
-                        <option value="60">1 hour</option>
-                        <option value="90">1 hour 30 minutes</option>
-                        <option value="120">2 hours</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Location -->
-            <div class="form-group">
-                <label for="appointmentLocation">Location:</label>
-                <input type="text" id="appointmentLocation" name="location" list="locations" placeholder="Enter location">
-                <datalist id="locations">
-                    {% for location in doctor_locations %}
-                        <option value="{{ location }}">{{ location }}</option>
-                    {% endfor %}
-                </datalist>
-            </div>
-
-            <!-- Patient Selection -->
-            <div class="form-group">
-                <label for="appointmentPatient">Patient (optional):</label>
-                <select id="appointmentPatient" name="patient">
-                    <option value="">No specific patient</option>
-                    {% for patient in patients %}
-                        <option value="{{ patient.id }}">{{ patient.get_full_name|default:patient.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Referral Type -->
-            <div class="form-group">
-                <label for="referal_type">Referral Type (if required):</label>
-                <select id="referal_type" name="referal_type">
-                    <option value="">No referral required</option>
-                    <option value="CARDIOLOGIST">Cardiologist</option>
-                    <option value="DERMATOLOGIST">Dermatologist</option>
-                    <option value="NEUROLOGIST">Neurologist</option>
-                    <option value="ORTHOPEDIST">Orthopedist</option>
-                    <option value="PEDIATRICIAN">Pediatrician</option>
-                    <option value="PSYCHIATRIST">Psychiatrist</option>
-                </select>
-            </div>
-
-            <!-- Recurring Appointment -->
-            <div class="form-group">
-                <label class="checkbox-container" style="display: flex; flex-direction: row; flex-grow: 1; justify-content: space-between;">
-                    Make this a recurring appointment
-                    <input type="checkbox" id="isRecurring" name="is_recurring">
-                </label>
-                <div id="recurringOptions" style="display: none;">
-                    <select class="radio-container" name="recurring_type">
-                        <option value="daily">Daily</option>
-                        <option value="weekly" selected>Weekly</option>
-                        <option value="biweekly">Every two weeks</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                    <div class="form-group">
-                        <label for="recurringCount">Number of occurrences:</label>
-                        <input type="number" id="recurringCount" name="recurring_count" min="2" max="52" value="4">
+            <div class="form-section">
+                <h5 class="section-title"><i class="fas fa-calendar-alt"></i> Schedule Information</h5>
+                <div class="form-row">
+                    <div>
+                        <label for="appointmentDate" class="field-label">Date:</label>
+                        <input type="date" id="appointmentDate" name="date" class="form-control" required style="height: 40px; resize: none;">
+                    </div>
+                    <div>
+                        <label for="appointmentTime" class="field-label">Time:</label>
+                        <input type="time" id="appointmentTime" name="time" class="form-control" required style="height: 40px; resize: none;">
+                    </div>
+                    <div>
+                        <label for="appointmentDuration" class="field-label">Duration:</label>
+                        <select id="appointmentDuration" name="duration" class="form-control" required style="background-color: white; height: 40px;">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="90">1 hour 30 minutes</option>
+                            <option value="120">2 hours</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
+            <!-- Location -->
+            <div class="form-section">
+                <h5 class="section-title"><i class="fas fa-map-marker-alt"></i> Appointment Details</h5>
+                <div class="form-group">
+                    <label for="appointmentLocation" class="field-label">Location:</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-hospital"></i>
+                        <input type="text" id="appointmentLocation" name="location" class="form-control" list="locations" placeholder="Enter appointment location" style="height: 40px;">
+                        <datalist id="locations">
+                            {% for location in doctor_locations %}
+                                <option value="{{ location }}">{{ location }}</option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Patient Selection -->
+                <div class="form-group">
+                    <label for="appointmentPatient" class="field-label">Patient (optional):</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <select id="appointmentPatient" name="patient" class="form-control" style="background-color: white; height: 45px;">
+                            <option value="">No specific patient</option>
+                            {% for patient in patients %}
+                                <option value="{{ patient.id }}">{{ patient.get_full_name|default:patient.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+                .form-section {
+                    margin-bottom: 18px;
+                    padding-bottom: 0;
+                }
+                
+                .section-title {
+                    color: #007bff;
+                    margin-bottom: 10px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 1.1rem;
+                }
+                
+                .input-with-icon {
+                    position: relative;
+                }
+                
+                .input-with-icon i {
+                    position: absolute;
+                    left: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #6c757d;
+                    font-size: 0.9rem;
+                }
+                
+                .input-with-icon input,
+                .input-with-icon select {
+                    padding-left: 30px;
+                }
+            </style>
+
+            <!-- Options Section -->
+            <div class="form-section">
+                <h5 class="section-title"><i class="fas fa-cog"></i> Appointment Options</h5>
+                
+                <!-- Referral Required Checkbox -->
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <label for="referral_required" class="checkbox-label">
+                            <div class="checkbox-content">
+                                <i class="fas fa-file-medical me-2"></i>
+                                <span>Referral Required</span>
+                            </div>
+                            <input type="checkbox" id="referral_required" name="referral_required" class="checkbox-input">
+                        </label>
+                    </div>
+                    {% if doctor_specialization %}
+                    <div class="checkbox-description">
+                        When checked, a referral to a <strong>{{ doctor_specialization }}</strong> will be required for this appointment
+                    </div>
+                    {% else %}
+                    <div class="checkbox-description warning-text">
+                        <i class="fas fa-exclamation-triangle"></i> Warning: You don't have a specialization set in your profile. Please update your doctor profile first.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recurring Appointment -->
+                <div class="form-group mt-4">
+                    <div class="checkbox-group">
+                        <label for="isRecurring" class="checkbox-label">
+                            <div class="checkbox-content">
+                                <i class="fas fa-repeat me-2"></i>
+                                <span>Make this a recurring appointment</span>
+                            </div>
+                            <input type="checkbox" id="isRecurring" name="is_recurring" class="checkbox-input">
+                        </label>
+                    </div>
+                    <div id="recurringOptions" class="recurring-options-panel">
+                        <div class="form-group mb-3">
+                            <label for="recurringType" class="field-label">Frequency:</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-clock"></i>
+                                <select id="recurringType" class="form-control" name="recurring_type" style="background-color: white; height: 45px;">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="biweekly">Every two weeks</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label for="recurringCount" class="field-label">Number of occurrences:</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-list-ol"></i>
+                                <input type="number" id="recurringCount" class="form-control" name="recurring_count" min="2" max="52" value="4" style="background-color: white; height: 40px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+                .checkbox-content {
+                    display: flex !important;
+                    align-items: center;
+                    font-size: 0.95rem;
+                    color: #575757;
+                    padding: 0;
+                    flex: 0 1 auto !important;
+                    white-space: nowrap !important;
+                    order: 1 !important;
+                }
+                
+                .recurring-options-panel {
+                    display: none;
+                    padding: 12px;
+                    background-color: white !important;
+                    border-radius: 6px;
+                    margin-top: 8px;
+                    border: 1px solid #ccc;
+                    transition: all 0.3s ease;
+                    overflow: hidden;
+                }
+                
+                .checkbox-group {
+                    transition: all 0.3s ease;
+                }
+                
+                .checkbox-group:hover {
+                    transform: translateY(-2px);
+                }
+                
+                .me-2 {
+                    margin-right: 8px;
+                    color: #6c757d;
+                    width: 18px;
+                    text-align: center;
+                    font-size: 0.9rem;
+                }
+                
+                .mt-4 {
+                    margin-top: 20px;
+                }
+                
+                .mb-3 {
+                    margin-bottom: 15px;
+                }
+            </style>
+
             <!-- Description -->
-            <div class="form-group">
-                <label for="appointmentDescription">Description:</label>
-                <textarea id="appointmentDescription" name="description" rows="3"></textarea>
+            <div class="form-section">
+                <h5 class="section-title"><i class="fas fa-align-left"></i> Additional Information</h5>
+                <div class="form-group">
+                    <label for="appointmentDescription" class="field-label">Description:</label>
+                    <textarea id="appointmentDescription" class="form-control" name="description" rows="2" style="background-color: white; min-height: 60px;" placeholder="Add details about this appointment (procedures, preparations, etc.)"></textarea>
+                    <small class="text-muted" style="font-size: 0.8rem;">This description will be visible to patients when booking.</small>
+                </div>
             </div>
 
             <!-- Buttons -->
-            <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
-                <button type="submit" class="btn btn-primary">Create Appointment</button>
-                <a href="{% url 'appointments:appointment_list' %}" class="btn btn-danger" id="cancelBtn">Cancel</a>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Create Appointment
+                </button>
+                <a href="{% url 'appointments:appointment_list' %}" class="btn btn-danger" id="cancelBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
             </div>
+            
+            <style>
+                .form-actions {
+                    margin-top: 30px;
+                    display: flex;
+                    justify-content: center;
+                    gap: 20px;
+                }
+                
+                .form-actions .btn {
+                    padding: 8px 20px;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+                }
+                
+                .form-actions .btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+            </style>
         </form>
     </div>
 
@@ -206,21 +496,98 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Set today's date as minimum
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('appointmentDate').min = today;
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        document.getElementById('appointmentDate').min = todayStr;
+        
+        // Set default date to today if not already set
+        if (!document.getElementById('appointmentDate').value) {
+            document.getElementById('appointmentDate').value = todayStr;
+        }
+        
+        // Set default time to nearest half hour if not already set
+        if (!document.getElementById('appointmentTime').value) {
+            const hours = today.getHours();
+            const minutes = today.getMinutes() >= 30 ? '30' : '00';
+            const nextHour = minutes === '30' ? hours + 1 : hours;
+            const nextMinutes = minutes === '30' ? '00' : '30';
+            
+            const timeStr = `${String(nextHour).padStart(2, '0')}:${nextMinutes}`;
+            document.getElementById('appointmentTime').value = timeStr;
+        }
     
-        // Toggle recurring options
+        // Toggle recurring options with animation
         const isRecurringCheckbox = document.getElementById('isRecurring');
         const recurringOptions = document.getElementById('recurringOptions');
     
-        isRecurringCheckbox.onchange = function () {
-            recurringOptions.style.display = this.checked ? 'block' : 'none';
+        isRecurringCheckbox.onchange = function() {
+            if (this.checked) {
+                recurringOptions.style.display = 'block';
+                setTimeout(() => {
+                    recurringOptions.style.maxHeight = '300px';
+                    recurringOptions.style.opacity = '1';
+                }, 10);
+            } else {
+                recurringOptions.style.maxHeight = '0';
+                recurringOptions.style.opacity = '0';
+                setTimeout(() => {
+                    recurringOptions.style.display = 'none';
+                }, 300);
+            }
         };
+        
+        // Add animation styles
+        recurringOptions.style.transition = 'max-height 0.3s ease, opacity 0.3s ease';
+        recurringOptions.style.maxHeight = '0';
+        recurringOptions.style.opacity = '0';
+        recurringOptions.style.overflow = 'hidden';
     
-        // Handle form submission
+        // Highlight fields on focus
+        const formElements = document.querySelectorAll('input, select, textarea');
+        formElements.forEach(el => {
+            el.addEventListener('focus', function() {
+                this.closest('.form-group')?.classList.add('highlight');
+            });
+            
+            el.addEventListener('blur', function() {
+                this.closest('.form-group')?.classList.remove('highlight');
+            });
+        });
+    
+        // Handle form submission with validation
         document.getElementById('appointmentForm').onsubmit = function(e) {
             e.preventDefault();
             
+            // Simple validation
+            const requiredFields = this.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    
+                    // Add error message if not exists
+                    if (!field.nextElementSibling?.classList.contains('invalid-feedback')) {
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'invalid-feedback';
+                        errorMsg.textContent = 'This field is required';
+                        field.parentNode.insertBefore(errorMsg, field.nextSibling);
+                    }
+                } else {
+                    field.classList.remove('is-invalid');
+                    const errorMsg = field.nextElementSibling;
+                    if (errorMsg?.classList.contains('invalid-feedback')) {
+                        errorMsg.remove();
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                return false;
+            }
+            
+            // Process form data
             const date = document.getElementById('appointmentDate').value;
             const time = document.getElementById('appointmentTime').value;
     
@@ -232,10 +599,43 @@
                 datetimeInput.value = datetime;
                 this.appendChild(datetimeInput);
                 
-                // Submit the form
-                this.submit();
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+                
+                // Submit the form after a short delay to show loading state
+                setTimeout(() => {
+                    this.submit();
+                }, 200);
             }
         };
     });
 </script>
+
+<style>
+    .highlight {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-section {
+        animation: fadeIn 0.5s ease;
+    }
+</style>
 {% endblock %}
