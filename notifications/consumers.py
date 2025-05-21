@@ -89,7 +89,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message,
             'notification_id': str(notification_id),
-            'type': notification_type
+            'notification_type': notification_type
         }))
         
         # Mark the notification as delivered in the database
@@ -145,7 +145,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         
         undelivered = Notification.objects.filter(
             receiver=self.user,
-            is_delivered=False
+            delivered_at__isnull=True
         ).order_by('-date')[:50]  # Limit to most recent 50
         
         # Just get the notifications and record the attempt, we'll send them in the async method
@@ -155,7 +155,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             notifications_data.append({
                 "message": notification.message,
                 "notification_id": str(notification.id),
-                "type": notification.notification_type
+                "notification_type": notification.notification_type
             })
         
         return notifications_data

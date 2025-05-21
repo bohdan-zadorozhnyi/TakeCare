@@ -68,7 +68,7 @@ class NotificationService:
                         "type": "notification_message",
                         "message": message,
                         "notification_id": str(notification.id),
-                        "type": notification_type
+                        "notification_type": notification_type
                     }
                 )
                 logger.info(f"Notification {notification.id} sent to user {user.id}")
@@ -168,8 +168,8 @@ class NotificationService:
         
         # Get notifications that aren't delivered but have been attempted less than max_retries times
         pending_notifications = Notification.objects.filter(
-            is_delivered=False,
-            delivery_attempts__lt=max_retries,
+            delivered_at__isnull=True,
+            retry_count__lt=max_retries,
             date__gt=min_date
         )
         
