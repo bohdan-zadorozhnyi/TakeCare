@@ -20,6 +20,15 @@ class AppointmentSlot(models.Model):
     duration = models.IntegerField()
     status = models.CharField(choices=AppointmentStatus.choices)
     referal_type = models.CharField(choices=DoctorCategory.choices, null=True, blank=True)
+    
+    def __str__(self):
+        return f"Appointment with Dr. {self.doctor.name} on {self.date}"
+        
+    def get_referal_type_display_safe(self):
+        """Return the display value of referal_type or None if not set"""
+        if self.referal_type:
+            return dict(DoctorCategory.choices).get(self.referal_type, "Unknown")
+        return None
 
 class Appointment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -28,6 +37,6 @@ class Appointment(models.Model):
     referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f"Appointment with {self.appointment_slot.doctor.user} on {self.appointment_slot.date}"
+        return f"Appointment with {self.appointment_slot.doctor} on {self.appointment_slot.date}"
 
 

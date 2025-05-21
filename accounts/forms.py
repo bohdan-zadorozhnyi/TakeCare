@@ -81,7 +81,8 @@ class CustomUserCreationForm(UserCreationForm):
 
         if commit:
             user.save()
-            group = Group.objects.get(name=user.role)
+            # Create the group if it doesn't exist
+            group, created = Group.objects.get_or_create(name=user.role)
             user.groups.add(group)
 
         return user
@@ -110,7 +111,8 @@ class AdminCreateUserForm(CustomUserCreationForm):
             user.is_superuser = True
         if commit:
             user.save()
-            group = Group.objects.get(name=user.role)
+            # Create the group if it doesn't exist
+            group, created = Group.objects.get_or_create(name=user.role)
             user.groups.add(group)
 
             if user.role == 'DOCTOR':

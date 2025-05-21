@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from .models import AppointmentSlot, Appointment
+from .models import AppointmentSlot, Appointment, AppointmentStatus
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from collections import defaultdict
 from notifications.models import Notification
@@ -12,21 +12,33 @@ from django.db.models.functions import Cast
 from datetime import datetime, timedelta
 from referrals.models import Referral
 from django.contrib.auth.decorators import user_passes_test
-
 from django.utils import timezone
+from django.http import JsonResponse
 
 
 User = get_user_model()
 
 @login_required()
-@permission_required('appointments.add_appointment', raise_exception=True)
-def CreateAppointment(request):
+#@permission_required('appointments.add_appointment', raise_exception=True)
+def CreateAppointment(request, only_ids = False):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
-        return render(request, "appointments/error.html", {'error_message': "Only doctors can create appointments"})
+        return render(request, "error.html", {'error_message': "Only doctors can create appointments"})
 
+    # Get doctor's specialization for display
+    doctor_specialization = None
+    try:
+        doctor_profile = curr_user.doctor_profile
+        doctor_specialization = doctor_profile.get_specialization_display()
+    except:
+        pass
+        
     if request.method == 'GET':
-        return render(request, 'appointments/create_appointment.html')
+        context = {
+            'doctor_specialization': doctor_specialization,
+            'doctor_locations': [curr_user.address] if curr_user.address else []
+        }
+        return render(request, 'create_appointment.html', context)
     
     elif request.method == 'POST':
         try:
@@ -44,7 +56,19 @@ def CreateAppointment(request):
             is_recurring = request.POST.get('is_recurring') == 'on'
             recurring_type = request.POST.get('recurring_type', '')
             recurring_count = int(request.POST.get('recurring_count', 1))
-            referal_type = request.POST.get('referal_type')
+            
+            # Get referral_required checkbox value
+            referral_required = request.POST.get('referral_required') == 'on'
+            
+            # Get doctor's specialization from their profile if referral is required
+            referal_type = None
+            if referral_required:
+                try:
+                    doctor_profile = curr_user.doctor_profile
+                    referal_type = doctor_profile.specialization
+                except:
+                    # If no doctor profile found, no referral will be required
+                    pass
             
             
             # Make sure we create a timezone-aware datetime
@@ -52,27 +76,32 @@ def CreateAppointment(request):
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
             current_slot = AppointmentSlot.objects.annotate(
-                                                            end_time=ExpressionWrapper(F('date') + Cast(F('duration'), IntegerField())  * timedelta(minutes=1)),
-                                                            output_field=DateTimeField()
-                                                            ).filter(Q(
-                                                                        Q(date_gt=appointment_start_datetime) & Q(end_time_lt=appointment_end_datetime))
-                                                                    | Q(
-                                                                        Q(date_lt=appointment_start_datetime) & Q(end_time_gt=appointment_start_datetime))
-                                                                    | Q(
-                                                                        Q(date_gt=appointment_start_datetime) & Q(end_time_gt=appointment_end_datetime)
-                                                                        )
-                                                                    ).first()
-            if current_slot is not None:
+                end_time=ExpressionWrapper(
+                    F('date') + Cast(F('duration'), IntegerField()) * timedelta(minutes=1),
+                    output_field=DateTimeField()
+                )
+            ).filter((Q(
+                Q(date__gt=appointment_start_datetime) & Q(end_time__lt=appointment_end_datetime))
+            | Q(
+                Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_start_datetime))
+            | Q(
+                Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_end_datetime)
+            )) & Q(doctor=curr_user)).first()
+            if current_slot:
+                print(current_slot.doctor)
+                print(current_slot.date)
                 raise ValueError("Cannot create an appointment slot. This time is already used in some other timeslot")
-            
+            ids = []
             appointment = AppointmentSlot.objects.create(
                 doctor=curr_user,
                 date=appointment_start_datetime,
                 duration=duration,
                 description=description,
-                status='Available',
-                location = curr_user.address
+                status=AppointmentStatus.AVAILABLE,
+                location = curr_user.address,
+                referal_type=referal_type
             )
+            ids.append(appointment.id)
             if is_recurring and recurring_type:
                 if recurring_type == 'daily':
                     interval = timedelta(days=1)
@@ -86,7 +115,7 @@ def CreateAppointment(request):
                 next_date = appointment_start_datetime
                 for _ in range(1, recurring_count):
                     next_date = next_date + interval
-                    AppointmentSlot.objects.create(
+                    appointment = AppointmentSlot.objects.create(
                         doctor=curr_user,
                         date=next_date,
                         duration=duration,
@@ -95,12 +124,16 @@ def CreateAppointment(request):
                         location = curr_user.address,
                         referal_type = referal_type
                     )
-            
-            return render(request, 'appointments/success.html')
+                    ids.append(appointment.id)
+            if only_ids:
+                return ids
+            return render(request, 'appointment_list.html')
             
         except Exception as e:
             print(f"Error creating appointment: {e}")
-            return render(request, 'appointments/error.html', {'error_message': str(e)})
+            if only_ids:
+                return -1
+            return render(request, 'error.html')
             
 
 
@@ -170,10 +203,10 @@ def GetAppointment(request):
         'has_appointments': len(grouped_appointments) > 0
     }
     
-    return render(request, 'appointments/list.html', context)
+    return render(request, 'list.html', context)
 
 @login_required()
-@permission_required('appointments.delete_appointment', raise_exception=True)
+#@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     
@@ -195,79 +228,167 @@ def CancelAppointment(request, appointment_id):
                 appointment.referral.save()
                 Notification.objects.create(receiver=chosen_appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
         else:
-            return render(request, 'appointments/error.html', {'error_message': "You don't have right to do this!"})
+            return render(request, 'error.html', {'error_message': "You don't have right to do this!"})
         chosen_appointment_slot.status = 'Cancelled'
         chosen_appointment_slot.save()
-        return render(request, 'appointments/cancel_success.html')
     except AppointmentSlot.DoesNotExist:
-        return render(request, 'appointments/not_found.html')
+        return render(request, 'not_found.html')
 
 @login_required
-@permission_required('appointments.add_appointment', raise_exception=True)
-def BookAppointment(request, appointment_id):
+#@permission_required('appointments.add_appointment', raise_exception=True)
+def BookAppointment(request, appointment_id, user_id_var = None):
     curr_user = request.user
 
     if curr_user.role != "PATIENT":
-        return render(request, 'appointments/error.html', {'error_message': "You can't do this!"})
-
+        return render(request, 'error.html', {'error_message': "You can't do this!"})
+    
+    user_id = curr_user.id
+    if user_id_var:
+        user_id = user_id_var
+    
     try:
         appointment_slot = AppointmentSlot.objects.get(id=appointment_id, status='Available')
         if not appointment_slot:
-            return render(request, "appointments/error.html", {'error_message': "No slot available"})
+            return render(request, "error.html", {'error_message': "No slot available"})
+        
+        # Make sure doctor has a profile
+        doctor = appointment_slot.doctor
+        if not hasattr(doctor, 'doctor_profile'):
+            from accounts.models import DoctorProfile
+            # Default to CARDIOLOGIST if no profile exists
+            DoctorProfile.objects.get_or_create(
+                user=doctor,
+                defaults={
+                    'specialization': 'CARDIOLOGIST',
+                    'work_address': doctor.address,
+                    'license_uri': 'https://license.example.org/' + str(doctor.id)
+                }
+            )
         
         if request.method == "GET":
-            return render(request, 'appointments/book_appointment.html', {'appointment': appointment_slot})
+            # Ensure we're loading the doctor with profile for proper display
+            doctor = appointment_slot.doctor
+            # Prefetch the doctor profile to avoid potential issues
+            return render(request, 'book_appointment.html', {
+                'appointment': appointment_slot
+            })
         
         if request.method == "POST":
             available_referral = None
             if appointment_slot.referal_type:
-                # Use timezone.now() instead of datetime.now() for timezone awareness
-                available_referral = Referral.objects.filter(Q(patient=curr_user) &
-                                                        Q(specialist_type=appointment_slot.referal_type) &
-                                                        Q(is_used=False) &
-                                                        Q(expiration_date_gte=timezone.now().date())).first()
+                # Check for valid referrals
+                available_referral = Referral.objects.filter(
+                    Q(patient=curr_user) &
+                    Q(specialist_type=appointment_slot.referal_type) &
+                    Q(is_used=False) &
+                    Q(expiration_date__gte=timezone.now().date())
+                ).first()
+                
                 if available_referral is None:
-                    return render(request, 'appointments/error.html', {'error_message':"You are not alowed to book this as you don't have referral needed"})
-                available_referral.is_used=True
+                    # Get the doctor's specialization for display
+                    doctor_specialization = None
+                    try:
+                        doctor_profile = doctor.doctor_profile
+                        doctor_specialization = doctor_profile.get_specialization_display()
+                    except:
+                        doctor_specialization = "specialist"
+
+                    return render(request, 'error_referral.html', {
+                        'doctor_specialization': doctor_specialization
+                    })
+                
+                available_referral.is_used = True
                 available_referral.save()
+            
+            patient = User.objects.filter(id=user_id).first()
+            if patient is None:
+                return render(request, 'error.html', {'error_message': "Invalid patient information"})
+
             appointment = Appointment.objects.create(
-                patient=curr_user,
+                patient=patient,
                 appointment_slot=appointment_slot,
                 referral=available_referral
             )
 
             appointment_slot.status = "Booked"
             appointment_slot.save()
-            
 
-            doctor_notification = Notification.objects.create(
+            # Notify the doctor
+            Notification.objects.create(
                 receiver=appointment_slot.doctor,
-                message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.first_name} {curr_user.last_name}."
+                message=f"Your appointment slot on {appointment_slot.date} has been booked by {curr_user.name}."
             )
             
+            # Notify the patient
             Notification.objects.create(
                 receiver=curr_user,
-                message=f"Your appointment with Dr. {appointment_slot.doctor.user.first_name} {appointment_slot.doctor.user.last_name} on {appointment_slot.date} has been confirmed."
+                message=f"Your appointment with Dr. {appointment_slot.doctor.name} on {appointment_slot.date} has been confirmed."
             )
             
-            return render(request, 'appointments/booking_success.html', {'appointment': appointment})
+            return render(request, 'booking_success.html', {'appointment': appointment})
             
     except AppointmentSlot.DoesNotExist:
-        return render(request, 'appointments/not_found.html')
+        return render(request, 'not_found.html')
 
 
 @login_required
 def doctors_list(request):
-    doctors = User.objects.filter(role='DOCTOR').order_by('name')
+    from referrals.models import DoctorCategory
+    
+    # Get all doctors
+    doctors = User.objects.filter(role='DOCTOR')
 
+    # Search by name
+    search_query = request.GET.get('search', '')
+    if search_query:
+        doctors = doctors.filter(name__icontains=search_query)
+
+    # Filter by specialization
+    specialization = request.GET.get('specialization', '')
+    if specialization:
+        doctors = doctors.filter(doctor_profile__specialization=specialization)
+
+    # Filter by available date
+    available_start_date = request.GET.get('start_date', '')
+    available_end_date = request.GET.get('end_date', '')
+    if available_start_date:
+        start_date = datetime.strptime(available_start_date, '%Y-%m-%d').date()
+    else:
+        start_date = datetime.now().date()
+    if available_end_date:
+        end_date = datetime.strptime(available_end_date, '%Y-%m-%d').date()
+    else:
+        end_date = datetime.max.date()
+    doctors = doctors.filter(
+        appointments_as_doctor__date__date__gte=start_date,
+        appointments_as_doctor__date__date__lte=end_date,
+        appointments_as_doctor__status='Available'
+    ).distinct()
+
+    # Get specialization choices from the model
+    specializations = DoctorCategory.choices
+
+    # Order by name
+    doctors = doctors.order_by('name')
+
+    # Pagination
     paginator = Paginator(doctors, 10)
-
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'appointments/doctors/doctors_list.html', {
-        'page_obj': page_obj
-    })
+    context = {
+        'page_obj': page_obj,
+        'specializations': specializations,
+        'filters': {
+            'search': search_query,
+            'specialization': specialization,
+            'start_date': start_date,
+            'end_date': end_date
+        },
+        'today': timezone.now().date(),
+    }
+
+    return render(request, 'doctors/doctors_list.html', context)
 
 
 @login_required
@@ -303,7 +424,7 @@ def appointment_list(request):
     today = timezone.now()
     appointments = appointments.order_by('appointment_slot__date')
 
-    return render(request, 'appointments/appointment_list.html', {
+    return render(request, 'appointment_list.html', {
         'appointments': appointments,
         'filters': {
             'upcoming': show_upcoming,
@@ -318,7 +439,7 @@ def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
 
 @login_required
-@user_passes_test(is_doctor)
+#@user_passes_test(is_doctor)
 def search_patients(request):
     search_term = request.GET.get('term', '')
     if len(search_term) < 2:
@@ -348,4 +469,52 @@ def search_users(request):
 
     results = [{'id': str(user['id']), 'text': user['name']} for user in users]
     return JsonResponse({'results': results})
+
+@login_required
+#@user_passes_test(lambda u: u.role == 'PATIENT')
+def doctor_available_appointments(request, doctor_id):
+    """
+    View to list all available appointments for a specific doctor.
+    Only accessible by patients.
+    """
+    try:
+        doctor = User.objects.get(id=doctor_id, role='DOCTOR')
+    except User.DoesNotExist:
+        return render(request, 'appointments/error.html', {'error_message': 'Doctor not found'})
+
+    # Get all available appointment slots for this doctor
+    available_slots = AppointmentSlot.objects.filter(
+        doctor=doctor,
+        status=AppointmentStatus.AVAILABLE,
+        date__gte=timezone.now()  # Only show future appointments
+    ).order_by('date')
+
+    # Group appointments by date
+    appointments_by_date = defaultdict(list)
+    for slot in available_slots:
+        date_key = slot.date.date()
+        appointments_by_date[date_key].append(slot)
+
+    # Sort by date
+    grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
+
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(grouped_appointments, 5)  # 5 dates per page
+
+    try:
+        paginated_dates = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_dates = paginator.page(1)
+    except EmptyPage:
+        paginated_dates = paginator.page(paginator.num_pages)
+
+    context = {
+        'doctor': doctor,
+        'grouped_appointments': paginated_dates,
+        'has_appointments': len(grouped_appointments) > 0
+    }
+
+    return render(request, 'doctor_available_appointments.html', context)
+
 

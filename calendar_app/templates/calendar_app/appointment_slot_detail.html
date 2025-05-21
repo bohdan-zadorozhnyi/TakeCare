@@ -117,11 +117,11 @@
             </a>
             
             {% if can_edit %}
-            <a href="#edit-form" class="btn btn-secondary">
+            {% comment %} <a href="#edit-form" class="btn btn-secondary">
                 <i class="fas fa-edit"></i> Edit Slot
-            </a>
+            </a> {% endcomment %}
             
-            <form action="{% url 'delete_appointment_slot' slot.id %}" method="post" class="d-inline">
+            <form action="{% url 'cancel_appointment' slot.id %}" method="post" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this slot?')">
                     <i class="fas fa-trash"></i> Delete Slot
@@ -135,7 +135,7 @@
         <div class="slot-detail">
             <i class="fas fa-clock"></i>
             <span class="slot-detail-label">Time:</span>
-            <span>{{ slot.date|date:"g:i A" }} - {{ slot.date|date:"g:i A"|add_minutes:slot.duration }}</span>
+            <span>{{ slot.date|date:"g:i A" }} - {{ end_time }}</span>
         </div>
         
         <div class="slot-detail">
@@ -163,41 +163,6 @@
         </div>
     </div>
     
-    {% if can_edit %}
-    <div class="slot-form" id="edit-form">
-        <h3>Edit Appointment Slot</h3>
-        <form action="{% url 'update_appointment_slot' slot.id %}" method="post">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="location">Location</label>
-                <input type="text" id="location" name="location" class="form-control" value="{{ slot.location }}" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" rows="3" required>{{ slot.description }}</textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="duration">Duration (minutes)</label>
-                <input type="number" id="duration" name="duration" class="form-control" value="{{ slot.duration }}" min="15" step="5" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="referal_type">Service Type</label>
-                <select id="referal_type" name="referal_type" class="form-control">
-                    <option value="">General Consultation</option>
-                    {% for choice in referal_types %}
-                    <option value="{{ choice.0 }}" {% if slot.referal_type == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Update Slot</button>
-        </form>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
 
