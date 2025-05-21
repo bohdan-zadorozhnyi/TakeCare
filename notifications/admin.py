@@ -4,10 +4,10 @@ from .models import Notification
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'message_preview', 'receiver', 'notification_type', 'status', 'date', 'is_delivered', 'delivery_attempts')
-    list_filter = ('notification_type', 'status', 'is_delivered', 'date')
-    search_fields = ('receiver__email', 'receiver__username', 'message', 'related_object_id')
-    readonly_fields = ('id', 'date', 'last_delivery_attempt', 'delivery_attempts', 'is_delivered')
+    list_display = ('id', 'message_preview', 'receiver', 'notification_type', 'status', 'date', 'delivered_at', 'retry_count')
+    list_filter = ('notification_type', 'status', 'date')
+    search_fields = ('receiver__email', 'receiver__username', 'message', 'object_id')
+    readonly_fields = ('id', 'date', 'delivered_at', 'retry_count')
     ordering = ('-date',)
     list_per_page = 25
     
@@ -20,7 +20,7 @@ class NotificationAdmin(admin.ModelAdmin):
     
     def has_delete_permission(self, request, obj=None):
         # Only allow deletion of notifications that have been delivered or failed
-        if obj and (obj.is_delivered or obj.delivery_attempts >= 3):
+        if obj and (obj.delivered_at or obj.retry_count >= 3):
             return True
         return request.user.is_superuser
     
@@ -31,16 +31,16 @@ class NotificationAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('id', 'receiver', 'message', 'date', 'type', 'status')
+            'fields': ('id', 'receiver', 'subject', 'message', 'date', 'notification_type', 'status')
         }),
         ('Delivery Information', {
-            'fields': ('is_delivered', 'delivery_attempts', 'last_delivery_attempt')
+            'fields': ('delivered_at', 'retry_count', 'max_retries')
         }),
         ('Related Object', {
-            'fields': ('related_object_type', 'related_object_id')
+            'fields': ('object_id',)
         }),
-        ('Advanced', {
+        ('Additional Details', {
             'classes': ('collapse',),
-            'fields': ('sensitive_data',),
+            'fields': ('severity', 'is_resolved', 'resolved_at'),
         }),
     )
