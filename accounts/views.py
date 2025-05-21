@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -160,15 +160,15 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user: User = request.user
 
-    today = timezone.now()
+    today = datetime.now().date
     if user.role == 'PATIENT':
         upcoming_appointments = Appointment.objects.filter(
             patient=user,
-            appointment_slot__date__gte=timezone.now()
+            appointment_slot__date__gte=datetime.now()
         ).order_by('appointment_slot__date')
         active_prescriptions = Prescription.objects.filter(
             patient=user,
-            expiration_date__gte=timezone.now()
+            expiration_date__gte=datetime.now()
         ).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': upcoming_appointments,

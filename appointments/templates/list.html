@@ -37,7 +37,7 @@ Appointments
                                 <p>Reason: {{ appointment.reason }}</p>
                             </div>
                             <div class="appointment-actions">
-                                <a href="{% url 'cancel_appointment' appointment.id %}" class="btn btn-danger">Cancel</a>
+                                <a href="{% url 'cancel_appointment' appointment.appointment_slot.id %}" class="btn btn-danger">Cancel</a>
                             </div>
                         </div>
                     {% endfor %}

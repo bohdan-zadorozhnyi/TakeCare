@@ -71,8 +71,8 @@ def get_appointments_json(request):
             appointments_data.append({
                 'id': str(appointment.id),
                 'title': f"Appointment with Dr. {slot.doctor.name}",
-                'start': slot.date.isoformat(),
-                'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                'start': slot.date,
+                'end': (slot.date + timedelta(minutes=slot.duration)).isoformat(),
                 'location': slot.location,
                 'description': slot.description,
                 'status': slot.status,
@@ -86,8 +86,9 @@ def get_appointments_json(request):
         # Get all appointment slots for this doctor
         slots = AppointmentSlot.objects.filter(
             doctor=user,
-            date__range=[start_date, end_date]
+            date__range=[start_date, end_date],
         )
+        slots = slots.exclude(status='Cancelled')
         
         for slot in slots:
             # Try to get the related appointment if it exists
@@ -98,8 +99,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(appointment.id),
                         'title': f"Appointment with {appointment.patient.name}",
-                        'start': slot.date.isoformat(),
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                        'start': slot.date,
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
@@ -113,8 +114,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(slot.id),
                         'title': "Available Slot",
-                        'start': slot.date.isoformat(),
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                        'start': slot.date,
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
