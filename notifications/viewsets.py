@@ -37,7 +37,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         # Filter by type if specified
         type_filter = request.query_params.get('type', None)
         if type_filter:
-            queryset = queryset.filter(type=type_filter)
+            queryset = queryset.filter(notification_type=type_filter)
             
         # Get only unread notifications
         unread = request.query_params.get('unread', None)

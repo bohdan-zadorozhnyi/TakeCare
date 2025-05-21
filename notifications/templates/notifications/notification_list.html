@@ -5,61 +5,98 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+<style>
+    /* Fix for black search box */
+    #notification-search {
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #ced4da;
+    }
+    
+    /* Ensure proper notification container styling */
+    .notifications-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container notifications-container my-4">
     <h2 class="mb-4">Your Notifications</h2>
     
-    <div class="notification-filters">
-        <div class="notification-search">
-            <input type="text" class="form-control" id="notification-search" placeholder="Search notifications...">
+    <div class="notification-filters row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="notification-search" placeholder="Search notifications...">
+            </div>
         </div>
         
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Filter by Type
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="dropdown w-100">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Type
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item filter-type active" data-type="ALL" href="#">All Types</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item filter-type" data-type="APPOINTMENT" href="#">Appointments</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="PRESCRIPTION" href="#">Prescriptions</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="REFERRAL" href="#">Referrals</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MEDICAL" href="#">Medical</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="SYSTEM" href="#">System</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="dropdown w-100">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-check-circle me-1"></i>Status
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                    <li><a class="dropdown-item filter-status active" data-status="ALL" href="#">All Statuses</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item filter-status" data-status="UNREAD" href="#">Unread</a></li>
+                    <li><a class="dropdown-item filter-status" data-status="READ" href="#">Read</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-4 col-md-2">
+            <button class="btn btn-primary w-100" id="mark-all-read">
+                <i class="fas fa-check-double me-1"></i>Mark All Read
             </button>
-            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-                <li><a class="dropdown-item filter-type active" data-type="ALL" href="#">All Types</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item filter-type" data-type="APPOINTMENT" href="#">Appointments</a></li>
-                <li><a class="dropdown-item filter-type" data-type="PRESCRIPTION" href="#">Prescriptions</a></li>
-                <li><a class="dropdown-item filter-type" data-type="REFERRAL" href="#">Referrals</a></li>
-                <li><a class="dropdown-item filter-type" data-type="MEDICAL" href="#">Medical</a></li>
-                <li><a class="dropdown-item filter-type" data-type="SYSTEM" href="#">System</a></li>
-            </ul>
         </div>
-        
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Filter by Status
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="statusDropdown">
-                <li><a class="dropdown-item filter-status active" data-status="ALL" href="#">All Statuses</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item filter-status" data-status="UNREAD" href="#">Unread</a></li>
-                <li><a class="dropdown-item filter-status" data-status="READ" href="#">Read</a></li>
-            </ul>
-        </div>
-        
-        <button class="btn btn-primary ms-auto" id="mark-all-read">Mark All as Read</button>
     </div>
     
-    <div class="notification-list mt-4">
-        <!-- Notifications will be loaded here -->
-        <div class="text-center py-5" id="notifications-loading">
+    <div class="card mb-4">
+        <div class="card-body notification-list">
+            <!-- Notifications will be loaded here -->
+        </div>
+        <div class="card-body text-center py-5" id="notifications-loading">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-3 text-muted">Loading notifications...</p>
         </div>
     </div>
     
     <div class="d-none" id="no-notifications">
-        <div class="text-center p-5 border rounded">
-            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
-            <h4>No notifications found</h4>
-            <p class="text-muted">You don't have any notifications matching your filters.</p>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-5">
+                <div class="display-1 text-muted mb-4">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h4 class="card-title">No notifications found</h4>
+                <p class="card-text text-muted">You don't have any notifications matching your filters.</p>
+                <button class="btn btn-outline-secondary mt-3" onclick="window.location.reload()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
         </div>
     </div>
     
@@ -74,17 +111,23 @@
 <script id="notification-template" type="text/template">
     <div class="card notification-card ${status === 'UNREAD' ? 'unread' : ''}" data-id="${id}">
         <div class="notification-card-header">
-            <span class="notification-card-type">${typeLabel}</span>
-            <span class="notification-card-date">${formattedDate}</span>
+            <span class="badge bg-${typeLabel === 'System' ? 'secondary' : 
+                     typeLabel === 'Appointment' ? 'success' : 
+                     typeLabel === 'Prescription' ? 'warning' : 
+                     typeLabel === 'Referral' ? 'info' : 
+                     typeLabel === 'Medical' ? 'danger' : 'primary'}">${typeLabel}</span>
+            <small class="text-muted">${formattedDate}</small>
         </div>
         <div class="notification-card-body">
-            <p class="notification-card-message">${message}</p>
+            <p class="mb-0">${message}</p>
         </div>
         <div class="notification-card-actions">
             <button class="btn btn-sm btn-outline-secondary btn-mark-read" ${status === 'READ' ? 'disabled' : ''}>
-                ${status === 'READ' ? 'Read' : 'Mark as Read'}
+                <i class="fas fa-check me-1"></i>${status === 'READ' ? 'Read' : 'Mark as Read'}
             </button>
-            <button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>
+            <button class="btn btn-sm btn-outline-danger btn-delete">
+                <i class="fas fa-trash-alt me-1"></i>Delete
+            </button>
         </div>
     </div>
 </script>
@@ -124,6 +167,11 @@
             return labels[type] || type;
         }
         
+        // Helper function to get notification type (works with both type and notification_type fields)
+        function getNotificationType(notification) {
+            return notification.notification_type || notification.type;
+        }
+        
         // Fetch and display notifications
         function fetchNotifications() {
             notificationsLoading.style.display = 'block';
@@ -144,9 +192,11 @@
                 url += `&search=${encodeURIComponent(searchQuery)}`;
             }
             
+            console.log('Fetching notifications from:', url);
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Notification API response:', data);
                     notificationsLoading.style.display = 'none';
                     
                     if (!data.results || data.results.length === 0) {
@@ -156,10 +206,11 @@
                     
                     // Display notifications
                     data.results.forEach(notification => {
+                        const notificationType = getNotificationType(notification);
                         const rendered = notificationTemplate
                             .replace(/\${id}/g, notification.id)
                             .replace(/\${status === 'UNREAD' \? 'unread' : ''}/g, notification.status === 'UNREAD' ? 'unread' : '')
-                            .replace(/\${typeLabel}/g, getTypeLabel(notification.type))
+                            .replace(/\${typeLabel}/g, getTypeLabel(notificationType))
                             .replace(/\${formattedDate}/g, formatDate(notification.date))
                             .replace(/\${message}/g, notification.message)
                             .replace(/\${status === 'READ' \? 'disabled' : ''}/g, notification.status === 'READ' ? 'disabled' : '')
@@ -218,52 +269,100 @@
             
             const pageCount = Math.ceil(data.count / 10);
             
-            // Previous button
-            const prevLi = document.createElement('li');
-            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `
-                <a class="page-link" href="#" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
+            // Create simple but effective pagination
+            // First/Previous
+            pagination.innerHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="First" data-page="1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Previous" data-page="${currentPage - 1}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
             `;
-            prevLi.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (currentPage > 1) {
-                    currentPage--;
-                    fetchNotifications();
-                }
-            });
-            pagination.appendChild(prevLi);
             
-            // Page numbers
-            for (let i = 1; i <= pageCount; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-                li.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    currentPage = i;
-                    fetchNotifications();
-                });
-                pagination.appendChild(li);
+            // Determine which pages to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(pageCount, currentPage + 2);
+            
+            // Always show at least 5 pages if available
+            if (endPage - startPage < 4 && pageCount > 4) {
+                if (currentPage < 3) {
+                    endPage = Math.min(5, pageCount);
+                } else if (currentPage > pageCount - 2) {
+                    startPage = Math.max(1, pageCount - 4);
+                }
             }
             
-            // Next button
-            const nextLi = document.createElement('li');
-            nextLi.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
-            nextLi.innerHTML = `
-                <a class="page-link" href="#" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            `;
-            nextLi.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (currentPage < pageCount) {
-                    currentPage++;
-                    fetchNotifications();
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                pagination.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="1">1</a>
+                    </li>
+                `;
+                if (startPage > 2) {
+                    pagination.innerHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
                 }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.innerHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Add last page and ellipsis if needed
+            if (endPage < pageCount) {
+                if (endPage < pageCount - 1) {
+                    pagination.innerHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+                pagination.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${pageCount}">${pageCount}</a>
+                    </li>
+                `;
+            }
+            
+            // Next/Last
+            pagination.innerHTML += `
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Next" data-page="${currentPage + 1}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Last" data-page="${pageCount}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            `;
+            
+            // Add event listeners to all page links
+            document.querySelectorAll('.page-link[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const newPage = parseInt(this.getAttribute('data-page'));
+                    if (newPage !== currentPage && !isNaN(newPage) && newPage > 0 && newPage <= pageCount) {
+                        currentPage = newPage;
+                        fetchNotifications();
+                    }
+                });
             });
-            pagination.appendChild(nextLi);
         }
         
         function markAsRead(notificationId) {
@@ -280,7 +379,7 @@
                     card.classList.remove('unread');
                     const button = card.querySelector('.btn-mark-read');
                     button.disabled = true;
-                    button.textContent = 'Read';
+                    button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
                 }
             })
             .catch(error => console.error('Error marking as read:', error));
@@ -350,7 +449,7 @@
                         card.classList.remove('unread');
                         const button = card.querySelector('.btn-mark-read');
                         button.disabled = true;
-                        button.textContent = 'Read';
+                        button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
                     });
                 }
             })

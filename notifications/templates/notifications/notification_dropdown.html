@@ -1,39 +1,52 @@
 {% load static %}
 <!-- Notification Bell and Dropdown -->
 <div class="notification-bell-container dropdown">
-    <a href="#" class="dropdown-toggle notification-bell" role="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    <a href="#" class="dropdown-toggle notification-bell position-relative" role="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fas fa-bell"></i>
-        <span class="notification-badge" id="notification-count"></span>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count"></span>
     </a>
     
-    <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0" aria-labelledby="notificationDropdown">
-        <div class="notification-header">
-            <h6 class="notification-title m-0">Notifications</h6>
+    <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow p-0" aria-labelledby="notificationDropdown">
+        <div class="notification-header bg-light d-flex justify-content-between align-items-center p-2 border-bottom">
+            <h6 class="notification-title m-0 ps-1"><i class="fas fa-bell me-2"></i>Notifications</h6>
             <div class="notification-actions">
-                <button class="btn btn-sm btn-link mark-all-read">Mark all as read</button>
-                <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-link">See all</a>
+                <button class="btn btn-sm btn-link text-decoration-none mark-all-read">Mark all as read</button>
+                <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-link text-decoration-none">See all</a>
             </div>
         </div>
         
-        <div class="notification-list">
+        <div class="notification-list scrollable-menu overflow-auto" style="max-height: 350px;">
             <!-- Notifications will be inserted here via JavaScript -->
         </div>
         
-        <div class="notification-footer">
+        <div class="notification-footer p-2 text-center border-top bg-light">
             <small class="text-muted">You'll be notified of important updates</small>
         </div>
     </div>
 </div>
 
 <script id="notification-item-template" type="text/template">
-    <div class="notification-item ${unread ? 'unread' : ''} ${type.toLowerCase()}" data-id="${id}">
-        <div class="notification-content">
-            <div class="notification-icon">
+    <div class="notification-item list-group-item-action p-2 border-bottom ${unread ? 'bg-light' : ''}" data-id="${id}">
+        <div class="d-flex align-items-start">
+            <div class="notification-icon me-2 p-1 rounded-circle bg-${
+                type === 'APPOINTMENT' ? 'success' :
+                type === 'PRESCRIPTION' ? 'warning' :
+                type === 'REFERRAL' ? 'info' :
+                type === 'MEDICAL' ? 'danger' : 'secondary'
+            } bg-opacity-25 text-${
+                type === 'APPOINTMENT' ? 'success' :
+                type === 'PRESCRIPTION' ? 'warning' :
+                type === 'REFERRAL' ? 'info' :
+                type === 'MEDICAL' ? 'danger' : 'secondary'
+            }">
                 ${getNotificationIcon(type)}
             </div>
-            <div>
-                <div class="notification-message">${message}</div>
-                <div class="notification-time">${formatTime(date)}</div>
+            <div class="flex-grow-1">
+                <p class="mb-1 text-truncate">${message}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="far fa-clock me-1"></i>${formatTime(date)}</small>
+                    ${unread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                </div>
             </div>
         </div>
     </div>
@@ -90,12 +103,13 @@
                     
                     // Add notifications to dropdown
                     data.forEach(notification => {
+                        const notificationType = notification.notification_type || notification.type;
                         const template = notificationTemplate
                             .replace('${unread}', notification.status === 'UNREAD')
-                            .replace('${type}', notification.type)
+                            .replace(/\${type}/g, notificationType)
                             .replace('${id}', notification.id)
                             .replace('${message}', notification.message)
-                            .replace('${getNotificationIcon(type)}', getNotificationIcon(notification.type))
+                            .replace('${getNotificationIcon(type)}', getNotificationIcon(notificationType))
                             .replace('${formatTime(date)}', formatTime(notification.date));
                             
                         // Convert template string to HTML
