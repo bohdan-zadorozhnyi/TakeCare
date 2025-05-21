@@ -4,8 +4,8 @@ from .models import Notification
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'message_preview', 'receiver', 'type', 'status', 'date', 'is_delivered', 'delivery_attempts')
-    list_filter = ('type', 'status', 'is_delivered', 'date')
+    list_display = ('id', 'message_preview', 'receiver', 'notification_type', 'status', 'date', 'is_delivered', 'delivery_attempts')
+    list_filter = ('notification_type', 'status', 'is_delivered', 'date')
     search_fields = ('receiver__email', 'receiver__username', 'message', 'related_object_id')
     readonly_fields = ('id', 'date', 'last_delivery_attempt', 'delivery_attempts', 'is_delivered')
     ordering = ('-date',)

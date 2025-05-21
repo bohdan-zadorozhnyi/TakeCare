@@ -39,12 +39,19 @@ class NotificationService:
             # Create notification in database
             notification = Notification.objects.create(
                 receiver=user,
+                subject=related_object_type or 'Notification',
                 message=message,
-                type=notification_type,
-                related_object_id=related_object_id,
-                related_object_type=related_object_type,
+                notification_type=notification_type,
                 status=NotificationStatus.UNREAD
             )
+            
+            # Set related object ID if provided
+            if related_object_id:
+                try:
+                    notification.object_id = uuid.UUID(related_object_id) if isinstance(related_object_id, str) else related_object_id
+                    notification.save()
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid UUID for related_object_id: {related_object_id}")
             
             # If there's sensitive data, encrypt it
             if sensitive_data:
@@ -179,7 +186,7 @@ class NotificationService:
                         "type": "notification_message",
                         "message": notification.message,
                         "notification_id": str(notification.id),
-                        "type": notification.type
+                        "notification_type": notification.notification_type
                     }
                 )
                 count += 1

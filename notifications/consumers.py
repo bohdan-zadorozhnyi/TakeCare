@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 import logging
 
@@ -82,7 +83,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         """
         message = event["message"]
         notification_id = event.get("notification_id")
-        notification_type = event.get("type", "SYSTEM")
+        notification_type = event.get("notification_type", "SYSTEM")
         
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
@@ -136,9 +137,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             return False
     
     @database_sync_to_async
-    def send_undelivered_notifications(self):
+    def get_undelivered_notifications(self):
         """
-        Send all undelivered notifications to the connected client
+        Retrieve undelivered notifications for the connected client
         """
         from .models import Notification
         
@@ -147,17 +148,30 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             is_delivered=False
         ).order_by('-date')[:50]  # Limit to most recent 50
         
+        # Just get the notifications and record the attempt, we'll send them in the async method
+        notifications_data = []
         for notification in undelivered:
-            # Use channel_layer to send via the notification_message handler
             notification.record_delivery_attempt()
-            
-            # Schedule the message to be sent
-            self.channel_layer.group_send(
+            notifications_data.append({
+                "message": notification.message,
+                "notification_id": str(notification.id),
+                "type": notification.notification_type
+            })
+        
+        return notifications_data
+
+    async def send_undelivered_notifications(self):
+        """
+        Send all undelivered notifications to the connected client
+        """
+        notifications = await self.get_undelivered_notifications()
+        
+        for notification_data in notifications:
+            # Now we can use the channel layer directly in this async method
+            await self.channel_layer.group_send(
                 self.notification_group_name,
                 {
                     "type": "notification_message",
-                    "message": notification.message,
-                    "notification_id": str(notification.id),
-                    "type": notification.type
+                    **notification_data
                 }
             )

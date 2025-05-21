@@ -9,5 +9,4 @@ class NotificationsConfig(AppConfig):
         """
         Register signals when the app is ready
         """
-        import notifications.signals
-        notifications.signals.ready()
+        import notifications.signals  # Import signals to register them

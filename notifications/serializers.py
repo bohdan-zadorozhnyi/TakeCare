@@ -10,12 +10,12 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = [
             'id', 'receiver', 'receiver_name', 'receiver_email', 
-            'message', 'date', 'type', 'status', 
-            'related_object_id', 'related_object_type',
-            'is_delivered', 'data'
+            'message', 'subject', 'date', 'notification_type', 'status', 
+            'object_id', 'delivery_channel', 'severity',
+            'delivered_at', 'read_at', 'data'
         ]
         read_only_fields = [
-            'id', 'date', 'is_delivered', 'receiver_name', 
+            'id', 'date', 'delivered_at', 'read_at', 'receiver_name', 
             'receiver_email', 'data'
         ]
     
@@ -32,7 +32,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             NotificationType.PRESCRIPTION
         ]
         
-        if obj.sensitive_data and obj.type not in sensitive_types:
+        if obj.is_encrypted and obj.notification_type not in sensitive_types:
             return obj.decrypt_data()
         return None
     

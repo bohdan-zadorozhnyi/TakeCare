@@ -11,6 +11,8 @@ from .services import NotificationService
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
+    # Define a queryset at class level to fix router registration issue
+    queryset = Notification.objects.all()
     
     def get_queryset(self):
         """
