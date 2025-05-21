@@ -132,11 +132,13 @@ class NotificationClient {
         
         // Get notification type for styling
         const notificationType = notification.notification_type || notification.type || 'SYSTEM';
+        const bootstrapColor = getBootstrapColor(notificationType);
         
         // Create toast element
         const toastId = `toast-${Date.now()}`;
         const toast = document.createElement('div');
-        toast.className = 'toast show';
+        toast.className = `toast show border-start border-4 border-${bootstrapColor} shadow-sm`;
+        toast.style.backgroundColor = '#ffffff';
         toast.id = toastId;
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
@@ -144,12 +146,15 @@ class NotificationClient {
         
         // Set toast content
         toast.innerHTML = `
-            <div class="toast-header bg-${getBootstrapColor(notificationType)} bg-opacity-10">
+            <div class="toast-header bg-${bootstrapColor} bg-opacity-15 text-${bootstrapColor}">
+                <span class="me-2 text-${bootstrapColor}">
+                    ${getNotificationIcon(notificationType)}
+                </span>
                 <strong class="me-auto">${getNotificationTypeLabel(notificationType)}</strong>
-                <small>${new Date().toLocaleTimeString()}</small>
+                <small class="text-muted">${new Date().toLocaleTimeString()}</small>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <div class="toast-body">
+            <div class="toast-body bg-white">
                 ${notification.message}
             </div>
         `;
@@ -189,6 +194,17 @@ class NotificationClient {
                 'MEDICAL': 'Medical'
             };
             return map[type] || 'Notification';
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                'SYSTEM': '<i class="fas fa-info-circle"></i>',
+                'APPOINTMENT': '<i class="far fa-calendar-check"></i>',
+                'PRESCRIPTION': '<i class="fas fa-prescription"></i>',
+                'REFERRAL': '<i class="fas fa-exchange-alt"></i>',
+                'MEDICAL': '<i class="fas fa-heartbeat"></i>'
+            };
+            return icons[type] || icons['SYSTEM'];
         }
     }
 }

@@ -68,7 +68,10 @@ class NotificationService:
                         "type": "notification_message",
                         "message": message,
                         "notification_id": str(notification.id),
-                        "notification_type": notification_type
+                        "notification_type": notification_type,
+                        "id": str(notification.id),
+                        "date": notification.date.isoformat(),
+                        "status": notification.status
                     }
                 )
                 logger.info(f"Notification {notification.id} sent to user {user.id}")
@@ -186,7 +189,10 @@ class NotificationService:
                         "type": "notification_message",
                         "message": notification.message,
                         "notification_id": str(notification.id),
-                        "notification_type": notification.notification_type
+                        "notification_type": notification.notification_type,
+                        "id": str(notification.id),
+                        "date": notification.date.isoformat(),
+                        "status": notification.status
                     }
                 )
                 count += 1

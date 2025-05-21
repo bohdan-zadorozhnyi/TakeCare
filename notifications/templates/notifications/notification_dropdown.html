@@ -28,7 +28,7 @@
 <script id="notification-item-template" type="text/template">
     <div class="notification-item list-group-item-action p-2 border-bottom ${unread ? 'bg-light' : ''}" data-id="${id}">
         <div class="d-flex align-items-start">
-            <div class="notification-icon me-2 p-1 rounded-circle bg-${
+            <div class="notification-icon me-2 p-2 rounded-circle bg-${
                 type === 'APPOINTMENT' ? 'success' :
                 type === 'PRESCRIPTION' ? 'warning' :
                 type === 'REFERRAL' ? 'info' :
@@ -42,7 +42,7 @@
                 ${getNotificationIcon(type)}
             </div>
             <div class="flex-grow-1">
-                <p class="mb-1 text-truncate">${message}</p>
+                <p class="mb-1 text-truncate fw-semibold">${message}</p>
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted"><i class="far fa-clock me-1"></i>${formatTime(date)}</small>
                     ${unread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}

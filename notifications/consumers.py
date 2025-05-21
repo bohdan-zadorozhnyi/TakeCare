@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import logging
 
 User = get_user_model()
@@ -89,7 +90,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message,
             'notification_id': str(notification_id),
-            'notification_type': notification_type
+            'notification_type': notification_type,
+            'date': timezone.now().isoformat(),
+            'status': 'UNREAD',
+            'type': notification_type,  # Add type field for compatibility with frontend
+            'id': str(notification_id)  # Ensure id field is present for frontend
         }))
         
         # Mark the notification as delivered in the database
@@ -155,7 +160,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             notifications_data.append({
                 "message": notification.message,
                 "notification_id": str(notification.id),
-                "notification_type": notification.notification_type
+                "notification_type": notification.notification_type,
+                "id": str(notification.id),
+                "type": notification.notification_type,
+                "date": notification.date.isoformat(),
+                "status": notification.status
             })
         
         return notifications_data
