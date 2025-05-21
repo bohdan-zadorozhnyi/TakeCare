@@ -15,4 +15,5 @@ urlpatterns = [
     path('referrals/', include('referrals.urls')),  # Added the referrals app URLs
     path('calendar/', include('calendar_app.urls')),  # Added the calendar app URLs
     path('articles/', include('articles.urls')),
+    path('payments/', include('payments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

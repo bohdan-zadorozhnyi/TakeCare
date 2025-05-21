@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-warning text-center p-4 rounded shadow">
+        <h2><i class="fas fa-exclamation-circle me-2"></i>Payment Canceled</h2>
+        <p class="mt-3">You canceled the payment. The appointment has not been paid. If your appointment is offline,
+        you can pay the checkout desk. For online appointments the online payment is mandatory.</p>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-secondary mt-3">Back to Calendar</a>
+    </div>
+</div>
+{% endblock %}

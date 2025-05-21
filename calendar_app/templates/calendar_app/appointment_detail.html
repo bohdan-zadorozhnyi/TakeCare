@@ -42,8 +42,36 @@
                 <i class="fas fa-exchange-alt"></i> Reschedule
             </a>
             {% endif %}
+
+
         </div>
     </div>
+    <div class="payment-status mb-4">
+    {% if appointment.payment %}
+        {% if appointment.payment.status == 'succeeded' %}
+            <div class="alert alert-success d-inline-block px-4 py-2 rounded shadow-sm">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Paid</strong>
+            </div>
+        {% else %}
+            <div class="alert alert-warning d-inline-block px-4 py-2 rounded shadow-sm mb-2">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Payment Status: <strong>Unpaid</strong>
+            </div>
+            <form action="{% url 'payments:create_checkout_session' %}?appointment_id={{ appointment.id }}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-primary shadow-sm" type="submit">
+                    <i class="fas fa-credit-card me-1"></i> Pay Now
+                </button>
+            </form>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-secondary d-inline-block px-4 py-2 rounded shadow-sm">
+            Payment information not available.
+        </div>
+    {% endif %}
+    </div>
+
     
     <div class="appointment-info">
         <div class="appointment-detail">
