@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Available Appointments - Dr. {{ doctor.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Available Appointments - Dr. {{ doctor.name }}</h2>
+        <a href="{% url 'appointments:doctors_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Back to Doctors List
+        </a>
+    </div>
+
+    {% if has_appointments %}
+        {% for date, slots in grouped_appointments %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{{ date|date:"l, F j, Y" }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for slot in slots %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            {{ slot.date|date:"g:i A" }}
+                                            {{ slot.date|add:slot.duration|date:"g:i A" }}
+                                        </h6>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Duration: {{ slot.duration }} minutes<br>
+                                                Location: {{ slot.location }}
+                                            </small>
+                                        </p>
+                                        {% if slot.description %}
+                                            <p class="card-text">{{ slot.description }}</p>
+                                        {% endif %}
+                                        <a href="{% url 'appointments:book_appointment' slot.id %}" 
+                                           class="btn btn-primary">Book Appointment</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if grouped_appointments.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if grouped_appointments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ grouped_appointments.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in grouped_appointments.paginator.page_range %}
+                        {% if num == grouped_appointments.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > grouped_appointments.number|add:'-3' and num < grouped_appointments.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if grouped_appointments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ grouped_appointments.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            No available appointments found for Dr. {{ doctor.name }}.
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    .btn-outline-primary {
+        color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+</style>
+{% endblock %} 

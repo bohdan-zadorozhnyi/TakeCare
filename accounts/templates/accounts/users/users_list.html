@@ -9,7 +9,7 @@
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
-    <a href="{% url 'admin_create_user' %}" class="btn btn-primary">Create New User</a>
+    <a href="{% url 'accounts:admin_create_user' %}" class="btn btn-primary">Create New User</a>
     </div>
 
     {% for user in page_obj %}

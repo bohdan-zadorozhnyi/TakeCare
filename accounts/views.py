@@ -16,7 +16,25 @@ from django.db.models import Q
 from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
 from django.utils import timezone
+from referrals.models import DoctorCategory
 User = get_user_model()
+
+# Adding debug view for doctor specialization
+@login_required
+def debug_specialization(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if user.role != 'DOCTOR':
+        messages.error(request, "This debug view is only for doctor profiles.")
+        return redirect('accounts:view_profile', user_id=user.id)
+    
+    profile = getattr(user, 'doctor_profile', None)
+    doctor_categories = DoctorCategory.choices
+    
+    return render(request, 'accounts/debug_specialization.html', {
+        'user': user,
+        'profile': profile,
+        'doctor_categories': doctor_categories,
+    })
 
 def login_view(request):
     if request.method == 'POST':
@@ -29,7 +47,7 @@ def login_view(request):
             print(f"DEBUG: Found user - {user}")
             if user is not None:
                 login(request, user)
-                return redirect('home')
+                return redirect('core:home')
             else:
                 messages.error(request, "Email or Password is incorrect.")
         else:
@@ -41,14 +59,14 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('accounts:login')
 
 def register_view(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
-            return redirect('login')
+            return redirect('accounts:login')
     else:
         form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -57,8 +75,9 @@ def register_view(request):
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'accounts/password_reset/password_reset_form.html'
     email_template_name = 'accounts/password_reset/password_reset_email.html'
-    # subject_template_name = 'accounts/password_reset/password_reset_subject.txt'
+    success_url = reverse_lazy('accounts:password_reset_done')
     from_email = 'support@takecare.local'
+    subject_template_name = 'accounts/password_reset/password_reset_subject.txt'
 
 @login_required
 def view_profile(request, user_id):
@@ -71,6 +90,15 @@ def view_profile(request, user_id):
     profile = None
     if user.role == 'DOCTOR':
         profile = getattr(user, 'doctor_profile', None)
+        if profile:
+            # Enhanced debugging for doctor specialization
+            specialty_raw = profile.specialization
+            specialty_display = profile.get_specialization_display()
+            print(f"DEBUG: Doctor specialization debug info:")
+            print(f"  - Raw value: {specialty_raw}")
+            print(f"  - Display value: {specialty_display}")
+            print(f"  - Type of raw value: {type(specialty_raw)}")
+            print(f"  - Type of display value: {type(specialty_display)}")
     elif user.role == 'PATIENT':
         profile = getattr(user, 'patient_profile', None)
     elif user.role == 'ADMIN':
@@ -96,7 +124,7 @@ def admin_create_user_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, "User created successfully.")
-            return redirect('dashboard')
+            return redirect('accounts:dashboard')
     else:
         form = AdminCreateUserForm()
 
@@ -122,7 +150,7 @@ def edit_profile(request, user_id):
 
         if form.is_valid():
             form.save()
-            return redirect('view_profile', user_id=user.id)
+            return redirect('accounts:view_profile', user_id=user.id)
     else:
         form = EditUserProfileForm(instance=user, profile=profile)
 
@@ -164,7 +192,7 @@ def dashboard_view(request):
             'total_doctors': total_doctors,
         })
 
-    return redirect('home')
+    return redirect('core:home')
 
 @login_required
 @permission_required('accounts.list_user', raise_exception=True)
@@ -205,7 +233,7 @@ def admin_block_unblock_user(request, user_id):
         user.save()
         messages.success(request, f"User {'unblocked' if user.is_active else 'blocked'} successfully.")
 
-    return redirect('users_list')
+    return redirect('accounts:users_list')
 
 @login_required
 @permission_required('accounts.delete_user', raise_exception=True)
@@ -220,4 +248,4 @@ def admin_delete_user(request, user_id):
         user.delete()
         messages.success(request, "User deleted successfully.")
 
-    return redirect('users_list')
+    return redirect('accounts:users_list')

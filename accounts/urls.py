@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from django.contrib.auth import views as auth_views
 
+app_name = 'accounts'
 
 
 urlpatterns = [
@@ -28,5 +29,6 @@ urlpatterns = [
     path('admin/users/<uuid:user_id>/block-unblock/', views.admin_block_unblock_user, name='admin_block_unblock_user'),
     path('admin/users/<uuid:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
     path('admin/users/<uuid:user_id>/edit/', views.edit_profile, name='admin_edit_user'),
+    path('profile/<uuid:user_id>/debug-specialization/', views.debug_specialization, name='debug_specialization'),
 
 ]

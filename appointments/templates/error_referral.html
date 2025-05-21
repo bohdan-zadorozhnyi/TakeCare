@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Referral Required{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fas fa-file-medical"></i>
+        </div>
+        <h1>Referral Required</h1>
+        <p class="error-message">To book this appointment, you'll need a medical referral from your primary care physician.</p>
+        <div class="error-details">
+            <p>This appointment requires a referral to a <strong>{{ doctor_specialization }}</strong> specialist.</p>
+            <p class="help-text">Please obtain a referral from your doctor before booking this appointment.</p>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'appointments:appointment_list' %}" class="btn btn-primary">
+                <i class="fas fa-calendar-alt"></i> Back to Calendar
+            </a>
+            <a href="javascript:history.back()" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
+    }
+
+    .error-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        padding: 40px;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        animation: slideUp 0.4s ease-out;
+    }
+
+    .error-icon {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 20px;
+    }
+
+    .error-icon i {
+        animation: pulse 2s infinite;
+    }
+
+    h1 {
+        color: #2c3e50;
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+
+    .error-message {
+        font-size: 1.1rem;
+        color: #5c6f7c;
+        margin-bottom: 24px;
+        line-height: 1.5;
+    }
+
+    .error-details {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .help-text {
+        color: #6c757d;
+        font-size: 0.95rem;
+        margin-top: 12px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 32px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+    .btn-outline {
+        background-color: transparent;
+        border: 1px solid #6c757d;
+        color: #6c757d;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+{% endblock %}

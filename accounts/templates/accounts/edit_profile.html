@@ -35,7 +35,7 @@
 
                 <div class="d-flex justify-content-between mt-4 button-wrapper">
                     <button type="submit" class="btn btn-primary submit-btn">Save</button>
-                    <a href="{% url 'view_profile' user.id %}">
+                    <a href="{% url 'accounts:view_profile' user.id %}">
                         <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
                     </a>
                 </div>

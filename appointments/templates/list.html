@@ -9,11 +9,13 @@ Appointments
     <div class="appointments-header">
         <h1>Your Appointments</h1>
         {% if user.role == 'DOCTOR' %}
-            <a href="{% url 'create_appointment' %}">
-                <div id="addAppointmentBtn" class="btn btn-primary">
+        <a href="{% url 'appointments:create_appointment' %}">
+            <div id="addAppointmentBtn" class="btn btn-primary">
+                
                     Add Appointment Slot
-                </div>
-            </a>
+                
+            </div>
+        </a>
         {% endif %}
     </div>
     

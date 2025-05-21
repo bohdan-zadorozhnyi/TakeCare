@@ -69,7 +69,7 @@
 
                 {% if is_own_profile or viewer_is_admin %}
                     <div class="d-flex justify-content-center mt-4 button-wrapper">
-                        <a href="{% url 'edit_profile' user.id %}">
+                        <a href="{% url 'accounts:edit_profile' user.id %}">
                             <button class="btn btn-primary submit-btn">Edit Profile</button>
                         </a>
                     </div>
