@@ -49,14 +49,29 @@ class NotificationViewSet(viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(message__icontains=search)
             
+        # Log for debugging
+        print(f"Found {queryset.count()} notifications for user {request.user.id}")
+            
         # Limit the number of notifications if specified
         limit = request.query_params.get('limit', None)
+        is_dropdown = limit and limit.isdigit() and int(limit) <= 5
+        
         if limit and limit.isdigit():
             queryset = queryset[:int(limit)]
             page = 1
             total_pages = 1
             count = len(queryset)
             results = self.get_serializer(queryset, many=True).data
+            
+            # For dropdown requests, still use the paginated format for consistency
+            if is_dropdown:
+                return Response({
+                    'results': results,
+                    'count': count,
+                    'page': page,
+                    'total_pages': total_pages,
+                    'is_dropdown': True
+                })
         else:
             # Use pagination for the full list view
             from rest_framework.pagination import PageNumberPagination

@@ -87,22 +87,41 @@
         const notificationList = document.querySelector('.notification-list');
         const markAllReadBtn = document.querySelector('.mark-all-read');
         const notificationTemplate = document.getElementById('notification-item-template').innerHTML;
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        
+        // Only fetch notifications when dropdown is opened
+        notificationDropdown.addEventListener('shown.bs.dropdown', function() {
+            fetchNotifications();
+        });
         
         // Fetch recent notifications
         function fetchNotifications() {
             fetch('/api/v1/notifications/?limit=5')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     // Clear existing notifications
                     notificationList.innerHTML = '';
                     
-                    if (data.length === 0) {
+                    // Handle both array and paginated responses
+                    let notifications;
+                    if (Array.isArray(data)) {
+                        notifications = data;
+                    } else {
+                        notifications = data.results || [];
+                    }
+                    
+                    if (notifications.length === 0) {
                         notificationList.innerHTML = '<div class="p-3 text-center">No notifications</div>';
                         return;
                     }
                     
                     // Add notifications to dropdown
-                    data.forEach(notification => {
+                    notifications.forEach(notification => {
                         const notificationType = notification.notification_type || notification.type;
                         const template = notificationTemplate
                             .replace('${unread}', notification.status === 'UNREAD')
@@ -149,7 +168,12 @@
                 })
                 .catch(error => {
                     console.error('Error fetching notifications:', error);
-                    notificationList.innerHTML = '<div class="p-3 text-center">Error loading notifications</div>';
+                    // Only show error if dropdown is open/visible
+                    if (document.querySelector('.notification-dropdown.show')) {
+                        notificationList.innerHTML = '<div class="p-3 text-center">Error loading notifications</div>';
+                    } else {
+                        notificationList.innerHTML = '';
+                    }
                 });
         }
         
@@ -243,8 +267,7 @@
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
         }
         
-        // Initial load
-        fetchNotifications();
+        // Initial count load
         updateNotificationCount();
         
         // Setup WebSocket for real-time notifications if available
@@ -253,8 +276,10 @@
                 // Update notification count
                 updateNotificationCount(1);
                 
-                // Refresh notification list
-                fetchNotifications();
+                // Refresh notification list only if dropdown is visible
+                if (document.querySelector('.notification-dropdown.show')) {
+                    fetchNotifications();
+                }
             };
         }
     });

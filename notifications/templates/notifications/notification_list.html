@@ -223,14 +223,39 @@
             
             console.log('Fetching notifications from:', url);
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log('Notification API response:', data);
                     notificationsLoading.style.display = 'none';
                     
                     // Handle both paginated and non-paginated responses
-                    const results = data.results || data;
-                    const count = data.count || (Array.isArray(results) ? results.length : 0);
+                    let results, count, page, totalPages;
+                    
+                    if (Array.isArray(data)) {
+                        // Direct array of notifications
+                        results = data;
+                        count = data.length;
+                        page = 1;
+                        totalPages = 1;
+                    } else {
+                        // Paginated response
+                        results = data.results || [];
+                        count = data.count || 0;
+                        page = data.page || 1;
+                        totalPages = data.total_pages || 1;
+                    }
+                    
+                    console.log('Processed notifications data:', {
+                        resultCount: results.length,
+                        totalCount: count,
+                        page: page,
+                        totalPages: totalPages
+                    });
                     
                     if (!results || results.length === 0) {
                         noNotifications.classList.remove('d-none');
@@ -239,15 +264,25 @@
                     
                     // Display notifications
                     results.forEach(notification => {
+                        // Ensure notification has all required fields
                         const notificationType = getNotificationType(notification);
+                        const status = notification.status || 'UNREAD';
+                        
+                        console.log('Processing notification:', {
+                            id: notification.id,
+                            type: notificationType,
+                            status: status,
+                            message: notification.message
+                        });
+                        
                         const rendered = notificationTemplate
                             .replace(/\${id}/g, notification.id)
-                            .replace(/\${status === 'UNREAD' \? 'unread' : ''}/g, notification.status === 'UNREAD' ? 'unread' : '')
+                            .replace(/\${status === 'UNREAD' \? 'unread' : ''}/g, status === 'UNREAD' ? 'unread' : '')
                             .replace(/\${typeLabel}/g, getTypeLabel(notificationType))
                             .replace(/\${formattedDate}/g, formatDate(notification.date))
                             .replace(/\${message}/g, notification.message)
-                            .replace(/\${status === 'READ' \? 'disabled' : ''}/g, notification.status === 'READ' ? 'disabled' : '')
-                            .replace(/\${status === 'READ' \? 'Read' : 'Mark as Read'}/g, notification.status === 'READ' ? 'Read' : 'Mark as Read');
+                            .replace(/\${status === 'READ' \? 'disabled' : ''}/g, status === 'READ' ? 'disabled' : '')
+                            .replace(/\${status === 'READ' \? 'Read' : 'Mark as Read'}/g, status === 'READ' ? 'Read' : 'Mark as Read');
                         
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = rendered;
@@ -402,6 +437,7 @@
         }
         
         function markAsRead(notificationId) {
+            console.log(`Marking notification ${notificationId} as read`);
             fetch(`/api/v1/notifications/${notificationId}/mark-read/`, {
                 method: 'POST',
                 headers: {
@@ -410,12 +446,33 @@
                 }
             })
             .then(response => {
-                if (response.ok) {
-                    const card = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Mark as read response:', data);
+                const card = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+                if (card) {
                     card.classList.remove('unread');
+                    card.classList.remove('border-start');
+                    card.classList.remove('border-4');
+                    card.classList.remove('border-primary');
+                    
                     const button = card.querySelector('.btn-mark-read');
-                    button.disabled = true;
-                    button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
+                    }
+                    
+                    // Update any badges in the card
+                    const badge = card.querySelector('.badge');
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                } else {
+                    console.warn(`Could not find notification card with ID ${notificationId}`);
                 }
             })
             .catch(error => console.error('Error marking as read:', error));
