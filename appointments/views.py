@@ -9,10 +9,11 @@ from accounts.models import PatientProfile, DoctorProfile, AdminProfile
 from django.contrib.auth.decorators import permission_required, login_required
 from django.db.models import IntegerField, DateTimeField, Q, ExpressionWrapper, F
 from django.db.models.functions import Cast
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from referrals.models import Referral
 from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse
+from django.utils import timezone
 
 
 User = get_user_model()
@@ -269,6 +270,7 @@ def BookAppointment(request, appointment_id, user_id_var = None):
         if request.method == "GET":
             # Ensure we're loading the doctor with profile for proper display
             doctor = appointment_slot.doctor
+            appointment_slot.date = appointment_slot.date + timedelta(hours=2)
             # Prefetch the doctor profile to avoid potential issues
             return render(request, 'book_appointment.html', {
                 'appointment': appointment_slot
@@ -386,7 +388,7 @@ def doctors_list(request):
             'start_date': start_date,
             'end_date': end_date
         },
-        'today': datetime.now().date(),
+        'today': datetime.now(),
     }
 
     return render(request, 'doctors/doctors_list.html', context)
@@ -404,7 +406,7 @@ def appointment_list(request):
     search_id = request.GET.get('search', '').strip()
     search_name = None
 
-    today = datetime.now().date()
+    today = timezone.now() + timedelta(hours=2)
     if show_upcoming and not show_past:
         appointments = appointments.filter(appointment_slot__date__gte=today)
     elif show_past and not show_upcoming:
@@ -422,9 +424,10 @@ def appointment_list(request):
                 search_name = search_user.name
         except User.DoesNotExist:
             pass
-    today = datetime.now().date()
+    today = timezone.now() + timedelta(hours=2)
     appointments = appointments.order_by('appointment_slot__date')
-
+    for appointment in appointments:
+        appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
     return render(request, 'appointment_list.html', {
         'appointments': appointments,
         'filters': {

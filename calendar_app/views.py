@@ -179,15 +179,15 @@ def appointment_detail(request, appointment_id):
         ).first()
     except:
         pass
-
+    appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
     context = {
         'appointment': appointment,
         'notes': notes,
         'chat_room': chat_room,
         'can_cancel': appointment.appointment_slot.status == 'Booked' and 
-                    appointment.appointment_slot.date > timezone.now(),
+                    appointment.appointment_slot.date > timezone.now() + timedelta(hours=2),
         'can_reschedule': appointment.appointment_slot.status == 'Booked' and 
-                        appointment.appointment_slot.date > timezone.now(),
+                        appointment.appointment_slot.date > timezone.now() + timedelta(hours=2),
     }
     
     return render(request, 'calendar_app/appointment_detail.html', context)
