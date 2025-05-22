@@ -47,8 +47,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     ])
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    groups = models.ManyToManyField(Group, related_name="custom_user_set", blank=True)
-    user_permissions = models.ManyToManyField(Permission, related_name="custom_user_set", blank=True)
 
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, default='avatars/default_avatar.jpg')
 
@@ -64,6 +62,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         permissions = [
             ("block_user", "Can block or unblock a user"),
             ("list_user", "Can see the whole or partial list of all users"),
+            ("debugSpecialization_user", "Can debug the specialization of a doctor"),
+            ("searchPatient_user", "Can search for a patient"),
         ]
 
 class DoctorProfile(models.Model):

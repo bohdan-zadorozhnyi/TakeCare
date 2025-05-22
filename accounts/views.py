@@ -21,6 +21,7 @@ User = get_user_model()
 
 # Adding debug view for doctor specialization
 @login_required
+@permission_required('accounts.debugSpecialization_user', raise_exception=True)
 def debug_specialization(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if user.role != 'DOCTOR':
@@ -46,7 +47,7 @@ def login_view(request):
             user = backend.authenticate(request=request, username=email, password=password)
             print(f"DEBUG: Found user - {user}")
             if user is not None:
-                login(request, user)
+                login(request, user, backend='TakeCare.backends.EmailAuthBackend')
                 return redirect('core:home')
             else:
                 messages.error(request, "Email or Password is incorrect.")

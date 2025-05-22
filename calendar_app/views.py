@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
 from django.urls import reverse
@@ -150,6 +150,7 @@ def get_appointments_json(request):
     return JsonResponse(appointments_data, safe=False)
 
 @login_required
+@permission_required('appointments.view_appointment', raise_exception=True)
 def appointment_detail(request, appointment_id):
     """View for appointment details when a user clicks on an appointment in the calendar"""
     appointment = get_object_or_404(
@@ -193,6 +194,7 @@ def appointment_detail(request, appointment_id):
     return render(request, 'calendar_app/appointment_detail.html', context)
 
 @login_required
+@permission_required('appointments.add_appointmentnote', raise_exception=True)
 def add_appointment_note(request, appointment_id):
     """Add a note to an appointment"""
     if request.method == 'POST':
@@ -218,6 +220,7 @@ def add_appointment_note(request, appointment_id):
     return HttpResponseBadRequest("Invalid request method")
 
 @login_required
+@permission_required('appointments.view_appointmentslot', raise_exception=True)
 def appointment_slot_detail(request, slot_id):
     """View for appointment slot details for doctors"""
     slot = get_object_or_404(
@@ -240,6 +243,7 @@ def appointment_slot_detail(request, slot_id):
     return render(request, 'calendar_app/appointment_slot_detail.html', context)
 
 @login_required
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def cancel_appointment(request, appointment_id):
     CancelAppointment(request, appointment_id)
     return redirect('calendar_view')
@@ -263,6 +267,7 @@ def update_calendar_settings(request):
 
 @login_required
 @require_POST
+@permission_required('appointments.add_appointmentslot', raise_exception=True)
 def add_calendar_slot(request):
     """Add a new appointment slot to the calendar"""
     # Only doctors can create slots
