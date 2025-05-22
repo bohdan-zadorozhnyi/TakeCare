@@ -2,9 +2,12 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from appointments.models import Appointment, AppointmentSlot
+from articles.models import Article
 from prescriptions.models import Prescription
 from referrals.models import Referral
 from accounts.models import User
+from medical.models import MedicalRecord
+from calendar_app.models import AppointmentNote
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
@@ -12,19 +15,29 @@ class Command(BaseCommand):
             'ADMIN': {
                 Appointment: ['add', 'change', 'delete', 'view'],
                 AppointmentSlot: ['add', 'change', 'delete', 'view'],
-                Prescription: ['add', 'change', 'delete', 'view'],
-                Referral: ['add', 'change', 'delete', 'view'],
-                User: ['add', 'change', 'delete', 'view', 'block', 'list']
+                Prescription: ['add', 'change', 'delete', 'view', 'list','search'],
+                Referral: ['add', 'change', 'delete', 'view', 'search', 'list'],
+                MedicalRecord: ['add', 'change', 'delete', 'view'],
+                User: ['add', 'change', 'delete', 'view', 'block', 'list'],
+                Article: ['add', 'change', 'delete', 'view', 'list'],
             },
             'DOCTOR': {
-                Appointment: ['add', 'change', 'delete', 'view'],
-                AppointmentSlot: ['add', 'change', 'view'],
-                Prescription: ['add', 'change', 'view'],
-                Referral: ['add', 'change', 'view']
+                Appointment: ['change', 'delete', 'view'],
+                AppointmentSlot: ['add', 'change', 'delete', 'view'],
+                Prescription: ['add', 'change', 'delete', 'view', 'list','search'],
+                Referral: ['add', 'change', 'delete', 'view', 'search', 'list'],
+                MedicalRecord: ['add', 'change', 'delete', 'view'],
+                User: ['debugSpecialization', 'searchPatient'],
+                Article: ['view'],
+                AppointmentNote: ['add', 'change', 'delete', 'view'],
             },
             'PATIENT': {
-                Appointment: ['view'],
-                Prescription: ['view']
+                Appointment: ['add', 'change', 'delete', 'view'],
+                AppointmentSlot: ['view'],
+                Prescription: ['view', 'list', 'search'],
+                Referral: ['view', 'search', 'list'],
+                MedicalRecord: ['view'],
+                Article: ['view'],
             }
         }
 

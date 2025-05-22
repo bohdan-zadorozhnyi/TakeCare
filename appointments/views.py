@@ -19,7 +19,7 @@ from django.utils import timezone
 User = get_user_model()
 
 @login_required()
-#@permission_required('appointments.add_appointment', raise_exception=True)
+@permission_required('appointments.add_appointmentslot', raise_exception=True)
 def CreateAppointment(request, only_ids = False):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
@@ -155,6 +155,7 @@ def group_appointments_by_date(appointments):
 
 
 @login_required()
+@permission_required('appointments.view_appointment', raise_exception=True)
 def GetAppointment(request):
     curr_user = request.user
     
@@ -203,7 +204,7 @@ def GetAppointment(request):
     return render(request, 'list.html', context)
 
 @login_required()
-#@permission_required('appointments.delete_appointment', raise_exception=True)
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     
@@ -237,7 +238,7 @@ def CancelAppointment(request, appointment_id):
         return render(request, 'not_found.html')
 
 @login_required
-#@permission_required('appointments.add_appointment', raise_exception=True)
+@permission_required('appointments.add_appointment', raise_exception=True)
 def BookAppointment(request, appointment_id, user_id_var = None):
     curr_user = request.user
 

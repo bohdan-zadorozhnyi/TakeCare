@@ -14,6 +14,12 @@ class Prescription(models.Model):
     def __str__(self):
         return f"Prescription for {self.patient.name}"
 
+    class Meta:
+        permissions = [
+            ("list_prescription", "Can list prescriptions"),
+            ("search_prescription", "Can search prescriptions"),
+        ]
+
 class PrescriptionMedication(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     prescription = models.ForeignKey(Prescription, related_name='medications', on_delete=models.CASCADE)
