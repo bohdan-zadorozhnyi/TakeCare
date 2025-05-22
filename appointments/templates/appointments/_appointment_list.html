@@ -25,17 +25,17 @@
                 <div class="table-responsive">
                     <div id="appointmentList" class="d-flex flex-column gap-3">
                         {% for appointment in appointments %}
-                            <div class="card p-3 shadow-sm rounded-3 list-group-item {% if appointment.appointment_slot.date.date < today %}bg-light{% endif %}">
+                            <div class="card p-3 shadow-sm rounded-3 list-group-item {% if appointment.appointment_slot.date < today %}bg-light{% endif %}">
                                 <div class="row align-items-center gy-2">
                                     <!-- Name -->
                                     <div class="col-12 col-md-3">
 
                                         {% if user.role == 'DOCTOR' %}
-                                        <strong class="d-md-none {% if appointment.appointment_slot.date.date < today %}text-muted{% endif %}">
+                                        <strong class="d-md-none {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">
                                                 Patient:
                                         </strong>
                                         {% endif %}
-                                        <div class="d-flex align-items-center {% if appointment.appointment_slot.date.date < today %}text-muted{% endif %}">
+                                        <div class="d-flex align-items-center {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">
                                             {% if user.role == 'PATIENT' %}
                                                 <img src="{{ appointment.appointment_slot.doctor.avatar.url }}" alt="Doctor Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">
                                                 Dr. {{ appointment.appointment_slot.doctor.name }}
@@ -47,7 +47,7 @@
                                     </div>
 
                                     <!-- Date & Time -->
-                                    <div class="col-12 col-md-2 {% if appointment.appointment_slot.date.date < today %}text-muted{% endif %}">
+                                    <div class="col-12 col-md-2 {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">
                                         <strong class="d-md-none">Date - Time:</strong>
                                         {{ appointment.appointment_slot.date|date:"d.m.y - H:i" }}
                                     </div>
@@ -55,15 +55,15 @@
 
 
                                     <!-- Location -->
-                                    <div class="col-12 col-md-2 {% if appointment.appointment_slot.date.date < today %}text-muted{% endif %}">
+                                    <div class="col-12 col-md-2 {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">
                                         <strong class="d-md-none">Location:</strong>
                                         {{ appointment.appointment_slot.location }}
                                     </div>
 
                                     <!-- Status -->
                                     <div class="col-12 col-md-2">
-                                        <strong class="d-md-none {% if appointment.appointment_slot.date.date < today %}text-muted{% endif %}">Status:</strong>
-                                        {% if appointment.appointment_slot.date.date < today %}
+                                        <strong class="d-md-none {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">Status:</strong>
+                                        {% if appointment.appointment_slot.date < today %}
                                             <span class="badge bg-secondary d-inline-block px-3 py-2 fw-bold fs-6">Past</span>
                                         {% else %}
                                             <span class="badge bg-success d-inline-block px-3 py-2 fw-bold fs-6">Upcoming</span>
@@ -74,7 +74,7 @@
                                     <div class="col-12 col-md-3 d-flex justify-content-between align-items-center">
 
                                         <a href="{% url "appointment_detail" appointment.id %}" class="btn btn-sm  btn-outline-light {% if appointment.appointment_slot.date.date > today %}w-50 bg-primary{% else %}w-100 bg-secondary{% endif %}">View</a>
-                                        {% if appointment.appointment_slot.date.date > today %}
+                                        {% if appointment.appointment_slot.date > today %}
                                         <a href="{% url 'appointments:cancel_appointment' appointment.appointment_slot.id %}" class="btn btn-sm bg-danger btn-outline-light w-50">Cancel</a>
                                         {% endif %}
                                     </div>
