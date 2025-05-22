@@ -34,12 +34,18 @@ def notification_test(request):
     """
     user = request.user
     message = request.data.get('message', 'This is a test notification')
+    notification_type = request.data.get('notification_type', NotificationType.SYSTEM)
     
+    # Validate notification type
+    valid_types = [choice[0] for choice in NotificationType.choices]
+    if notification_type not in valid_types:
+        notification_type = NotificationType.SYSTEM
+        
     # Create a test notification
     notification = NotificationService.send_notification(
         user_id=user.id,
         message=message,
-        notification_type=NotificationType.SYSTEM
+        notification_type=notification_type
     )
     
     if notification:

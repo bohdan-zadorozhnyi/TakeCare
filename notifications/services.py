@@ -71,7 +71,10 @@ class NotificationService:
                         "notification_type": notification_type,
                         "id": str(notification.id),
                         "date": notification.date.isoformat(),
-                        "status": notification.status
+                        "status": notification.status,
+                        "unread": notification.status == "UNREAD",
+                        "related_object_id": str(notification.object_id) if notification.object_id else None,
+                        "related_object_type": related_object_type
                     }
                 )
                 logger.info(f"Notification {notification.id} sent to user {user.id}")
@@ -192,7 +195,10 @@ class NotificationService:
                         "notification_type": notification.notification_type,
                         "id": str(notification.id),
                         "date": notification.date.isoformat(),
-                        "status": notification.status
+                        "status": notification.status,
+                        "unread": notification.status == "UNREAD",
+                        "related_object_id": str(notification.object_id) if notification.object_id else None,
+                        "related_object_type": notification.related_object_type
                     }
                 )
                 count += 1

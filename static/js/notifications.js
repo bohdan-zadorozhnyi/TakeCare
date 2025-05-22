@@ -137,8 +137,8 @@ class NotificationClient {
         // Create toast element
         const toastId = `toast-${Date.now()}`;
         const toast = document.createElement('div');
-        toast.className = `toast show border-start border-4 border-${bootstrapColor} shadow-sm`;
-        toast.style.backgroundColor = '#ffffff';
+        toast.className = `toast show border-start border-4 shadow-sm bg-white`;
+        toast.style.borderStartColor = `var(--bs-${bootstrapColor})`;
         toast.id = toastId;
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
@@ -146,7 +146,7 @@ class NotificationClient {
         
         // Set toast content
         toast.innerHTML = `
-            <div class="toast-header bg-${bootstrapColor} bg-opacity-15 text-${bootstrapColor}">
+            <div class="toast-header bg-${bootstrapColor} bg-opacity-10">
                 <span class="me-2 text-${bootstrapColor}">
                     ${getNotificationIcon(notificationType)}
                 </span>

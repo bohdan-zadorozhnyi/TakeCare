@@ -109,25 +109,25 @@
 
 <!-- Notification card template -->
 <script id="notification-template" type="text/template">
-    <div class="card notification-card ${status === 'UNREAD' ? 'unread' : ''}" data-id="${id}">
-        <div class="notification-card-header">
-            <span class="badge bg-${typeLabel === 'System' ? 'secondary' : 
-                     typeLabel === 'Appointment' ? 'success' : 
-                     typeLabel === 'Prescription' ? 'warning' : 
-                     typeLabel === 'Referral' ? 'info' : 
-                     typeLabel === 'Medical' ? 'danger' : 'primary'}">${typeLabel}</span>
-            <small class="text-muted">${formattedDate}</small>
-        </div>
-        <div class="notification-card-body">
-            <p class="mb-0">${message}</p>
-        </div>
-        <div class="notification-card-actions">
-            <button class="btn btn-sm btn-outline-secondary btn-mark-read" ${status === 'READ' ? 'disabled' : ''}>
-                <i class="fas fa-check me-1"></i>${status === 'READ' ? 'Read' : 'Mark as Read'}
-            </button>
-            <button class="btn btn-sm btn-outline-danger btn-delete">
-                <i class="fas fa-trash-alt me-1"></i>Delete
-            </button>
+    <div class="card notification-card mb-3 shadow-sm ${status === 'UNREAD' ? 'unread border-start border-4 border-primary' : ''}" data-id="${id}">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-${typeLabel === 'System' ? 'secondary' : 
+                         typeLabel === 'Appointment' ? 'success' : 
+                         typeLabel === 'Prescription' ? 'warning' : 
+                         typeLabel === 'Referral' ? 'info' : 
+                         typeLabel === 'Medical' ? 'danger' : 'primary'} me-2">${typeLabel}</span>
+                <small class="text-muted">${formattedDate}</small>
+            </div>
+            <p class="mb-3 fw-${status === 'UNREAD' ? 'bold' : 'normal'}">${message}</p>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-sm btn-outline-secondary me-2 btn-mark-read" ${status === 'READ' ? 'disabled' : ''}>
+                    <i class="fas fa-check me-1"></i>${status === 'READ' ? 'Read' : 'Mark as Read'}
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete">
+                    <i class="fas fa-trash-alt me-1"></i>Delete
+                </button>
+            </div>
         </div>
     </div>
 </script>

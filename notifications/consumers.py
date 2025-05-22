@@ -85,16 +85,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         notification_id = event.get("notification_id")
         notification_type = event.get("notification_type", "SYSTEM")
+        date = event.get("date", timezone.now().isoformat())
+        status = event.get("status", "UNREAD")
         
-        # Send message to WebSocket
+        # Send message to WebSocket with all required fields for frontend
         await self.send(text_data=json.dumps({
             'message': message,
             'notification_id': str(notification_id),
             'notification_type': notification_type,
-            'date': timezone.now().isoformat(),
-            'status': 'UNREAD',
+            'date': date,
+            'status': status,
             'type': notification_type,  # Add type field for compatibility with frontend
-            'id': str(notification_id)  # Ensure id field is present for frontend
+            'id': str(notification_id),  # Ensure id field is present for frontend
+            'unread': status == "UNREAD",  # Add unread field for dropdown template
+            'related_object_id': event.get("related_object_id"),
+            'related_object_type': event.get("related_object_type")
         }))
         
         # Mark the notification as delivered in the database
@@ -164,7 +169,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 "id": str(notification.id),
                 "type": notification.notification_type,
                 "date": notification.date.isoformat(),
-                "status": notification.status
+                "status": notification.status,
+                "unread": notification.status == "UNREAD",
+                "related_object_id": str(notification.object_id) if notification.object_id else None,
+                "related_object_type": notification.related_object_type
             })
         
         return notifications_data
