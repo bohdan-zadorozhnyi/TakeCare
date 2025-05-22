@@ -55,6 +55,7 @@
     .input-group-text {
         height: 37px !important;
     }
+
 </style>
 {% endblock %}
 
@@ -116,7 +117,7 @@
     
     <!-- Notification Card Container -->
     <div class="card mb-4">
-        <div class="notification-list card-body">
+        <div class="notification-list-page card-body">
             <!-- Notifications will be loaded here -->
         </div>
         
@@ -155,11 +156,7 @@
     <div class="card notification-card mb-3 shadow-sm ${status === 'UNREAD' ? 'unread border-start border-4 border-primary' : ''}" data-id="${id}">
         <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="badge bg-${typeLabel === 'System' ? 'secondary' : 
-                         typeLabel === 'Appointment' ? 'success' : 
-                         typeLabel === 'Prescription' ? 'warning' : 
-                         typeLabel === 'Referral' ? 'info' : 
-                         typeLabel === 'Medical' ? 'danger' : 'primary'} me-2">${typeLabel}</span>
+                <span class="badge bg-info me-2">${typeLabel}</span>
                 <small class="text-muted">${formattedDate}</small>
             </div>
             <p class="mb-3 fw-${status === 'UNREAD' ? 'bold' : 'normal'}">${message}</p>
@@ -179,7 +176,7 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const notificationList = document.querySelector('.notification-list');
+        const notificationList = document.querySelector('.notification-list-page');
         const notificationsLoading = document.getElementById('notifications-loading');
         const noNotifications = document.getElementById('no-notifications');
         const markAllReadBtn = document.getElementById('mark-all-read');
