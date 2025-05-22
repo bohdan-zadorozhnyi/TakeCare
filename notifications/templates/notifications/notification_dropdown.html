@@ -25,33 +25,6 @@
     </div>
 </div>
 
-<script id="notification-item-template" type="text/template">
-    <div class="notification-item list-group-item-action p-2 border-bottom ${unread ? 'bg-light' : ''}" data-id="${id}">
-        <div class="d-flex align-items-start">
-            <div class="notification-icon me-2 p-2 rounded-circle bg-${
-                type === 'APPOINTMENT' ? 'success' :
-                type === 'PRESCRIPTION' ? 'warning' :
-                type === 'REFERRAL' ? 'info' :
-                type === 'MEDICAL' ? 'danger' : 'secondary'
-            } bg-opacity-25 text-${
-                type === 'APPOINTMENT' ? 'success' :
-                type === 'PRESCRIPTION' ? 'warning' :
-                type === 'REFERRAL' ? 'info' :
-                type === 'MEDICAL' ? 'danger' : 'secondary'
-            }">
-                ${getNotificationIcon(type)}
-            </div>
-            <div class="flex-grow-1">
-                <p class="mb-1 text-truncate fw-${unread ? 'bold' : 'normal'}">${message}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted"><i class="far fa-clock me-1"></i>${formatTime(date)}</small>
-                    ${unread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
-                </div>
-            </div>
-        </div>
-    </div>
-</script>
-
 <script>
     // Utility functions for notification templates
     function getNotificationIcon(type) {
@@ -82,17 +55,80 @@
         return date.toLocaleDateString();
     }
     
+    function getTypeColor(type, property) {
+        switch (type) {
+            case 'APPOINTMENT': return 'success';
+            case 'PRESCRIPTION': return 'warning';
+            case 'REFERRAL': return 'info';
+            case 'MEDICAL': return 'danger';
+            default: return 'secondary';
+        }
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize the notification dropdown
         const notificationList = document.querySelector('.notification-list');
         const markAllReadBtn = document.querySelector('.mark-all-read');
-        const notificationTemplate = document.getElementById('notification-item-template').innerHTML;
         const notificationDropdown = document.getElementById('notificationDropdown');
         
         // Only fetch notifications when dropdown is opened
         notificationDropdown.addEventListener('shown.bs.dropdown', function() {
             fetchNotifications();
         });
+        
+        // Function to create a notification item DOM element
+        function createNotificationElement(notification) {
+            const notificationType = notification.notification_type || notification.type;
+            const isUnread = notification.status === 'UNREAD';
+            const typeColor = getTypeColor(notificationType);
+            
+            const element = document.createElement('div');
+            element.className = `notification-item list-group-item-action p-2 border-bottom ${isUnread ? 'bg-light' : ''}`;
+            element.setAttribute('data-id', notification.id);
+            
+            element.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <div class="notification-icon me-2 rounded-circle bg-${typeColor} bg-opacity-25 text-${typeColor} d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        ${getNotificationIcon(notificationType)}
+                    </div>
+                    <div class="flex-grow-1">
+                        <p class="mb-1 text-truncate fw-${isUnread ? 'bold' : 'normal'}">${notification.message}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="far fa-clock me-1"></i>${formatTime(notification.date)}</small>
+                            ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click handler to mark as read
+            element.addEventListener('click', function() {
+                markNotificationRead(notification.id);
+                
+                // If related object exists, navigate to it
+                if (notification.related_object_type && notification.related_object_id) {
+                    // Handle navigation based on object type
+                    let url;
+                    switch (notification.related_object_type) {
+                        case 'appointment':
+                            url = `/appointments/detail/${notification.related_object_id}/`;
+                            break;
+                        case 'prescription':
+                            url = `/prescriptions/detail/${notification.related_object_id}/`;
+                            break;
+                        case 'referral':
+                            url = `/referrals/detail/${notification.related_object_id}/`;
+                            break;
+                        default:
+                            url = '/notifications/';
+                    }
+                    
+                    window.location.href = url;
+                }
+            });
+            
+            return element;
+        }
         
         // Fetch recent notifications
         function fetchNotifications() {
@@ -122,47 +158,7 @@
                     
                     // Add notifications to dropdown
                     notifications.forEach(notification => {
-                        const notificationType = notification.notification_type || notification.type;
-                        const template = notificationTemplate
-                            .replace('${unread}', notification.status === 'UNREAD')
-                            .replace(/\${type}/g, notificationType)
-                            .replace('${id}', notification.id)
-                            .replace('${message}', notification.message)
-                            .replace('${getNotificationIcon(type)}', getNotificationIcon(notificationType))
-                            .replace('${formatTime(date)}', formatTime(notification.date));
-                            
-                        // Convert template string to HTML
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = template;
-                        const notificationItem = tempDiv.firstElementChild;
-                        
-                        // Add click handler to mark as read
-                        notificationItem.addEventListener('click', function() {
-                            markNotificationRead(notification.id);
-                            
-                            // If related object exists, navigate to it
-                            if (notification.related_object_type && notification.related_object_id) {
-                                // Handle navigation based on object type
-                                // This should be customized based on your URL structure
-                                let url;
-                                switch (notification.related_object_type) {
-                                    case 'appointment':
-                                        url = `/appointments/detail/${notification.related_object_id}/`;
-                                        break;
-                                    case 'prescription':
-                                        url = `/prescriptions/detail/${notification.related_object_id}/`;
-                                        break;
-                                    case 'referral':
-                                        url = `/referrals/detail/${notification.related_object_id}/`;
-                                        break;
-                                    default:
-                                        url = '/notifications/';
-                                }
-                                
-                                window.location.href = url;
-                            }
-                        });
-                        
+                        const notificationItem = createNotificationElement(notification);
                         notificationList.appendChild(notificationItem);
                     });
                 })
@@ -191,7 +187,15 @@
                     // Update UI on success
                     const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
                     if (item) {
-                        item.classList.remove('unread');
+                        item.classList.remove('bg-light');
+                        const textElement = item.querySelector('.fw-bold');
+                        if (textElement) {
+                            textElement.classList.replace('fw-bold', 'fw-normal');
+                        }
+                        const badge = item.querySelector('.badge');
+                        if (badge) {
+                            badge.remove();
+                        }
                     }
                     
                     // Update notification count
@@ -217,9 +221,17 @@
                 })
                 .then(response => {
                     if (response.ok) {
-                        // Remove unread class from all items
-                        document.querySelectorAll('.notification-item.unread').forEach(item => {
-                            item.classList.remove('unread');
+                        // Update all notifications to read state
+                        document.querySelectorAll('.notification-item.bg-light').forEach(item => {
+                            item.classList.remove('bg-light');
+                            const textElement = item.querySelector('.fw-bold');
+                            if (textElement) {
+                                textElement.classList.replace('fw-bold', 'fw-normal');
+                            }
+                            const badge = item.querySelector('.badge');
+                            if (badge) {
+                                badge.remove();
+                            }
                         });
                         
                         // Reset notification count
@@ -240,6 +252,8 @@
             
             if (change) {
                 count += change;
+                if (count < 0) count = 0; // Don't allow negative counts
+                updateCountDisplay();
             } else {
                 // Fetch count from API
                 fetch('/api/v1/notifications/unread-count/')
@@ -254,8 +268,6 @@
                 return;
             }
             
-            updateCountDisplay();
-            
             function updateCountDisplay() {
                 countElem.textContent = count;
                 countElem.style.display = count > 0 ? 'inline-block' : 'none';
@@ -264,7 +276,22 @@
         
         // Get CSRF token
         function getCsrfToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            // Try to get from cookies first
+            let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            // If not found in the form, try cookies
+            if (!csrfToken) {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        csrfToken = value;
+                        break;
+                    }
+                }
+            }
+            
+            return csrfToken || '';
         }
         
         // Initial count load
