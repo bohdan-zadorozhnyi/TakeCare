@@ -6,19 +6,46 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
 <style>
-    /* Fix for black search box */
-    #notification-search {
-        background-color: #fff;
-        color: #333;
-        border: 1px solid #ced4da;
-    }
-    
     /* Ensure proper notification container styling */
     .notifications-container {
         background-color: #fff;
         padding: 20px;
         border-radius: 5px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Search box styling */
+    .notification-search-container {
+        position: relative;
+    }
+    
+    #notification-search {
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #ced4da;
+        padding-right: 40px; /* Make room for the icon */
+        border-radius: 4px;
+    }
+    
+    .notification-search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+    
+    /* Style active filters */
+    .dropdown-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    /* Notification cards styling */
+    .notification-card.unread {
+        border-left: 4px solid #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.05);
     }
 </style>
 {% endblock %}
@@ -29,9 +56,11 @@
     
     <div class="notification-filters row g-3 mb-4">
         <div class="col-12 col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" id="notification-search" placeholder="Search notifications...">
+            <div class="notification-search-container">
+                <input type="text" class="form-control shadow-sm" id="notification-search" placeholder="Search notifications...">
+                <div class="notification-search-icon">
+                    <i class="fas fa-search"></i>
+                </div>
             </div>
         </div>
         
@@ -199,13 +228,17 @@
                     console.log('Notification API response:', data);
                     notificationsLoading.style.display = 'none';
                     
-                    if (!data.results || data.results.length === 0) {
+                    // Handle both paginated and non-paginated responses
+                    const results = data.results || data;
+                    const count = data.count || (Array.isArray(results) ? results.length : 0);
+                    
+                    if (!results || results.length === 0) {
                         noNotifications.classList.remove('d-none');
                         return;
                     }
                     
                     // Display notifications
-                    data.results.forEach(notification => {
+                    results.forEach(notification => {
                         const notificationType = getNotificationType(notification);
                         const rendered = notificationTemplate
                             .replace(/\${id}/g, notification.id)
@@ -263,11 +296,14 @@
         function updatePagination(data) {
             pagination.innerHTML = '';
             
-            if (!data.count || data.count <= 10) {
+            const count = data.count || 0;
+            const totalPages = data.total_pages || Math.ceil(count / 10);
+            
+            if (count <= 10) {
                 return;
             }
             
-            const pageCount = Math.ceil(data.count / 10);
+            const pageCount = totalPages;
             
             // Create simple but effective pagination
             // First/Previous

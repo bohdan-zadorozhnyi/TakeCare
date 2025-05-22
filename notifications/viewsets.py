@@ -44,13 +44,40 @@ class NotificationViewSet(viewsets.ModelViewSet):
         if unread and unread.lower() == 'true':
             queryset = queryset.filter(status=NotificationStatus.UNREAD)
             
+        # Search by message if specified
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(message__icontains=search)
+            
         # Limit the number of notifications if specified
         limit = request.query_params.get('limit', None)
         if limit and limit.isdigit():
             queryset = queryset[:int(limit)]
+            page = 1
+            total_pages = 1
+            count = len(queryset)
+            results = self.get_serializer(queryset, many=True).data
+        else:
+            # Use pagination for the full list view
+            from rest_framework.pagination import PageNumberPagination
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            page_queryset = paginator.paginate_queryset(queryset, request)
+            results = self.get_serializer(page_queryset, many=True).data
+            count = queryset.count()
+            page = request.query_params.get('page', 1)
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
+            total_pages = (count + paginator.page_size - 1) // paginator.page_size  # Ceiling division
             
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'results': results,
+            'count': count,
+            'page': page,
+            'total_pages': total_pages
+        })
     
     @action(detail=True, methods=['post'], url_path='mark-read')
     def mark_read(self, request, pk=None):
