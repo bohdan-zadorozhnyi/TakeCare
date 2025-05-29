@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -21,6 +21,7 @@ User = get_user_model()
 
 # Adding debug view for doctor specialization
 @login_required
+@permission_required('accounts.debugSpecialization_user', raise_exception=True)
 def debug_specialization(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if user.role != 'DOCTOR':
@@ -46,7 +47,7 @@ def login_view(request):
             user = backend.authenticate(request=request, username=email, password=password)
             print(f"DEBUG: Found user - {user}")
             if user is not None:
-                login(request, user)
+                login(request, user, backend='TakeCare.backends.EmailAuthBackend')
                 return redirect('core:home')
             else:
                 messages.error(request, "Email or Password is incorrect.")
@@ -160,15 +161,15 @@ def edit_profile(request, user_id):
 def dashboard_view(request):
     user: User = request.user
 
-    today = timezone.now()
+    today = datetime.now().date
     if user.role == 'PATIENT':
         upcoming_appointments = Appointment.objects.filter(
             patient=user,
-            appointment_slot__date__gte=timezone.now()
+            appointment_slot__date__gte=datetime.now()
         ).order_by('appointment_slot__date')
         active_prescriptions = Prescription.objects.filter(
             patient=user,
-            expiration_date__gte=timezone.now()
+            expiration_date__gte=datetime.now()
         ).order_by('-issue_date')
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': upcoming_appointments,

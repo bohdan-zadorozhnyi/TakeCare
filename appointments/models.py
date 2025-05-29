@@ -16,7 +16,7 @@ class AppointmentSlot(models.Model):
     doctor = models.ForeignKey(User, related_name="appointments_as_doctor", limit_choices_to={'role': 'DOCTOR'}, on_delete=models.CASCADE)
     location = models.CharField(max_length=255)
     description = models.TextField()
-    date = models.DateTimeField()
+    date = models.DateTimeField(db_column='date', null=False, blank=False)
     duration = models.IntegerField()
     status = models.CharField(choices=AppointmentStatus.choices)
     referal_type = models.CharField(choices=DoctorCategory.choices, null=True, blank=True)
