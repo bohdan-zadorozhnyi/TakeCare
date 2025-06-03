@@ -1,5 +1,21 @@
 from django.db import models
 from appointments.models import Appointment
+from referrals.models import DoctorCategory
+
+class SpecializationPrice(models.Model):
+    specialization = models.CharField(
+        max_length=50,
+        choices=DoctorCategory.choices,
+        unique=True
+    )
+    price = models.IntegerField(default=10000)
+
+    def __str__(self):
+        return f"{self.get_specialization_display()}: {self.price} cents"
+
+    @property
+    def formatted_price(self):
+        return f"{self.price / 100:.2f}"
 
 class Payment(models.Model):
     appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='payment')

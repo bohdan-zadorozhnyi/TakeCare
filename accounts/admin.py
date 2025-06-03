@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, DoctorProfile, PatientProfile, AdminProfile
 from django.utils.translation import gettext_lazy as _
 from .forms import AdminCreateUserForm
 
@@ -29,3 +29,21 @@ class UserAdmin(BaseUserAdmin):
                 'birth_date', 'gender', 'personal_id', 'role', 'avatar',
                 'password1', 'password2',),}),
     )
+
+@admin.register(DoctorProfile)
+class DoctorProfileAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'specialization', 'license_uri')
+    search_fields = ('user__name', 'specialization')
+    list_filter = ('specialization',)
+
+
+@admin.register(PatientProfile)
+class PatientProfileAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user')
+    search_fields = ('user__name', 'user__email')
+
+
+@admin.register(AdminProfile)
+class AdminProfileAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user')
+    search_fields = ('user__name', 'user__email')

@@ -1,14 +1,19 @@
 import stripe
 from django.conf import settings
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import get_user_model
 from django.views import View
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from django.contrib import messages
+from django.forms import modelformset_factory
 from appointments.models import Appointment
-from .models import Payment
+from referrals.models import DoctorCategory
+from .models import Payment, SpecializationPrice
+from .forms import SpecializationPriceFormSet
 
-
+User = get_user_model()
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -23,10 +28,10 @@ def create_checkout_session(request):
     if request.method == 'POST':
         appointment_id = request.GET.get("appointment_id")
         appointment = get_object_or_404(Appointment, id=appointment_id)
-        amount_cents = 10000
 
         try:
             payment = appointment.payment
+            amount_cents = payment.price
         except Payment.DoesNotExist:
             return JsonResponse({'error': 'Payment not found for this appointment'}, status=404)
 
@@ -94,3 +99,28 @@ def webhook_view(request):
                 appointment.save()
 
     return HttpResponse(status=200)
+
+
+def is_admin(user):
+    return user.is_authenticated and user.role == 'ADMIN'
+
+@login_required
+@user_passes_test(is_admin)
+def view_prices(request):
+    prices = SpecializationPrice.objects.all()
+    return render(request, 'payments/view_prices.html', {'prices': prices})
+
+@login_required
+@user_passes_test(is_admin)
+def edit_prices(request):
+    if request.method == 'POST':
+        formset = SpecializationPriceFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect('payments:prices')
+        else:
+            print(formset.errors)
+    else:
+        formset = SpecializationPriceFormSet()
+
+    return render(request, 'payments/edit_prices.html', {'formset': formset})

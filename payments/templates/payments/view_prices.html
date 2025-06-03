@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Prices
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <div class="card shadow-sm border-0 bg-white rounded-4 mx-auto" style="max-width: 700px;">
+        <div class="card-body">
+
+            <h2 class="mb-4 text-center">Current Prices per Category</h2>
+            <div class="table-responsive rounded-3 overflow-hidden">
+                <table class="table table-sm align-middle mb-0 table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="rounded-top-start">
+                                <i class="fas fa-stethoscope me-2 text-primary"></i>Specialization
+                            </th>
+                            <th scope="col" class="rounded-top-end">
+                                <i class="fas fa-money-bill-wave me-2 text-success"></i>Price (PLN)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for price in prices %}
+                        <tr>
+                            <td>{{ price.get_specialization_display }}</td>
+                            <td class="fw-semibold text-dark">{{ price.formatted_price }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">No prices found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        <div class="text-center mt-2 mb-1">
+        <a href="{% url 'payments:edit_prices' %}" class="btn btn-outline-primary rounded-pill">
+            <i class="fas fa-edit me-2"></i>Edit Prices
+        </a>
+        </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
