@@ -1,3 +1,5 @@
+from django.utils import timezone
+from datetime import timedelta
 import stripe
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -108,7 +110,25 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def view_prices(request):
     prices = SpecializationPrice.objects.all()
-    return render(request, 'payments/view_prices.html', {'prices': prices})
+
+    # Get appointments with no associated payment or with status != succeeded
+    unpaid_appointments = Appointment.objects.filter(
+        payment__status__in=['pending', 'failed']
+    )
+
+    # Paid appointments within the last 30 days
+    one_month_ago = timezone.now() - timedelta(days=30)
+    recent_paid_appointments = Appointment.objects.filter(
+        payment__status='succeeded',
+        payment__created_at__gte=one_month_ago
+    )
+
+    context = {
+        'prices': prices,
+        'unpaid_appointments': unpaid_appointments,
+        'recent_paid_appointments': recent_paid_appointments,
+    }
+    return render(request, 'payments/view_prices.html', context)
 
 @login_required
 @user_passes_test(is_admin)
@@ -124,3 +144,22 @@ def edit_prices(request):
         formset = SpecializationPriceFormSet()
 
     return render(request, 'payments/edit_prices.html', {'formset': formset})
+
+@login_required
+@user_passes_test(is_admin)
+def mark_as_paid(request, appointment_id):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    if not appointment.payment:
+        # Optionally create a Payment object if it doesn't exist
+        appointment.payment = Payment.objects.create(
+            appointment=appointment,
+            status="succeeded",
+            amount=appointment.price if hasattr(appointment, "price") else 0  # adapt if needed
+        )
+    else:
+        appointment.payment.status = "succeeded"
+        appointment.payment.save()
+
+    messages.success(request, "Payment marked as paid.")
+    return redirect(request.META.get("HTTP_REFERER", "home"))

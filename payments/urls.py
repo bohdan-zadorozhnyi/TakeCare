@@ -11,5 +11,5 @@ urlpatterns = [
 
     path('prices/', views.view_prices, name='prices'),
     path('prices/edit/', views.edit_prices, name='edit_prices'),
-
+    path('mark-as-paid/<uuid:appointment_id>/', views.mark_as_paid, name='mark_as_paid'),
 ]

@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Prices
+    View Payments
 {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
 
+    <!-- Prices Card -->
     <div class="card shadow-sm border-0 bg-white rounded-4 mx-auto" style="max-width: 700px;">
         <div class="card-body">
-
             <h2 class="mb-4 text-center">Current Prices per Category</h2>
             <div class="table-responsive rounded-3 overflow-hidden">
                 <table class="table table-sm align-middle mb-0 table-bordered">
@@ -38,13 +38,15 @@
                 </table>
             </div>
 
-        <div class="text-center mt-2 mb-1">
-        <a href="{% url 'payments:edit_prices' %}" class="btn btn-outline-primary rounded-pill">
-            <i class="fas fa-edit me-2"></i>Edit Prices
-        </a>
-        </div>
-
+            <div class="text-center mt-2 mb-1">
+                <a href="{% url 'payments:edit_prices' %}" class="btn btn-outline-primary rounded-pill">
+                    <i class="fas fa-edit me-2"></i>Edit Prices
+                </a>
+            </div>
         </div>
     </div>
+
+    <!-- Appointment Lists -->
+    {% include 'appointments/_appointment_list.html' with title="Unpaid Appointments" appointments=unpaid_appointments %}
 </div>
 {% endblock %}
