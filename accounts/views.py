@@ -13,11 +13,14 @@ from .forms import CustomLoginForm, CustomUserCreationForm, EditUserProfileForm,
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.db.models import Q
+from datetime import timedelta
 from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
 from django.utils import timezone
 from referrals.models import DoctorCategory
 User = get_user_model()
+from payments.models import Payment
+from django.db import models
 
 # Adding debug view for doctor specialization
 @login_required
@@ -186,10 +189,17 @@ def dashboard_view(request):
         total_users = User.objects.count()
         total_doctors = User.objects.filter(role='DOCTOR').count()
 
+        # Payment stats
+        one_month_ago = timezone.now() - timedelta(days=30)
+        payments_last_month = Payment.objects.filter(created_at__gte=one_month_ago, status='succeeded')
+        total_paid = payments_last_month.aggregate(total=models.Sum('price'))['total'] or 0
+        count_paid = payments_last_month.count()
 
         return render(request, 'accounts/dashboard/admin_dashboard.html', {
             'total_users': total_users,
             'total_doctors': total_doctors,
+            'count_paid': count_paid,
+            'total_paid': total_paid / 100,
         })
 
     return redirect('core:home')
