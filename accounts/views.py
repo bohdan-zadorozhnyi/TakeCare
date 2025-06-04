@@ -13,15 +13,18 @@ from .forms import CustomLoginForm, CustomUserCreationForm, EditUserProfileForm,
 from TakeCare.backends import EmailAuthBackend
 from django.contrib.auth.views import PasswordResetView
 from django.db.models import Q
+from datetime import timedelta
 from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
 from django.utils import timezone
 from referrals.models import DoctorCategory
 User = get_user_model()
+from payments.models import Payment
+from django.db import models
 
 # Adding debug view for doctor specialization
 @login_required
-@permission_required('accounts.debugSpecialization_user', raise_exception=True)
+#@permission_required('accounts.debugSpecialization_user', raise_exception=True)
 def debug_specialization(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if user.role != 'DOCTOR':
@@ -114,7 +117,7 @@ def view_profile(request, user_id):
     })
 
 @login_required
-@permission_required('accounts.add_user', raise_exception=True)
+#@permission_required('accounts.add_user', raise_exception=True)
 def admin_create_user_view(request):
     user: User = request.user
     if user.role != 'ADMIN':
@@ -171,10 +174,22 @@ def dashboard_view(request):
             patient=user,
             expiration_date__gte=datetime.now()
         ).order_by('-issue_date')
+
+        # Total unpaid appointments
+        unpaid_appointments = Appointment.objects.filter(
+            patient=user,
+            payment__status='pending'
+        ).select_related('payment')
+
+        total_unpaid = unpaid_appointments.aggregate(
+            total=models.Sum('payment__price')
+        )['total'] or 0
+
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': upcoming_appointments,
             'prescriptions': active_prescriptions,
             'today': today,
+            'total_unpaid': total_unpaid / 100,
         })
     elif user.role == 'DOCTOR':
         appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
@@ -187,16 +202,23 @@ def dashboard_view(request):
         total_users = User.objects.count()
         total_doctors = User.objects.filter(role='DOCTOR').count()
 
+        # Payment stats
+        one_month_ago = timezone.now() - timedelta(days=30)
+        payments_last_month = Payment.objects.filter(created_at__gte=one_month_ago, status='succeeded')
+        total_paid = payments_last_month.aggregate(total=models.Sum('price'))['total'] or 0
+        count_paid = payments_last_month.count()
 
         return render(request, 'accounts/dashboard/admin_dashboard.html', {
             'total_users': total_users,
             'total_doctors': total_doctors,
+            'count_paid': count_paid,
+            'total_paid': total_paid / 100,
         })
 
     return redirect('core:home')
 
 @login_required
-@permission_required('accounts.list_user', raise_exception=True)
+#permission_required('accounts.list_user', raise_exception=True)
 def users_list_view(request):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -221,7 +243,7 @@ def users_list_view(request):
     })
 
 @login_required
-@permission_required('accounts.block_user', raise_exception=True)
+#@permission_required('accounts.block_user', raise_exception=True)
 def admin_block_unblock_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -237,7 +259,7 @@ def admin_block_unblock_user(request, user_id):
     return redirect('accounts:users_list')
 
 @login_required
-@permission_required('accounts.delete_user', raise_exception=True)
+#@permission_required('accounts.delete_user', raise_exception=True)
 def admin_delete_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()

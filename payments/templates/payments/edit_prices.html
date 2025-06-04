@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Edit Prices
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <div class="card shadow-sm border-0 bg-white rounded-4 mx-auto" style="max-width: 700px;">
+        <div class="card-body">
+
+            <h2 class="mb-4 text-center">Edit Prices per Category</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                <div class="table-responsive rounded-3 overflow-hidden">
+                    <table class="table table-sm align-middle mb-0 table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="rounded-top-start">
+                                    <i class="fas fa-stethoscope me-2 text-primary"></i>Specialization
+                                </th>
+                                <th scope="col" class="rounded-top-end">
+                                    <i class="fas fa-money-bill-wave me-2 text-success"></i>Price (PLN)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in formset %}
+    {{ form.id }}  {# Hidden #}
+    <tr>
+        <td>
+            <div style="display: none">
+                {{ form.specialization }}
+            </div>
+            {{ form.instance.get_specialization_display }}
+        </td>
+        <td class="fw-semibold">
+            <div class="input-group input-group-sm">
+                {{ form.price}}
+                <span class="input-group-text bg-light text-muted">PLN</span>
+            </div>
+            {% if form.price.errors %}
+                <div class="text-danger small mt-1">
+                    {{ form.price.errors.0 }}
+                </div>
+            {% endif %}
+        </td>
+    </tr>
+{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  document.querySelectorAll('.price-input').forEach(input => {
+    let initialVal = input.value.trim();
+    if (initialVal) {
+      let num = parseInt(initialVal, 10);
+      if (!isNaN(num)) {
+        input.value = (num / 100).toFixed(2);
+      }
+    }
+  });
+
+  form.addEventListener('submit', () => {
+    document.querySelectorAll('.price-input').forEach(input => {
+      let val = input.value.trim();
+      if (val) {
+        let num = parseFloat(val);
+        if (!isNaN(num)) {
+          input.value = Math.round(num * 100);
+        }
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

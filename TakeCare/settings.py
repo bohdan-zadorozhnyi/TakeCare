@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'medical',
     'core',
     'chat',
-    'calendar_app'
+    'calendar_app',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -167,3 +168,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STRIPE_SECRET_KEY = ""
+STRIPE_PUBLISHABLE_KEY = ""
+STRIPE_WEBHOOK_SECRET = ""
