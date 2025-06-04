@@ -16,4 +16,5 @@ urlpatterns = [
     path('calendar/', include('calendar_app.urls')),
     path('articles/', include('articles.urls')),
     path('notifications/', include('notifications.urls')),
+    path('payments/', include('payments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -169,3 +169,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+STRIPE_SECRET_KEY = ""
+STRIPE_PUBLISHABLE_KEY = ""
+STRIPE_WEBHOOK_SECRET = ""

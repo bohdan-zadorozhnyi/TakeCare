@@ -2,6 +2,21 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from appointments.models import Appointment
 from .models import Payment, SpecializationPrice
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
+from referrals.models import DoctorCategory
+
+@receiver(post_migrate)
+def create_specialization_prices(sender, **kwargs):
+    if sender.name != 'payments':
+        return
+
+    for spec_value, spec_label in DoctorCategory.choices:
+        SpecializationPrice.objects.get_or_create(
+            specialization=spec_value,
+            defaults={'price': 10000}
+        )
+
 
 @receiver(post_save, sender=Appointment)
 def create_payment_for_appointment(sender, instance, created, **kwargs):

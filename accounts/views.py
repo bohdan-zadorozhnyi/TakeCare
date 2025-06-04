@@ -24,7 +24,7 @@ from django.db import models
 
 # Adding debug view for doctor specialization
 @login_required
-@permission_required('accounts.debugSpecialization_user', raise_exception=True)
+#@permission_required('accounts.debugSpecialization_user', raise_exception=True)
 def debug_specialization(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if user.role != 'DOCTOR':
@@ -117,7 +117,7 @@ def view_profile(request, user_id):
     })
 
 @login_required
-@permission_required('accounts.add_user', raise_exception=True)
+#@permission_required('accounts.add_user', raise_exception=True)
 def admin_create_user_view(request):
     user: User = request.user
     if user.role != 'ADMIN':
@@ -218,7 +218,7 @@ def dashboard_view(request):
     return redirect('core:home')
 
 @login_required
-@permission_required('accounts.list_user', raise_exception=True)
+#permission_required('accounts.list_user', raise_exception=True)
 def users_list_view(request):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -243,7 +243,7 @@ def users_list_view(request):
     })
 
 @login_required
-@permission_required('accounts.block_user', raise_exception=True)
+#@permission_required('accounts.block_user', raise_exception=True)
 def admin_block_unblock_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
@@ -259,7 +259,7 @@ def admin_block_unblock_user(request, user_id):
     return redirect('accounts:users_list')
 
 @login_required
-@permission_required('accounts.delete_user', raise_exception=True)
+#@permission_required('accounts.delete_user', raise_exception=True)
 def admin_delete_user(request, user_id):
     if request.user.role != 'ADMIN':
         return HttpResponseForbidden()
