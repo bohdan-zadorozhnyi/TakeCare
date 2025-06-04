@@ -17,7 +17,11 @@
                 {% if request.user.role == 'PATIENT' %}
                     Appointment with Dr. {{ appointment.appointment_slot.doctor.name }}
                 {% else %}
-                    Appointment with {{ appointment.patient.name }}
+                    {% if request.user.role == 'DOCTOR' %}
+                        Appointment with {{ appointment.patient.name }}
+                    {% else %}
+                        Appointment of {{ appointment.patient.name }} with Dr. {{ appointment.appointment_slot.doctor.name }}
+                    {% endif %}
                 {% endif %}
             </h1>
             <p class="appointment-subtitle">{{ appointment.appointment_slot.date|date:"l, F j, Y • g:i A" }}</p>
@@ -58,6 +62,9 @@
                 <i class="fas fa-exclamation-circle me-2"></i>
                 Payment Status: <strong>Unpaid</strong>
             </div>
+            <div id="payment-amount" class="alert alert-info d-inline-block px-4 py-2 rounded shadow-sm mb-2">
+                Ammount to Pay: <strong data-price="{{ appointment.payment.price }}"></strong> PLN
+            </div>
             {% if user.role == 'PATIENT' %}
             <form action="{% url 'payments:create_checkout_session' %}?appointment_id={{ appointment.id }}" method="POST" class="d-inline">
                 {% csrf_token %}
@@ -69,7 +76,8 @@
             {% if user.role == 'ADMIN' %}
                 <form action="{% url 'payments:mark_as_paid' appointment.id %}" method="POST" class="d-inline ms-2">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success shadow-sm">
+                    <button type="submit" class="btn btn-success shadow-sm"
+                    onclick="return confirm('Are you sure you want to mark this appointment as paid?');">
                         <i class="fas fa-check-circle me-1"></i> Mark as Paid
                     </button>
                 </form>
@@ -144,7 +152,8 @@
         {% else %}
             <p>No notes have been added yet.</p>
         {% endif %}
-        
+
+        {% if user.role == 'DOCTOR' %}
         <div class="add-note-form">
             <h4>Add a Note</h4>
             <form action="{% url 'add_appointment_note' appointment.id %}" method="post">
@@ -153,6 +162,7 @@
                 <button type="submit" class="btn btn-primary btn-block">Add Note</button>
             </form>
         </div>
+        {% endif %}
     </div>
     
     <!-- Chat section if chat room exists -->
@@ -180,4 +190,13 @@
     const appointmentDuration = {{ appointment.appointment_slot.duration }};
 </script>
 <script src="{% static 'js/appointment-detail.js' %}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const priceElement = document.querySelector('#payment-amount strong');
+    const rawPrice = parseInt(priceElement.dataset.price, 10); // price in groszy
+    const formattedPrice = (rawPrice / 100).toFixed(2);
+    priceElement.textContent = formattedPrice;
+  });
+</script>
+
 {% endblock %}
