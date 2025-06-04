@@ -173,10 +173,22 @@ def dashboard_view(request):
             patient=user,
             expiration_date__gte=timezone.now()
         ).order_by('-issue_date')
+
+        # Total unpaid appointments
+        unpaid_appointments = Appointment.objects.filter(
+            patient=user,
+            payment__status='pending'
+        ).select_related('payment')
+
+        total_unpaid = unpaid_appointments.aggregate(
+            total=models.Sum('payment__price')
+        )['total'] or 0
+
         return render(request, 'accounts/dashboard/patient_dashboard.html', {
             'appointments': upcoming_appointments,
             'prescriptions': active_prescriptions,
             'today': today,
+            'total_unpaid': total_unpaid / 100,
         })
     elif user.role == 'DOCTOR':
         appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
