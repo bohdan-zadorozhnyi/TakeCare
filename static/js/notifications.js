@@ -191,7 +191,10 @@ class NotificationClient {
                 'APPOINTMENT': 'Appointment',
                 'PRESCRIPTION': 'Prescription',
                 'REFERRAL': 'Referral',
-                'MEDICAL': 'Medical'
+                'MEDICAL': 'Medical',
+                'MEDICAL_RECORD': 'Medical Record',
+                'ISSUE': 'Issue',
+                'MESSAGE': 'Message'
             };
             return map[type] || 'Notification';
         }
@@ -202,7 +205,10 @@ class NotificationClient {
                 'APPOINTMENT': '<i class="far fa-calendar-check"></i>',
                 'PRESCRIPTION': '<i class="fas fa-prescription"></i>',
                 'REFERRAL': '<i class="fas fa-exchange-alt"></i>',
-                'MEDICAL': '<i class="fas fa-heartbeat"></i>'
+                'MEDICAL': '<i class="fas fa-heartbeat"></i>',
+                'MEDICAL_RECORD': '<i class="fas fa-file-medical"></i>',
+                'ISSUE': '<i class="fas fa-exclamation-triangle"></i>',
+                'MESSAGE': '<i class="fas fa-comment-dots"></i>'
             };
             return icons[type] || icons['SYSTEM'];
         }

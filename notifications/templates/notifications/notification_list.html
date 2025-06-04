@@ -87,6 +87,9 @@
                     <li><a class="dropdown-item filter-type" data-type="PRESCRIPTION" href="#">Prescriptions</a></li>
                     <li><a class="dropdown-item filter-type" data-type="REFERRAL" href="#">Referrals</a></li>
                     <li><a class="dropdown-item filter-type" data-type="MEDICAL" href="#">Medical</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MEDICAL_RECORD" href="#">Medical Records</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="ISSUE" href="#">Issues</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MESSAGE" href="#">Messages</a></li>
                     <li><a class="dropdown-item filter-type" data-type="SYSTEM" href="#">System</a></li>
                 </ul>
             </div>
@@ -202,7 +205,10 @@
                 'APPOINTMENT': 'Appointment',
                 'PRESCRIPTION': 'Prescription',
                 'REFERRAL': 'Referral',
-                'MEDICAL': 'Medical'
+                'MEDICAL': 'Medical',
+                'MEDICAL_RECORD': 'Medical Record',
+                'ISSUE': 'Issue',
+                'MESSAGE': 'Message'
             };
             return labels[type] || type;
         }

@@ -33,7 +33,10 @@
             'APPOINTMENT': '<i class="far fa-calendar-check"></i>',
             'PRESCRIPTION': '<i class="fas fa-prescription"></i>',
             'REFERRAL': '<i class="fas fa-exchange-alt"></i>',
-            'MEDICAL': '<i class="fas fa-heartbeat"></i>'
+            'MEDICAL': '<i class="fas fa-heartbeat"></i>',
+            'MEDICAL_RECORD': '<i class="fas fa-file-medical"></i>',
+            'ISSUE': '<i class="fas fa-exclamation-triangle"></i>',
+            'MESSAGE': '<i class="fas fa-comment-dots"></i>'
         };
         return icons[type] || icons['SYSTEM'];
     }
@@ -61,6 +64,9 @@
             case 'PRESCRIPTION': return 'warning';
             case 'REFERRAL': return 'info';
             case 'MEDICAL': return 'danger';
+            case 'MEDICAL_RECORD': return 'danger';
+            case 'ISSUE': return 'dark';
+            case 'MESSAGE': return 'primary';
             default: return 'secondary';
         }
     }

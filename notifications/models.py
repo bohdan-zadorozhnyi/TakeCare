@@ -37,6 +37,9 @@ class NotificationType(models.TextChoices):
     APPOINTMENT = 'APPOINTMENT', 'Appointment'
     SYSTEM = 'SYSTEM', 'System'
     MEDICAL = 'MEDICAL', 'Medical'
+    ISSUE = 'ISSUE', 'Issue'
+    MESSAGE = 'MESSAGE', 'Message'
+    MEDICAL_RECORD = 'MEDICAL_RECORD', 'Medical Record'
 
 class NotificationStatus(models.TextChoices):
     UNREAD = 'UNREAD', 'Unread'
