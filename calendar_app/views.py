@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
 from django.urls import reverse
@@ -71,8 +71,8 @@ def get_appointments_json(request):
             appointments_data.append({
                 'id': str(appointment.id),
                 'title': f"Appointment with Dr. {slot.doctor.name}",
-                'start': slot.date.isoformat(),
-                'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                'start': slot.date,
+                'end': (slot.date + timedelta(minutes=slot.duration)).isoformat(),
                 'location': slot.location,
                 'description': slot.description,
                 'status': slot.status,
@@ -86,8 +86,9 @@ def get_appointments_json(request):
         # Get all appointment slots for this doctor
         slots = AppointmentSlot.objects.filter(
             doctor=user,
-            date__range=[start_date, end_date]
+            date__range=[start_date, end_date],
         )
+        slots = slots.exclude(status='Cancelled')
         
         for slot in slots:
             # Try to get the related appointment if it exists
@@ -98,8 +99,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(appointment.id),
                         'title': f"Appointment with {appointment.patient.name}",
-                        'start': slot.date.isoformat(),
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                        'start': slot.date,
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
@@ -113,8 +114,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(slot.id),
                         'title': "Available Slot",
-                        'start': slot.date.isoformat(),
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
+                        'start': slot.date,
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
@@ -149,6 +150,7 @@ def get_appointments_json(request):
     return JsonResponse(appointments_data, safe=False)
 
 @login_required
+@permission_required('appointments.view_appointment', raise_exception=True)
 def appointment_detail(request, appointment_id):
     """View for appointment details when a user clicks on an appointment in the calendar"""
     appointment = get_object_or_404(
@@ -178,20 +180,21 @@ def appointment_detail(request, appointment_id):
         ).first()
     except:
         pass
-
+    appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
     context = {
         'appointment': appointment,
         'notes': notes,
         'chat_room': chat_room,
         'can_cancel': appointment.appointment_slot.status == 'Booked' and 
-                    appointment.appointment_slot.date > timezone.now(),
+                    appointment.appointment_slot.date > timezone.now() + timedelta(hours=2),
         'can_reschedule': appointment.appointment_slot.status == 'Booked' and 
-                        appointment.appointment_slot.date > timezone.now(),
+                        appointment.appointment_slot.date > timezone.now() + timedelta(hours=2),
     }
     
     return render(request, 'calendar_app/appointment_detail.html', context)
 
 @login_required
+@permission_required('appointments.add_appointmentnote', raise_exception=True)
 def add_appointment_note(request, appointment_id):
     """Add a note to an appointment"""
     if request.method == 'POST':
@@ -217,6 +220,7 @@ def add_appointment_note(request, appointment_id):
     return HttpResponseBadRequest("Invalid request method")
 
 @login_required
+@permission_required('appointments.view_appointmentslot', raise_exception=True)
 def appointment_slot_detail(request, slot_id):
     """View for appointment slot details for doctors"""
     slot = get_object_or_404(
@@ -239,6 +243,7 @@ def appointment_slot_detail(request, slot_id):
     return render(request, 'calendar_app/appointment_slot_detail.html', context)
 
 @login_required
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def cancel_appointment(request, appointment_id):
     CancelAppointment(request, appointment_id)
     return redirect('calendar_view')
@@ -262,6 +267,7 @@ def update_calendar_settings(request):
 
 @login_required
 @require_POST
+@permission_required('appointments.add_appointmentslot', raise_exception=True)
 def add_calendar_slot(request):
     """Add a new appointment slot to the calendar"""
     # Only doctors can create slots

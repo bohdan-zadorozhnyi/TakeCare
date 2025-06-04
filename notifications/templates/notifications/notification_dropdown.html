@@ -1,0 +1,314 @@
+{% load static %}
+<!-- Notification Bell and Dropdown -->
+<div class="notification-bell-container dropdown">
+    <a href="#" class="dropdown-toggle notification-bell position-relative" role="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count"></span>
+    </a>
+    
+    <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow p-0" aria-labelledby="notificationDropdown">
+        <div class="notification-header bg-light d-flex justify-content-between align-items-center p-2 border-bottom">
+            <h6 class="notification-title m-0 ps-1"><i class="fas fa-bell me-2"></i>Notifications</h6>
+            <div class="notification-actions">
+                <button class="btn btn-sm btn-link text-decoration-none mark-all-read">Mark all as read</button>
+                <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-link text-decoration-none">See all</a>
+            </div>
+        </div>
+        
+        <div class="notification-list scrollable-menu overflow-auto" style="max-height: 350px;">
+            <!-- Notifications will be inserted here via JavaScript -->
+        </div>
+        
+        <div class="notification-footer p-2 text-center border-top bg-light">
+            <small class="text-muted">You'll be notified of important updates</small>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Utility functions for notification templates
+    function getNotificationIcon(type) {
+        const icons = {
+            'SYSTEM': '<i class="fas fa-info-circle"></i>',
+            'APPOINTMENT': '<i class="far fa-calendar-check"></i>',
+            'PRESCRIPTION': '<i class="fas fa-prescription"></i>',
+            'REFERRAL': '<i class="fas fa-exchange-alt"></i>',
+            'MEDICAL': '<i class="fas fa-heartbeat"></i>'
+        };
+        return icons[type] || icons['SYSTEM'];
+    }
+    
+    function formatTime(dateStr) {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSec = Math.round(diffMs / 1000);
+        const diffMin = Math.round(diffSec / 60);
+        const diffHour = Math.round(diffMin / 60);
+        const diffDay = Math.round(diffHour / 24);
+        
+        if (diffSec < 60) return 'just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffHour < 24) return `${diffHour}h ago`;
+        if (diffDay < 7) return `${diffDay}d ago`;
+        
+        return date.toLocaleDateString();
+    }
+    
+    function getTypeColor(type, property) {
+        switch (type) {
+            case 'APPOINTMENT': return 'success';
+            case 'PRESCRIPTION': return 'warning';
+            case 'REFERRAL': return 'info';
+            case 'MEDICAL': return 'danger';
+            default: return 'secondary';
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the notification dropdown
+        const notificationList = document.querySelector('.notification-list');
+        const markAllReadBtn = document.querySelector('.mark-all-read');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        
+        // Only fetch notifications when dropdown is opened
+        notificationDropdown.addEventListener('shown.bs.dropdown', function() {
+            fetchNotifications();
+        });
+        
+        // Function to create a notification item DOM element
+        function createNotificationElement(notification) {
+            const notificationType = notification.notification_type || notification.type;
+            const isUnread = notification.status === 'UNREAD';
+            const typeColor = getTypeColor(notificationType);
+            
+            const element = document.createElement('div');
+            element.className = `notification-item list-group-item-action p-2 border-bottom ${isUnread ? 'bg-light' : ''}`;
+            element.setAttribute('data-id', notification.id);
+            
+            element.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <div class="notification-icon me-2 rounded-circle bg-${typeColor} bg-opacity-25 text-${typeColor} d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        ${getNotificationIcon(notificationType)}
+                    </div>
+                    <div class="flex-grow-1">
+                        <p class="mb-1 text-truncate fw-${isUnread ? 'bold' : 'normal'}">${notification.message}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="far fa-clock me-1"></i>${formatTime(notification.date)}</small>
+                            ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click handler to mark as read
+            element.addEventListener('click', function() {
+                markNotificationRead(notification.id);
+                
+                // If related object exists, navigate to it
+                if (notification.related_object_type && notification.related_object_id) {
+                    // Handle navigation based on object type
+                    let url;
+                    switch (notification.related_object_type) {
+                        case 'appointment':
+                            url = `/appointments/detail/${notification.related_object_id}/`;
+                            break;
+                        case 'prescription':
+                            url = `/prescriptions/detail/${notification.related_object_id}/`;
+                            break;
+                        case 'referral':
+                            url = `/referrals/detail/${notification.related_object_id}/`;
+                            break;
+                        default:
+                            url = '/notifications/';
+                    }
+                    
+                    window.location.href = url;
+                }
+            });
+            
+            return element;
+        }
+        
+        // Fetch recent notifications
+        function fetchNotifications() {
+            fetch('/api/v1/notifications/?limit=5')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Clear existing notifications
+                    notificationList.innerHTML = '';
+                    
+                    // Handle both array and paginated responses
+                    let notifications;
+                    if (Array.isArray(data)) {
+                        notifications = data;
+                    } else {
+                        notifications = data.results || [];
+                    }
+                    
+                    
+                    if (notifications.length === 0) {
+                        notificationList.innerHTML = '<div class="p-3 text-center">No notifications</div>';
+                        return;
+                    }
+                    
+                    // Add notifications to dropdown
+                    notifications.forEach(notification => {
+                        const notificationItem = createNotificationElement(notification);
+                        notificationList.appendChild(notificationItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching notifications:', error);
+                    // Only show error if dropdown is open/visible
+                    if (document.querySelector('.notification-dropdown.show')) {
+                        notificationList.innerHTML = '<div class="p-3 text-center">Error loading notifications</div>';
+                    } else {
+                        notificationList.innerHTML = '';
+                    }
+                });
+        }
+        
+        // Mark notification as read
+        function markNotificationRead(notificationId) {
+            fetch(`/api/v1/notifications/${notificationId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Update UI on success
+                    const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                    if (item) {
+                        item.classList.remove('bg-light');
+                        const textElement = item.querySelector('.fw-bold');
+                        if (textElement) {
+                            textElement.classList.replace('fw-bold', 'fw-normal');
+                        }
+                        const badge = item.querySelector('.badge');
+                        if (badge) {
+                            badge.remove();
+                        }
+                    }
+                    
+                    // Update notification count
+                    updateNotificationCount(-1);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification read:', error);
+            });
+        }
+        
+        // Mark all notifications as read
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                fetch('/api/v1/notifications/mark-all-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Update all notifications to read state
+                        document.querySelectorAll('.notification-item.bg-light').forEach(item => {
+                            item.classList.remove('bg-light');
+                            const textElement = item.querySelector('.fw-bold');
+                            if (textElement) {
+                                textElement.classList.replace('fw-bold', 'fw-normal');
+                            }
+                            const badge = item.querySelector('.badge');
+                            if (badge) {
+                                badge.remove();
+                            }
+                        });
+                        
+                        // Reset notification count
+                        document.getElementById('notification-count').textContent = '0';
+                        document.getElementById('notification-count').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all as read:', error);
+                });
+            });
+        }
+        
+        // Update notification count
+        function updateNotificationCount(change = 0) {
+            const countElem = document.getElementById('notification-count');
+            let count = parseInt(countElem.textContent) || 0;
+            
+            if (change) {
+                count += change;
+                if (count < 0) count = 0; // Don't allow negative counts
+                updateCountDisplay();
+            } else {
+                // Fetch count from API
+                fetch('/api/v1/notifications/unread-count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        count = data.unread_count;
+                        updateCountDisplay();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notification count:', error);
+                    });
+                return;
+            }
+            
+            function updateCountDisplay() {
+                countElem.textContent = count;
+                countElem.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+        }
+        
+        // Get CSRF token
+        function getCsrfToken() {
+            // Try to get from cookies first
+            let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            // If not found in the form, try cookies
+            if (!csrfToken) {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        csrfToken = value;
+                        break;
+                    }
+                }
+            }
+            
+            return csrfToken || '';
+        }
+        
+        // Initial count load
+        updateNotificationCount();
+        
+        // Setup WebSocket for real-time notifications if available
+        if (window.notificationClient) {
+            window.notificationClient.onNotification = function(data) {
+                // Update notification count
+                updateNotificationCount(1);
+                
+                // Refresh notification list only if dropdown is visible
+                if (document.querySelector('.notification-dropdown.show')) {
+                    fetchNotifications();
+                }
+            };
+        }
+    });
+</script>

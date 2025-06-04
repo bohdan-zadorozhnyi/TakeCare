@@ -31,6 +31,12 @@ class Referral(models.Model):
     def __str__(self):
         return f"Referral for {self.patient.name} to {self.get_specialist_type_display()}"
 
+    class Meta:
+        permissions = [
+            ("list_referral", "Can list referrals"),
+            ("search_referral", "Can search referrals"),
+        ]
+
 class ReferralDetails(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     referral = models.ForeignKey(Referral, related_name='details', on_delete=models.CASCADE)

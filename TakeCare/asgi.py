@@ -18,11 +18,18 @@ django.setup()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
-from chat.routing import websocket_urlpatterns
+from channels.security.websocket import AllowedHostsOriginValidator
+import chat.routing
+import notifications.routing
+
+# Combine websocket URL patterns from both apps
+all_websocket_urlpatterns = chat.routing.websocket_urlpatterns + notifications.routing.websocket_urlpatterns
 
 application = ProtocolTypeRouter({
     "http": ASGIStaticFilesHandler(get_asgi_application()),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(websocket_urlpatterns)
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            URLRouter(all_websocket_urlpatterns)
+        )
     ),
 })

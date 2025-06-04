@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import AppointmentSlot, Appointment, AppointmentStatus
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from collections import defaultdict
@@ -12,14 +12,14 @@ from django.db.models.functions import Cast
 from datetime import datetime, timedelta
 from referrals.models import Referral
 from django.contrib.auth.decorators import user_passes_test
-from django.utils import timezone
 from django.http import JsonResponse
+from django.utils import timezone
 
 
 User = get_user_model()
 
 @login_required()
-#@permission_required('appointments.add_appointment', raise_exception=True)
+@permission_required('appointments.add_appointmentslot', raise_exception=True)
 def CreateAppointment(request, only_ids = False):
     curr_user = request.user
     if curr_user.role != 'DOCTOR':
@@ -42,14 +42,12 @@ def CreateAppointment(request, only_ids = False):
     
     elif request.method == 'POST':
         try:
-            datetime_str = request.POST.get('datetime')
-            if not datetime_str:
-                date = request.POST.get('date')
-                time = request.POST.get('time')
-                if date and time:
-                    datetime_str = date + 'T' + time
-                else:
-                    raise ValueError("Date and time are required")
+            date = request.POST.get('date')
+            time = request.POST.get('time')
+            print(date)
+            datetime_str = f"{date}T{time}"
+            naive_datetime = datetime.fromisoformat(datetime_str)
+            appointment_start_datetime = naive_datetime - timedelta(hours=2)
                 
             duration = int(request.POST.get('duration', 30))
             description = request.POST.get('description', '')
@@ -72,7 +70,6 @@ def CreateAppointment(request, only_ids = False):
             
             
             # Make sure we create a timezone-aware datetime
-            appointment_start_datetime = timezone.make_aware(datetime.fromisoformat(datetime_str))
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
 
             current_slot = AppointmentSlot.objects.annotate(
@@ -158,6 +155,7 @@ def group_appointments_by_date(appointments):
 
 
 @login_required()
+@permission_required('appointments.view_appointment', raise_exception=True)
 def GetAppointment(request):
     curr_user = request.user
     
@@ -206,36 +204,41 @@ def GetAppointment(request):
     return render(request, 'list.html', context)
 
 @login_required()
-#@permission_required('appointments.delete_appointment', raise_exception=True)
+@permission_required('appointments.delete_appointment', raise_exception=True)
 def CancelAppointment(request, appointment_id):
     curr_user = request.user
     
     try:
         chosen_appointment_slot = AppointmentSlot.objects.get(id=appointment_id)
-        
         if curr_user.role == 'DOCTOR' and chosen_appointment_slot.doctor == curr_user:
             if chosen_appointment_slot.status == 'Booked':
                 appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
                 if appointment.referral:
                     appointment.referral.is_used = False
-                appointment.referral.save()
+                    appointment.referral.save()
+                appointment.delete()
                 Notification.objects.create(receiver=appointment.patient, message="Your appointment has been cancelled by {appointment_slot.doctor}")
-        elif curr_user.role == 'PATIENT' and appointment.patient == curr_user:
+        elif curr_user.role == 'PATIENT':
+            appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
+            if appointment.patient != curr_user:
+                return render(request, 'error.html', {'error_message': "You don't have right to do this!"})
             if chosen_appointment_slot.status == 'Booked':
-                appointment = Appointment.objects.get(appointment_slot=chosen_appointment_slot)
                 if appointment.referral:
                     appointment.referral.is_used = False
-                appointment.referral.save()
+                    appointment.referral.save()
+                appointment.delete()
                 Notification.objects.create(receiver=chosen_appointment_slot.doctor, message="The appointment has been cancelled by {appointment.patient}")
         else:
             return render(request, 'error.html', {'error_message': "You don't have right to do this!"})
+        
         chosen_appointment_slot.status = 'Cancelled'
         chosen_appointment_slot.save()
+        return redirect('calendar_view')
     except AppointmentSlot.DoesNotExist:
         return render(request, 'not_found.html')
 
 @login_required
-#@permission_required('appointments.add_appointment', raise_exception=True)
+@permission_required('appointments.add_appointment', raise_exception=True)
 def BookAppointment(request, appointment_id, user_id_var = None):
     curr_user = request.user
 
@@ -268,6 +271,7 @@ def BookAppointment(request, appointment_id, user_id_var = None):
         if request.method == "GET":
             # Ensure we're loading the doctor with profile for proper display
             doctor = appointment_slot.doctor
+            appointment_slot.date = appointment_slot.date + timedelta(hours=2)
             # Prefetch the doctor profile to avoid potential issues
             return render(request, 'book_appointment.html', {
                 'appointment': appointment_slot
@@ -385,7 +389,7 @@ def doctors_list(request):
             'start_date': start_date,
             'end_date': end_date
         },
-        'today': timezone.now().date(),
+        'today': datetime.now(),
     }
 
     return render(request, 'doctors/doctors_list.html', context)
@@ -403,7 +407,7 @@ def appointment_list(request):
     search_id = request.GET.get('search', '').strip()
     search_name = None
 
-    today = timezone.now().date()
+    today = timezone.now() + timedelta(hours=2)
     if show_upcoming and not show_past:
         appointments = appointments.filter(appointment_slot__date__gte=today)
     elif show_past and not show_upcoming:
@@ -421,9 +425,10 @@ def appointment_list(request):
                 search_name = search_user.name
         except User.DoesNotExist:
             pass
-    today = timezone.now()
+    today = timezone.now() + timedelta(hours=2)
     appointments = appointments.order_by('appointment_slot__date')
-
+    for appointment in appointments:
+        appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
     return render(request, 'appointment_list.html', {
         'appointments': appointments,
         'filters': {
@@ -486,7 +491,7 @@ def doctor_available_appointments(request, doctor_id):
     available_slots = AppointmentSlot.objects.filter(
         doctor=doctor,
         status=AppointmentStatus.AVAILABLE,
-        date__gte=timezone.now()  # Only show future appointments
+        date__gte=datetime.now()  # Only show future appointments
     ).order_by('date')
 
     # Group appointments by date

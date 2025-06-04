@@ -1,0 +1,138 @@
+/* Bootstrap-compatible notification styling */
+.notification-badge {
+    /* Using Bootstrap's badge styling */
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 0.75rem;
+    /* Other styles are handled by Bootstrap's .badge and .badge-danger classes */
+}
+
+.notification-dropdown {
+    min-width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    /* Bootstrap dropdown already handles padding */
+}
+
+.notification-item {
+    /* Using Bootstrap list-group-item as a base */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    /* Other styles handled by .list-group-item */
+}
+
+.notification-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);  /* Bootstrap hover style */
+}
+
+.notification-item.unread {
+    background-color: rgba(13, 110, 253, 0.05); /* Bootstrap primary color with low opacity */
+}
+
+/* Bootstrap already handles heading and paragraph styling */
+
+.notification-meta {
+    /* Using Bootstrap's d-flex and text-muted */
+    font-size: 0.75rem;
+    margin-top: 5px;
+    /* Other styles handled by Bootstrap classes */
+}
+
+.notification-toast {
+    /* Using Bootstrap toast as a base */
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    z-index: 1050;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateX(400px);
+    opacity: 0;
+    /* Left border for categorization remains custom */
+    border-left: 4px solid #3498db;
+    /* Other styles handled by Bootstrap toast classes */
+}
+
+.notification-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+    /* Animation still needed as Bootstrap's fade doesn't handle horizontal movement */
+}
+
+.notification-toast-content {
+    /* Using Bootstrap's flex-grow-1 */
+    padding-right: 10px;
+}
+
+/* Bootstrap already handles heading and paragraph styling */
+
+.notification-toast-close {
+    /* Using Bootstrap's btn-close as a base */
+    align-self: flex-start;
+    /* Other styling handled by Bootstrap */
+}
+
+/* Different border colors based on notification type - using Bootstrap color system */
+.notification-toast[data-type="APPOINTMENT"] {
+    border-left-color: var(--bs-success); /* Bootstrap success color */
+}
+
+.notification-toast[data-type="PRESCRIPTION"] {
+    border-left-color: var(--bs-warning); /* Bootstrap warning color */
+}
+
+.notification-toast[data-type="REFERRAL"] {
+    border-left-color: var(--bs-purple); /* Bootstrap purple color */
+}
+
+.notification-toast[data-type="MEDICAL"] {
+    border-left-color: var(--bs-danger); /* Bootstrap danger color */
+}
+
+/* Add specific styles for notification cards */
+.notification-card {
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+}
+
+.notification-card.unread {
+    border-left: 4px solid var(--bs-primary);
+}
+
+.notification-card-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.notification-card-body {
+    padding: 1.25rem;
+}
+
+.notification-card-actions {
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0,0,0,.03);
+    border-top: 1px solid rgba(0,0,0,.125);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* Fix for notification filters */
+.notification-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.notification-search {
+    flex-grow: 1;
+    min-width: 200px;
+}
