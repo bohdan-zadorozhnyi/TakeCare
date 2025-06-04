@@ -121,6 +121,14 @@ Key environment variables include:
 - `REDIS_HOST`: Redis connection settings
 - `EMAIL_*`: Email configuration (for production)
 
+## Payment Integration
+
+This project uses **Stripe** for payment processing. To enable payments, you need to:
+
+- Add your Stripe API keys (`STRIPE_PUBLISHABLE_KEY` and `STRIPE_SECRET_KEY`) to global project settings.
+- Add the Stripe webhook signing secret (`STRIPE_WEBHOOK_SECRET`) to global project settings.
+
+
 ## Conventions
 
 ### Git Branching
