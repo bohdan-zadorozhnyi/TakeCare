@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
 
+{% if request.user.is_staff %}
 <!-- Test Notification Modal -->
 <div class="modal fade" id="testNotificationModal" tabindex="-1" aria-labelledby="testNotificationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -43,6 +44,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <style>
     /* Ensure proper notification container styling */
@@ -155,10 +157,12 @@
                 <i class="fas fa-check-double me-1"></i>Mark All Read
             </button>
             
-            <!-- Test Notification Button - Only for development/testing -->
+            <!-- Test Notification Button - Only for admin users -->
+            {% if request.user.is_staff %}
             <button class="btn btn-outline-warning ms-2" id="test-notification-button" title="Send a test notification">
                 <i class="fas fa-vial me-1"></i>Test
             </button>
+            {% endif %}
         </div>
     </div>
     
@@ -679,66 +683,69 @@
         
         // Test notification modal functionality
         const testNotificationBtn = document.getElementById('test-notification-button');
-        const testNotificationModal = new bootstrap.Modal(document.getElementById('testNotificationModal'));
-        const sendTestNotificationBtn = document.getElementById('send-test-notification');
         
-        testNotificationBtn.addEventListener('click', function() {
-            testNotificationModal.show();
-        });
-        
-        sendTestNotificationBtn.addEventListener('click', function() {
-            const notificationType = document.getElementById('notification-type-select').value;
-            const customMessage = document.getElementById('notification-message').value.trim();
+        // Only set up test notification if the button exists (admin users only)
+        if (testNotificationBtn) {
+            const testNotificationModal = new bootstrap.Modal(document.getElementById('testNotificationModal'));
+            const sendTestNotificationBtn = document.getElementById('send-test-notification');
             
-            // Send test notification
-            fetch('/api/v1/notifications/test/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCsrfToken(),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    notification_type: notificationType,
-                    message: customMessage || 'This is a test notification'
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Test notification sent:', data);
-                testNotificationModal.hide();
-                
-                // Show success alert
-                const alertHtml = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>Test notification sent successfully!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-                document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
-                
-                // Refresh notifications after a short delay
-                setTimeout(() => {
-                    fetchNotifications();
-                }, 1000);
-            })
-            .catch(error => {
-                console.error('Error sending test notification:', error);
-                
-                // Show error alert
-                const alertHtml = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>Error sending test notification. Please try again.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-                document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
+            testNotificationBtn.addEventListener('click', function() {
+                testNotificationModal.show();
             });
-        });
+            
+            sendTestNotificationBtn.addEventListener('click', function() {
+                const notificationType = document.getElementById('notification-type-select').value;
+                const customMessage = document.getElementById('notification-message').value.trim();
+                
+                fetch('/api/v1/notifications/test/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        notification_type: notificationType,
+                        message: customMessage || 'This is a test notification'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Test notification sent:', data);
+                    testNotificationModal.hide();
+                    
+                    // Show success alert
+                    const alertHtml = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>Test notification sent successfully!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
+                    
+                    // Refresh notifications after a short delay
+                    setTimeout(() => {
+                        fetchNotifications();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error sending test notification:', error);
+                    
+                    // Show error alert
+                    const alertHtml = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>Error sending test notification. Please try again.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
+                });
+            })
+        };
         
         // Initial load
         fetchNotifications();
