@@ -71,7 +71,7 @@ def get_appointments_json(request):
             appointments_data.append({
                 'id': str(appointment.id),
                 'title': f"Appointment with Dr. {slot.doctor.name}",
-                'start': slot.date,
+                'start': slot.date.isoformat(),
                 'end': (slot.date + timedelta(minutes=slot.duration)).isoformat(),
                 'location': slot.location,
                 'description': slot.description,
@@ -99,8 +99,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(appointment.id),
                         'title': f"Appointment with {appointment.patient.name}",
-                        'start': slot.date,
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
+                        'start': slot.date.isoformat(),
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
@@ -114,8 +114,8 @@ def get_appointments_json(request):
                     appointments_data.append({
                         'id': str(slot.id),
                         'title': "Available Slot",
-                        'start': slot.date,
-                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)),
+                        'start': slot.date.isoformat(),
+                        'end': (slot.date + timezone.timedelta(minutes=slot.duration)).isoformat(),
                         'location': slot.location,
                         'description': slot.description,
                         'status': slot.status,
@@ -232,7 +232,7 @@ def appointment_slot_detail(request, slot_id):
     user = request.user
     if user.role == 'DOCTOR' and slot.doctor != user:
         return HttpResponseBadRequest("You do not have permission to view this slot")
-        
+    slot.date = slot.date + timedelta(hours=2)
     context = {
         'slot': slot,
         'end_time': slot.date + timedelta(minutes=slot.duration),

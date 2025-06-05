@@ -47,7 +47,7 @@ def CreateAppointment(request, only_ids = False):
             print(date)
             datetime_str = f"{date}T{time}"
             naive_datetime = datetime.fromisoformat(datetime_str)
-            appointment_start_datetime = naive_datetime - timedelta(hours=2)
+            appointment_start_datetime = naive_datetime
                 
             duration = int(request.POST.get('duration', 30))
             description = request.POST.get('description', '')
@@ -68,21 +68,22 @@ def CreateAppointment(request, only_ids = False):
                     # If no doctor profile found, no referral will be required
                     pass
             
-            
+
             # Make sure we create a timezone-aware datetime
             appointment_end_datetime = appointment_start_datetime + timedelta(minutes=duration)
-
+            print(appointment_start_datetime)
+            print(appointment_end_datetime)
             current_slot = AppointmentSlot.objects.annotate(
                 end_time=ExpressionWrapper(
                     F('date') + Cast(F('duration'), IntegerField()) * timedelta(minutes=1),
                     output_field=DateTimeField()
                 )
             ).filter((Q(
-                Q(date__gt=appointment_start_datetime) & Q(end_time__lt=appointment_end_datetime))
+                Q(date__gte=appointment_start_datetime) & Q(end_time__lte=appointment_end_datetime))
             | Q(
-                Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_start_datetime))
+                Q(date__lte=appointment_start_datetime) & Q(end_time__gte=appointment_start_datetime))
             | Q(
-                Q(date__lt=appointment_start_datetime) & Q(end_time__gt=appointment_end_datetime)
+                Q(date__lte=appointment_start_datetime) & Q(end_time__gte=appointment_end_datetime)
             )) & Q(doctor=curr_user)).first()
             if current_slot:
                 print(current_slot.doctor)
@@ -148,7 +149,8 @@ def categorize_appointments(appointments, today):
 def group_appointments_by_date(appointments):
     appointments_by_date = defaultdict(list)
     for appointment in appointments.order_by('date'):
-        date_key = appointment.date.date()
+        date_key = appointment.appointment_slot.date.date()
+        appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
         appointments_by_date[date_key].append(appointment)
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
     return grouped_appointments
@@ -179,9 +181,10 @@ def GetAppointment(request):
     appointments_by_date = defaultdict(list)
     for appointment in appointments:
         if curr_user.role == 'DOCTOR':
-            date_key = appointment.date.date()
+            date_key = appointment.appointment_slot.date.date()
         else:
             date_key = appointment.appointment_slot.date.date()
+        appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
         appointments_by_date[date_key].append(appointment)
     
     grouped_appointments = sorted(appointments_by_date.items(), key=lambda x: x[0])
@@ -316,7 +319,7 @@ def BookAppointment(request, appointment_id, user_id_var = None):
 
             appointment_slot.status = "Booked"
             appointment_slot.save()
-
+            appointment_slot.date = appointment_slot.date + timedelta(hours=2)
             # Notify the doctor
             Notification.objects.create(
                 receiver=appointment_slot.doctor,
@@ -498,6 +501,7 @@ def doctor_available_appointments(request, doctor_id):
     appointments_by_date = defaultdict(list)
     for slot in available_slots:
         date_key = slot.date.date()
+        slot.date = slot.date + timedelta(hours=2)
         appointments_by_date[date_key].append(slot)
 
     # Sort by date
