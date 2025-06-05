@@ -15,3 +15,9 @@ class MedicalRecord(models.Model):
 
     def __str__(self):
         return f"Medical Record for {self.patient.name}"
+
+    class Meta:
+        permissions = [
+            ("list_medicalrecord", "Can list medical records"),
+            ("search_medicalrecord", "Can search medical records"),
+        ]

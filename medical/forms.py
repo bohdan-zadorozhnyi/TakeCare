@@ -24,6 +24,7 @@ class MedicalRecordForm(forms.ModelForm):
             'condition': forms.Textarea(attrs={'rows': 3}),
             'treatment': forms.Textarea(attrs={'rows': 3}),
             'notes': forms.Textarea(attrs={'rows': 3}),
+            'file': forms.ClearableFileInput(attrs={'class': 'custom-file-input'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -39,7 +40,7 @@ class EditMedicalRecordForm(forms.ModelForm):
             'condition': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'treatment': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'file': forms.ClearableFileInput(attrs={'class': 'custom-file-input'}),
         }
 
     def __init__(self, *args, **kwargs):

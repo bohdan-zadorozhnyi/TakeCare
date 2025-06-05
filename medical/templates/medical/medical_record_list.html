@@ -12,13 +12,13 @@
                 <span class="input-group-text border-end-0 bg-white d-flex align-items-center" style="margin-top: 15px;">
                     <i class="fas fa-search text-muted" style="font-size: 0.75rem;"></i>
                 </span>
-                <input type="text" class="form-control form-control-sm" id="recordSearch" placeholder="Search by condition, notes...">
+                <input type="text" class="form-control form-control-sm border-start-0" id="recordSearch" placeholder="Search by condition...">
             </div>
         </div>
 
         <div class="d-flex gap-2">
             {% if user.role == 'DOCTOR' %}
-                <a href="{% url 'medical:create_medical_record' %}" class="btn btn-primary btn-sm">Create New Record</a>
+                <a href="{% url 'medical:create_medical_record' %}" class="btn btn-primary">Create New Record</a>
             {% endif %}
             <button class="btn btn-secondary btn-sm filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterMenu" aria-expanded="false" aria-controls="filterMenu">
                 <i class="fas fa-filter filter-icon"></i>
@@ -29,83 +29,110 @@
     </div>
 
      <div class="collapse mb-3" id="filterMenu">
-        <div class="card card-body">
-            <form method="get" class="row g-3">
-                <label for="search" class="form-label">Search {% if user.role == 'DOCTOR' %}patient{% else %}doctor{% endif %}</label>
-                    <select class="form-control" id="search" name="search">
+    <div class="card card-body">
+        <form method="get">
+            <div class="row g-3">
+                <!-- Search by Doctor/Patient -->
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search {% if user.role == 'DOCTOR' %}patient{% else %}doctor{% endif %}</label>
+                    <select class="form-select" id="search" name="search">
                         {% if filters.search %}
                             <option value="{{ filters.search }}" selected>{{ filters.search_name }}</option>
                         {% endif %}
                     </select>
+                </div>
+
+                <!-- From Date -->
                 <div class="col-md-4">
                     <label for="date_from" class="form-label">From Date</label>
-                    <input type="date" id="date_from" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}">
+                    <input type="date" id="date_from" name="date_from" class="form-control bg-white" value="{{ filters.date_from }}">
                 </div>
+
+                <!-- To Date -->
                 <div class="col-md-4">
                     <label for="date_to" class="form-label">To Date</label>
-                    <input type="date" id="date_to" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}">
+                    <input type="date" id="date_to" name="date_to" class="form-control bg-white" value="{{ filters.date_to }}">
                 </div>
+
+                <!-- Condition -->
                 <div class="col-md-4">
                     <label for="condition" class="form-label">Condition</label>
-                    <input type="text" id="condition" name="condition" class="form-control form-control-sm" value="{{ filters.condition }}">
+                    <input type="text" id="condition" name="condition" class="form-control bg-white" value="{{ filters.condition }}">
                 </div>
-                <div class="col-12 d-flex justify-content-end mt-2">
-                    <button type="submit" class="btn btn-primary btn-sm me-2">Apply</button>
-                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div id="recordsList">
-        {% if medical_records %}
-            <div class="list-group">
-                {% for record in medical_records %}
-                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-                        <div class="d-flex w-100 justify-content-between">
-                            <div>
-                                <h5 class="mb-1">{{ record.patient.name }}</h5>
-                                <h6 class="text-muted">{{ record.doctor.name }} - {{ record.date|date:"Y-m-d H:i" }}</h6>
-                                <p class="mb-1 mt-2 condition-text">{{ record.condition }}</p>
-                            </div>
-                            <div class="d-flex flex-column align-items-end">
-                                <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-sm btn-outline-info mb-1">
-                                    View
-                                </a>
-                                {% if user == record.doctor or user.role == 'ADMIN' %}
-                                    <a href="{% url 'medical:delete_medical_record' record.pk %}"
-                                       class="btn btn-sm btn-outline-danger mb-1"
-                                       onclick="return confirm('Are you sure you want to delete this medical record?');">
-                                        Delete
-                                    </a>
-                                    <a href="{% url 'medical:edit_medical_record' record.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
+                <!-- Buttons -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply</button>
+                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
             </div>
-        {% else %}
-            <div class="alert alert-info">No medical records found.</div>
-        {% endif %}
+        </form>
     </div>
+</div>
+
+    {% include 'medical/_medical_list.html' with title="My Medical Records"%}
 </div>
 {% endblock %}
 
 {% block extra_css %}
     <style>
+        /* Search input styling */
+        .input-group {
+            width: 250px;
+        }
+
+        .input-group-text {
+            padding: 0;
+            height: 31px;
+            width: 31px;
+            display: inline-flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        /* Select2 styling */
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            padding: 6px 12px !important;
+            font-size: 1rem !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            background-color: #fff !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 24px !important;
+            color: #495057 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+
+        .select2-dropdown {
+            border-color: #ced4da !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+           /* Filter toggle icon styles */
         .filter-toggle[aria-expanded="true"] .filter-icon {
             display: none;
         }
+
         .filter-toggle[aria-expanded="true"] .close-icon {
             display: inline-block !important;
         }
+
         .filter-toggle[aria-expanded="false"] .filter-icon {
             display: inline-block;
         }
+
         .filter-toggle[aria-expanded="false"] .close-icon {
             display: none !important;
         }
+
 
         .list-group-item {
             padding: 1rem;
@@ -160,6 +187,16 @@
             border-color: #86b7fe !important;
         }
 
+        #filterMenu .form-label {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        #filterMenu .form-control-sm,
+        #filterMenu .form-select-sm {
+            font-size: 0.875rem;
+        }
+
         .form-control {
             border-radius: 0.25rem;
         }
@@ -172,6 +209,18 @@
         .collapsing {
             transition: height 0.35s ease;
         }
+
+        .select2-container .select2-selection--single {
+            height: 31px !important; /* Match #recordSearch height */
+            padding: 0 0.5rem !important;
+            font-size: 0.875rem !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 31px !important;
+        }
+
     </style>
 {% endblock %}
 
@@ -183,7 +232,7 @@
                 placeholder: 'Search for a {% if user.role == "DOCTOR" %}patient{% else %}doctor{% endif %}...',
                 allowClear: true,
                 ajax: {
-                    url: '{% url "prescriptions:search_users" %}',
+                    url: '{% url "medical:search_users" %}',
                     dataType: 'json',
                     delay: 250,
                     data: function (params) {
@@ -210,17 +259,88 @@
                 });
             });
 
-            document.addEventListener('DOMContentLoaded', function () {
-                const filterMenu = document.getElementById('filterMenu');
-                filterMenu.addEventListener('hidden.bs.collapse', () => {
-                    document.querySelector('.filter-toggle .filter-icon').classList.remove('d-none');
-                    document.querySelector('.filter-toggle .close-icon').classList.add('d-none');
-                });
-                filterMenu.addEventListener('shown.bs.collapse', () => {
-                    document.querySelector('.filter-toggle .filter-icon').classList.add('d-none');
-                    document.querySelector('.filter-toggle .close-icon').classList.remove('d-none');
-                });
+            const filterMenu = document.getElementById('filterMenu');
+            filterMenu.addEventListener('hidden.bs.collapse shown.bs.collapse', function () {
+                document.querySelector('.filter-toggle').blur();
             });
+
+            let searchTimeout;
+            const recordsList = $('#recordsList');
+            const recordSearch = $('#recordSearch');
+
+            function renderMedicalRecord(record) {
+                const formattedDate = new Date(record.date).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                let name = '';
+                let avatarImg = '';
+
+                if (user.role === 'DOCTOR') {
+                    name = record.patient.name || '';
+                    avatarImg = record.patient.avatar_url
+                        ? `<img src="${record.patient.avatar_url}" alt="Patient Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">`
+                        : '';
+                } else if (user.role === 'PATIENT') {
+                    name = `Dr. ${record.doctor.name || ''}`;
+                    avatarImg = record.doctor.avatar_url
+                        ? `<img src="${record.doctor.avatar_url}" alt="Doctor Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">`
+                        : '';
+                }
+
+                const recordSummary = record.condition || 'No condition';
+                const recordTreatment = record.treatment || 'No treatment';
+
+                return `
+                    <tr class="d-flex flex-column flex-sm-row">
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            ${avatarImg}<span>${name}</span>
+                        </td>
+                        <td class="col-12 col-sm-3">
+                            <strong>Condition:</strong> ${recordSummary}
+                        </td>
+                        <td class="col-12 col-sm-3">
+                            <strong>Treatment:</strong> ${recordTreatment}
+                        </td>
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            ${formattedDate}
+                        </td>
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            <a href="/medical/${record.id}/" class="btn btn-sm bg-primary btn-outline-light w-100 w-sm-auto">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }
+
+
+            recordSearch.on('input', function() {
+            clearTimeout(searchTimeout);
+            const searchTerm = $(this).val().trim();
+
+            searchTimeout = setTimeout(function() {
+                $.get('{% url "medical:search_medical_record" %}', {
+                    term: searchTerm
+                })
+                .done(function(data) {
+                    recordsList.find('.list-group-item').addClass('hiding');
+                    setTimeout(function() {
+                        recordsList.empty();
+                        if (data.records.length > 0) {
+                            data.records.forEach(function(record) {
+                                recordsList.append(renderMedicalRecord(record));
+                            });
+
+                        } else {
+                            recordsList.html('<div class="alert alert-info">No medical records found.</div>');
+                        }
+                    }, 300);
+                });
+            }, 300);
+        });
+
         })
+
     </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
 {% block title %}Edit Medical Record{% endblock %}
 
 {% block content %}
@@ -20,27 +21,42 @@
 
                 {{ form.non_field_errors }}
                 <div class="form-grid">
-                    {% for field in form %}
-                        <div class="form-group mb-3">
-                            <div class="label-wrapper">
-                                {{ field.label_tag }}
-                                {% if field.field.required %}<span class="required">*</span>{% endif %}
-                            </div>
-                            <div class="value-wrapper">
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="error-message">
-                                        {% for error in field.errors %}
-                                            <p>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+                    <div class="form-group mb-3">
+                        {{ form.condition.label_tag }}{% if form.condition.field.required %}<span class="required">*</span>{% endif %}
+                        {{ form.condition }}
+                        {% for error in form.condition.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.treatment.label_tag }}{% if form.treatment.field.required %}<span class="required">*</span>{% endif %}
+                        {{ form.treatment }}
+                        {% for error in form.treatment.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.notes.label_tag }}{% if form.notes.field.required %}<span class="required">*</span>{% endif %}
+                        {{ form.notes }}
+                        {% for error in form.notes.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        {{ form.file.label_tag}}<br>
+
+                        {{ form.file}}
+                        {% for error in form.file.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
                 </div>
 
-                <div class="d-flex justify-content-between">
+
+                <div class="d-flex justify-content-end gap-2">
                     <a href="{% url 'medical:medical_record_detail' record.pk %}" class="btn btn-outline-secondary">
                         Cancel
                     </a>
@@ -48,8 +64,22 @@
                         Save Changes
                     </button>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
+
+{% block extra_css %}
+    <style>
+        input[type="text"],
+        textarea,
+        select {
+            background-color: #fff !important;
+        }
+    </style>
 {% endblock %}
+
+
+{% endblock %}
+

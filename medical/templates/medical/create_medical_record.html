@@ -4,7 +4,7 @@
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Create New Medical Record</h3>
+            <h3>Create New Medical Record</h3>
         </div>
         <div class="card-body">
             {% if form.errors %}
@@ -63,11 +63,161 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary" id="submit-btn">Create Medical Record</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+    {% block extra_css %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            padding: 6px 12px !important;
+            font-size: 1rem !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            background-color: #fff !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #212529 !important;
+            line-height: 25px !important;
+            padding-left: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 6px !important;
+        }
+
+        .select2-dropdown {
+            border-color: #ced4da !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-search__field {
+            height: 38px !important;
+            padding: 6px 12px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #0d6efd !important;
+        }
+
+        .form-control {
+            border: 1px solid #ced4da;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+        }
+
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            border-top-left-radius: 0.5rem !important;
+            border-top-right-radius: 0.5rem !important;
+        }
+
+        /* Select2 custom styling to match other form fields */
+        .select2-container--default .select2-selection--single {
+            height: 38px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            background-color: #fff !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px !important;
+            padding-left: 12px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+
+        .select2-container--default .select2-dropdown {
+            border: 1px solid #ced4da !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #007bff !important;
+        }
+
+        .select2-search__field {
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+        }
+
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            padding: 0.5rem !important;
+        }
+
+        /* Style for the clear button */
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            margin-right: 25px;
+            color: #6c757d;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+            color: #dc3545;
+        }
+        </style>
+    {% endblock %}
+
+    {% block extra_js %}
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                // Initialize Select2 for patient field
+                $('#id_patient').select2({
+                    theme: 'default',
+                    ajax: {
+                        url: '{% url "medical:search_patients" %}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                term: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data.results
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2,
+                    placeholder: 'Search for a patient...',
+                    allowClear: true,
+                    width: '100%'
+                });
+            });
+        </script>
+    {% endblock %}
 {% endblock %}

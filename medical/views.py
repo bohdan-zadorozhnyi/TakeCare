@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.http import HttpResponseForbidden
 from .forms import MedicalRecordForm, EditMedicalRecordForm
 from .models import MedicalRecord
@@ -14,7 +14,7 @@ def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
 
 @login_required
-@user_passes_test(is_doctor)
+@permission_required("medical.add_medicalrecord", raise_exception=True)
 def create_medical_record(request):
     if request.method == 'POST':
         form = MedicalRecordForm(request.POST, request.FILES)
@@ -36,6 +36,7 @@ def create_medical_record(request):
 
 
 @login_required
+@permission_required("medical.list_medicalrecord", raise_exception=True)
 def medical_record_list(request):
     user = request.user
     queryset = MedicalRecord.objects.all()
@@ -48,6 +49,8 @@ def medical_record_list(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     condition = request.GET.get('condition')
+    search_id = request.GET.get('search', '').strip()
+    search_name = None
 
     if date_from:
         queryset = queryset.filter(date__date__gte=date_from)
@@ -55,6 +58,19 @@ def medical_record_list(request):
         queryset = queryset.filter(date__date__lte=date_to)
     if condition:
         queryset = queryset.filter(condition__icontains=condition)
+
+    if search_id:
+        try:
+            if request.user.role == 'DOCTOR':
+                search_user = User.objects.get(id=search_id, role='PATIENT')
+                prescriptions = queryset.filter(patient=search_user)
+                search_name = search_user.name
+            else:
+                search_user = User.objects.get(id=search_id, role='DOCTOR')
+                prescriptions = queryset.filter(doctor=search_user)
+                search_name = search_user.name
+        except User.DoesNotExist:
+            pass
 
     return render(request, 'medical/medical_record_list.html', {
         'medical_records': queryset.order_by('-date'),
@@ -68,6 +84,7 @@ def medical_record_list(request):
 
 
 @login_required
+@permission_required("medical.view_medicalrecord", raise_exception=True)
 def medical_record_detail(request, pk):
     medical_record = get_object_or_404(MedicalRecord, pk=pk)
     if request.user != medical_record.doctor and request.user != medical_record.patient:
@@ -77,7 +94,7 @@ def medical_record_detail(request, pk):
 
 
 @login_required
-@user_passes_test(is_doctor)
+@permission_required("accounts.searchPatient_user", raise_exception=True)
 def search_patients(request):
     search_term = request.GET.get('term', '')
     if len(search_term) < 2:
@@ -93,34 +110,34 @@ def search_patients(request):
 
 
 @login_required
-@user_passes_test(is_doctor)
+@permission_required("medical.delete_medicalrecord", raise_exception=True)
 def delete_medical_record(request, pk):
     if request.method != 'POST':
-        return redirect('medical:medical_record_detail', pk=pk)
+        return redirect('medical:medical_record_list')
 
-    prescription = get_object_or_404(MedicalRecord, pk=pk)
-    if request.user != prescription.doctor:
+    medical_record = get_object_or_404(MedicalRecord, pk=pk)
+    if request.user != medical_record.doctor:
         messages.error(request, 'You do not have permission to delete this medical record.')
-        return redirect('medical:medical_record_detail')
+        return redirect('medical:medical_record_list')
 
-    prescription.delete()
+    medical_record.delete()
     messages.success(request, 'Medical record deleted successfully.')
-    return redirect('medical:medical_record_detail')
+    return redirect('medical:medical_record_list')
 
 @login_required
+@permission_required("medical.search_medicalrecord", raise_exception=True)
 def search_medical_record(request):
     search_term = request.GET.get('term', '').strip()
-    filter_condition = request.GET.get('filter_condition', '').strip()
-    sort_by = request.GET.get('sort_by', 'date')
-    order = request.GET.get('order', 'desc')
+    search_id = request.GET.get('search', '').strip()
+    search_name = None
+    sort_by = 'date'
+    order = 'asc'
 
     if request.user.role == 'DOCTOR':
         records = MedicalRecord.objects.filter(doctor=request.user)
     else:
         records = MedicalRecord.objects.filter(patient=request.user)
 
-    if filter_condition:
-        records = records.filter(condition__icontains=filter_condition)
 
     if search_term:
         records = records.filter(
@@ -129,12 +146,7 @@ def search_medical_record(request):
             Q(notes__icontains=search_term)
         ).distinct()
 
-    if sort_by not in ['date', 'condition']:
-        sort_by = 'date'
-    if order == 'asc':
-        records = records.order_by(sort_by)
-    else:
-        records = records.order_by(f'-{sort_by}')
+
 
     results = []
     for record in records:
@@ -167,7 +179,7 @@ def search_users(request):
 
 
 @login_required
-@user_passes_test(is_doctor)
+@permission_required("medical.change_medicalrecord", raise_exception=True)
 def edit_medical_record(request, pk):
     medical_record = get_object_or_404(MedicalRecord, pk=pk)
 
