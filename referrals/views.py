@@ -14,7 +14,7 @@ def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
 
 @login_required
-#@permission_required("referrals.add_referral", raise_exception=True)
+@permission_required("referrals.add_referral", raise_exception=True)
 def create_referral(request):
     if request.method == 'POST':
         form = ReferralForm(request.POST)
@@ -57,7 +57,7 @@ def create_referral(request):
     })
 
 @login_required
-#@permission_required("referrals.list_referral", raise_exception=True)
+@permission_required("referrals.list_referral", raise_exception=True)
 def referral_list(request):
     if request.user.role == 'DOCTOR':
         referrals = Referral.objects.filter(issuing_doctor=request.user)
@@ -111,7 +111,7 @@ def referral_list(request):
     })
 
 @login_required
-#@permission_required("referrals.view_referral", raise_exception=True)
+@permission_required("referrals.view_referral", raise_exception=True)
 def referral_detail(request, pk):
     referral = get_object_or_404(Referral, pk=pk)
     if request.user != referral.issuing_doctor and request.user != referral.patient:
@@ -131,7 +131,7 @@ def referral_detail(request, pk):
     })
 
 @login_required
-#@permission_required("accounts.searchPatient_user", raise_exception=True)
+@permission_required("accounts.searchPatient_user", raise_exception=True)
 def search_patients(request):
     search_term = request.GET.get('term', '')
     if len(search_term) < 2:
@@ -146,7 +146,7 @@ def search_patients(request):
     return JsonResponse({'results': results})
 
 @login_required
-#@permission_required("referrals.search_referral", raise_exception=True)
+@permission_required("referrals.search_referral", raise_exception=True)
 def search_referrals(request):
     search_term = request.GET.get('term', '').strip()
     show_active = request.GET.get('active') == 'true'
@@ -197,7 +197,7 @@ def search_referrals(request):
     return JsonResponse({'referrals': results})
 
 @login_required
-#@permission_required("referrals.delete_referral", raise_exception=True)
+@permission_required("referrals.delete_referral", raise_exception=True)
 def delete_referral(request, pk):
     if request.method != 'POST':
         return redirect('referrals:referral_detail', pk=pk)

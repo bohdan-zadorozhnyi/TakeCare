@@ -56,11 +56,10 @@ if REFERRALS_ENABLED:
         """
         if created and instance.patient:
             try:
-                referring_doctor = instance.referring_doctor.name if instance.referring_doctor else "Your doctor"
-                specialist = instance.specialist.name if instance.specialist else "a specialist"
-                specialty = instance.specialist.specialty if instance.specialist else "specialist consultation"
+                issuing_doctor = instance.issuing_doctor.name if instance.issuing_doctor else "Your doctor"
+                specialist_type = instance.get_specialist_type_display() if hasattr(instance, 'get_specialist_type_display') else instance.specialist_type
                 
-                message = f"You have been referred by {referring_doctor} to see {specialist} for {specialty}"
+                message = f"You have been referred by {issuing_doctor} to see a {specialist_type}"
                 
                 NotificationService.send_notification(
                     user_id=instance.patient.id,
@@ -71,7 +70,7 @@ if REFERRALS_ENABLED:
                 )
                 logger.info(f"Referral notification sent to patient {instance.patient.id} for referral {instance.id}")
             except Exception as e:
-                logger.error(f"Failed to send referral notification: {e}")
+                logger.error(f"Failed to send referral notification: {e}", exc_info=True)
 
 if PRESCRIPTIONS_ENABLED:
     @receiver(post_save, sender=Prescription)
@@ -81,10 +80,21 @@ if PRESCRIPTIONS_ENABLED:
         """
         if created and instance.patient:
             try:
-                medication = instance.medication_name
+                # Get medications from the prescription
+                medications = instance.medications.all()
+                med_names = []
+                
+                # Try to get medication names
+                if medications.exists():
+                    med_names = [med.medication_name for med in medications[:3]]
+                    if len(medications) > 3:
+                        med_names.append("and others")
+                
+                # Create medication text
+                medication_text = ", ".join(med_names) if med_names else "medications"
                 doctor = instance.doctor.name if instance.doctor else "Your doctor"
                 
-                message = f"A new prescription for {medication} has been created by {doctor}"
+                message = f"A new prescription for {medication_text} has been created by {doctor}"
                 
                 NotificationService.send_notification(
                     user_id=instance.patient.id,
@@ -95,7 +105,7 @@ if PRESCRIPTIONS_ENABLED:
                 )
                 logger.info(f"Prescription notification sent to patient {instance.patient.id} for prescription {instance.id}")
             except Exception as e:
-                logger.error(f"Failed to send prescription notification: {e}")
+                logger.error(f"Failed to send prescription notification: {e}", exc_info=True)
 
 if APPOINTMENTS_ENABLED:
     @receiver(post_save, sender=Appointment)
@@ -104,8 +114,8 @@ if APPOINTMENTS_ENABLED:
         Send notification for appointment creation and updates
         """
         try:
-            # Format the date for the notification
-            appt_date = instance.start_time.strftime("%d %b %Y at %H:%M") if instance.start_time else "scheduled date"
+            # Format the date for the notification - using a more user-friendly format
+            appt_date = instance.start_time.strftime("%A, %d %B %Y at %H:%M") if instance.start_time else "scheduled date"
             
             # Determine if this is a create or update action
             action = "scheduled" if created else "updated"
