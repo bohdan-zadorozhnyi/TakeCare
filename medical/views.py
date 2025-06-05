@@ -36,7 +36,7 @@ def create_medical_record(request):
 
 
 @login_required
-@permission_required("medical.list_medicalrecord", raise_exception=True)
+#@permission_required("medical.list_medicalrecord", raise_exception=True)
 def medical_record_list(request):
     user = request.user
     queryset = MedicalRecord.objects.all()

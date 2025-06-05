@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex gap-2 align-items-center">
             <div class="input-group input-group-sm">
-                <span class="input-group-text border-end-0 bg-white d-flex align-items-center" style="margin-top: 15px;">
+                <span class="input-group-text border-end-0 bg-white d-flex align-items-center" >
                     <i class="fas fa-search text-muted" style="font-size: 0.75rem;"></i>
                 </span>
                 <input type="text" class="form-control form-control-sm border-start-0" id="recordSearch" placeholder="Search by condition...">
@@ -75,6 +75,7 @@
 {% endblock %}
 
 {% block extra_css %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Search input styling */
         .input-group {
@@ -176,7 +177,7 @@
             background-color: #fff !important;
             font-size: 0.875rem;
             height: 31px;
-            padding: 0.25rem 0.75rem;
+            padding: 0.25rem ;
             border: 1px solid #ced4da;
             box-shadow: none;
         }
