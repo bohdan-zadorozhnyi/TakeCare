@@ -12,8 +12,9 @@ urlpatterns = [
     path('', include('appointments.urls')),
     path('chat/', include('chat.urls')),
     path('prescriptions/', include('prescriptions.urls')),
-    path('medical/', include('medical.urls')),  # Added the medical records URLs
-    path('referrals/', include('referrals.urls')),  # Added the referrals app URLs
-    path('calendar/', include('calendar_app.urls')),  # Added the calendar app URLs
+    path('referrals/', include('referrals.urls')),
+    path('calendar/', include('calendar_app.urls')),
     path('articles/', include('articles.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('payments/', include('payments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

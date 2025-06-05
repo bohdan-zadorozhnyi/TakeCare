@@ -272,20 +272,10 @@ footer {
     border: 1px solid #9e9e9e;
     box-sizing: border-box;
 }
-.form-control {
-    background-color: #121417;
-    border: 1px solid #717171;
-    color: #717171;
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    resize: vertical;
-    height: 6em;
-    margin: 15px 15px 0 0;
-}
+
 
 input[type="file"].form-control-file {
-    background-color: #121417;
+    background-color: #ffffff;
     border: 1px solid #717171;
     color: #717171;
     padding: 10px;

@@ -17,7 +17,11 @@
                 {% if request.user.role == 'PATIENT' %}
                     Appointment with Dr. {{ appointment.appointment_slot.doctor.name }}
                 {% else %}
-                    Appointment with {{ appointment.patient.name }}
+                    {% if request.user.role == 'DOCTOR' %}
+                        Appointment with {{ appointment.patient.name }}
+                    {% else %}
+                        Appointment of {{ appointment.patient.name }} with Dr. {{ appointment.appointment_slot.doctor.name }}
+                    {% endif %}
                 {% endif %}
             </h1>
             <p class="appointment-subtitle">{{ appointment.appointment_slot.date|date:"l, F j, Y • g:i A" }}</p>
@@ -42,8 +46,50 @@
                 <i class="fas fa-exchange-alt"></i> Reschedule
             </a>
             {% endif %}
+
+
         </div>
     </div>
+    <div class="payment-status mb-4">
+    {% if appointment.payment %}
+        {% if appointment.payment.status == 'succeeded' %}
+            <div class="alert alert-success d-inline-block px-4 py-2 rounded shadow-sm">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Paid</strong>
+            </div>
+        {% else %}
+            <div class="alert alert-warning d-inline-block px-4 py-2 rounded shadow-sm mb-2">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Payment Status: <strong>Unpaid</strong>
+            </div>
+            <div id="payment-amount" class="alert alert-info d-inline-block px-4 py-2 rounded shadow-sm mb-2">
+                Ammount to Pay: <strong data-price="{{ appointment.payment.price }}"></strong> PLN
+            </div>
+            {% if user.role == 'PATIENT' %}
+            <form action="{% url 'payments:create_checkout_session' %}?appointment_id={{ appointment.id }}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-primary shadow-sm" type="submit">
+                    <i class="fas fa-credit-card me-1"></i> Pay Now
+                </button>
+            </form>
+            {% endif %}
+            {% if user.role == 'ADMIN' %}
+                <form action="{% url 'payments:mark_as_paid' appointment.id %}" method="POST" class="d-inline ms-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success shadow-sm"
+                    onclick="return confirm('Are you sure you want to mark this appointment as paid?');">
+                        <i class="fas fa-check-circle me-1"></i> Mark as Paid
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <div class="alert alert-secondary d-inline-block px-4 py-2 rounded shadow-sm">
+            Payment information not available.
+        </div>
+    {% endif %}
+    </div>
+
     
     <div class="appointment-info">
         <div class="appointment-detail">
@@ -106,7 +152,8 @@
         {% else %}
             <p>No notes have been added yet.</p>
         {% endif %}
-        
+
+        {% if user.role == 'DOCTOR' %}
         <div class="add-note-form">
             <h4>Add a Note</h4>
             <form action="{% url 'add_appointment_note' appointment.id %}" method="post">
@@ -115,6 +162,7 @@
                 <button type="submit" class="btn btn-primary btn-block">Add Note</button>
             </form>
         </div>
+        {% endif %}
     </div>
     
     <!-- Chat section if chat room exists -->
@@ -142,4 +190,13 @@
     const appointmentDuration = {{ appointment.appointment_slot.duration }};
 </script>
 <script src="{% static 'js/appointment-detail.js' %}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const priceElement = document.querySelector('#payment-amount strong');
+    const rawPrice = parseInt(priceElement.dataset.price, 10); // price in groszy
+    const formattedPrice = (rawPrice / 100).toFixed(2);
+    priceElement.textContent = formattedPrice;
+  });
+</script>
+
 {% endblock %}

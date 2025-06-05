@@ -60,15 +60,34 @@
                                         {{ appointment.appointment_slot.location }}
                                     </div>
 
-                                    <!-- Status -->
-                                    <div class="col-12 col-md-2">
-                                        <strong class="d-md-none {% if appointment.appointment_slot.date < today %}text-muted{% endif %}">Status:</strong>
-                                        {% if appointment.appointment_slot.date < today %}
-                                            <span class="badge bg-secondary d-inline-block px-3 py-2 fw-bold fs-6">Past</span>
-                                        {% else %}
-                                            <span class="badge bg-success d-inline-block px-3 py-2 fw-bold fs-6">Upcoming</span>
-                                        {% endif %}
-                                    </div>
+<!-- Combined Status Column -->
+<div class="col-12 col-md-2 d-flex flex-row flex-md-column justify-content-md-center my-2">
+    <strong class="d-md-none {% if appointment.appointment_slot.date < today %}text-muted{% endif %} mb-1">Status:</strong>
+
+    <!-- Appointment Status -->
+    {% if user.role != 'ADMIN' %}
+    {% if appointment.appointment_slot.date < today %}
+        <span class="badge bg-secondary d-inline-block px-1 py-2 fw-bold fs-6 m-1 mx-md-0">Past</span>
+    {% else %}
+        <span class="badge bg-success d-inline-block px-1 py-2 fw-bold fs-6 m-1 mx-md-0">Upcoming</span>
+    {% endif %}
+    {% endif %}
+
+    <!-- Payment Status (Only for Patients) -->
+    {% if user.role != 'DOCTOR' %}
+        {% if appointment.payment %}
+            {% if appointment.payment.status == "succeeded" %}
+                <span class="badge bg-success d-inline-block px-1 py-2 fw-bold fs-6 m-1 mx-md-0">Paid</span>
+            {% else %}
+                <span class="badge bg-danger d-inline-block px-1 py-2 fw-bold fs-6 m-1 mx-md-0">Unpaid</span>
+            {% endif %}
+        {% else %}
+            <span class="badge bg-danger d-inline-block px-1 py-2 fw-bold fs-6 m-1 mx-md-0">Unpaid</span>
+        {% endif %}
+    {% endif %}
+</div>
+
+
 
                                     <!-- Action -->
                                     <div class="col-12 col-md-3 d-flex justify-content-between align-items-center">

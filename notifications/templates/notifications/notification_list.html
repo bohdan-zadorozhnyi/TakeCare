@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notifications | TakeCare{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+<style>
+    /* Ensure proper notification container styling */
+    .notifications-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Search box styling */
+    .notification-search-container {
+        position: relative;
+    }
+    
+    #notification-search {
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #ced4da;
+        padding-right: 40px; /* Make room for the icon */
+        border-radius: 4px;
+    }
+    
+    .notification-search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+    
+    /* Style active filters */
+    .dropdown-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    /* Notification cards styling */
+    .notification-card.unread {
+        border-left: 4px solid #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    #notification-search {
+        height: 37px !important;
+        margin-top: 0px !important;
+    }
+    .input-group-text {
+        height: 37px !important;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container notifications-container my-4">
+    <h2 class="mb-4">Your Notifications</h2>
+    
+    <div class="d-flex flex-wrap align-items-center mb-4 gap-2">
+        <!-- Search box -->
+        <div class="flex-grow-1 me-2">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="notification-search" placeholder="Search notifications...">
+            </div>
+        </div>
+        
+        <!-- Type filter dropdown -->
+        <div class="me-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Type
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item filter-type active" data-type="ALL" href="#">All Types</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item filter-type" data-type="APPOINTMENT" href="#">Appointments</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="PRESCRIPTION" href="#">Prescriptions</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="REFERRAL" href="#">Referrals</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MEDICAL" href="#">Medical</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MEDICAL_RECORD" href="#">Medical Records</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="ISSUE" href="#">Issues</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="MESSAGE" href="#">Messages</a></li>
+                    <li><a class="dropdown-item filter-type" data-type="SYSTEM" href="#">System</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Status filter dropdown -->
+        <div class="me-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-check-circle me-1"></i>Status
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                    <li><a class="dropdown-item filter-status active" data-status="ALL" href="#">All Statuses</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item filter-status" data-status="UNREAD" href="#">Unread</a></li>
+                    <li><a class="dropdown-item filter-status" data-status="READ" href="#">Read</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Mark All Read button -->
+        <div class="ms-auto">
+            <button class="btn btn-primary" id="mark-all-read">
+                <i class="fas fa-check-double me-1"></i>Mark All Read
+            </button>
+        </div>
+    </div>
+    
+    <!-- Notification Card Container -->
+    <div class="card mb-4">
+        <div class="notification-list-page card-body">
+            <!-- Notifications will be loaded here -->
+        </div>
+        
+        <div class="card-body text-center py-5" id="notifications-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading notifications...</p>
+        </div>
+    </div>
+    
+    <div class="d-none" id="no-notifications">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-5">
+                <div class="display-1 text-muted mb-4">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h4 class="card-title">No notifications found</h4>
+                <p class="card-text text-muted">You don't have any notifications matching your filters.</p>
+                <button class="btn btn-outline-secondary mt-3" onclick="window.location.reload()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <nav aria-label="Notification pagination" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination will be generated here -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Notification card template -->
+<script id="notification-template" type="text/template">
+    <div class="card notification-card mb-3 shadow-sm ${status === 'UNREAD' ? 'unread border-start border-4 border-primary' : ''}" data-id="${id}">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-info me-2">${typeLabel}</span>
+                <small class="text-muted">${formattedDate}</small>
+            </div>
+            <p class="mb-3 fw-${status === 'UNREAD' ? 'bold' : 'normal'}">${message}</p>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-sm btn-outline-secondary me-2 btn-mark-read" ${status === 'READ' ? 'disabled' : ''}>
+                    <i class="fas fa-check me-1"></i>${status === 'READ' ? 'Read' : 'Mark as Read'}
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete">
+                    <i class="fas fa-trash-alt me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationList = document.querySelector('.notification-list-page');
+        const notificationsLoading = document.getElementById('notifications-loading');
+        const noNotifications = document.getElementById('no-notifications');
+        const markAllReadBtn = document.getElementById('mark-all-read');
+        const searchInput = document.getElementById('notification-search');
+        const notificationTemplate = document.getElementById('notification-template').innerHTML;
+        const pagination = document.getElementById('pagination');
+        
+        // Filter variables
+        let currentPage = 1;
+        let typeFilter = 'ALL';
+        let statusFilter = 'ALL';
+        let searchQuery = '';
+        
+        // Utility functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString();
+        }
+        
+        function getTypeLabel(type) {
+            const labels = {
+                'SYSTEM': 'System',
+                'APPOINTMENT': 'Appointment',
+                'PRESCRIPTION': 'Prescription',
+                'REFERRAL': 'Referral',
+                'MEDICAL': 'Medical',
+                'MEDICAL_RECORD': 'Medical Record',
+                'ISSUE': 'Issue',
+                'MESSAGE': 'Message'
+            };
+            return labels[type] || type;
+        }
+        
+        // Helper function to get notification type (works with both type and notification_type fields)
+        function getNotificationType(notification) {
+            return notification.notification_type || notification.type;
+        }
+        
+        // Fetch and display notifications
+        function fetchNotifications() {
+            notificationsLoading.style.display = 'block';
+            notificationList.innerHTML = '';  // Clear previous notifications
+            noNotifications.classList.add('d-none');
+            
+            let url = `/api/v1/notifications/?page=${currentPage}`;
+            
+            if (typeFilter !== 'ALL') {
+                url += `&type=${typeFilter}`;
+            }
+            
+            if (statusFilter !== 'ALL') {
+                url += `&status=${statusFilter}`;
+            }
+            
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+            }
+            
+            console.log('Fetching notifications from:', url);
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Notification API response:', data);
+                    notificationsLoading.style.display = 'none';
+                    
+                    // Handle both paginated and non-paginated responses
+                    let results, count, page, totalPages;
+                    
+                    if (Array.isArray(data)) {
+                        // Direct array of notifications
+                        results = data;
+                        count = data.length;
+                        page = 1;
+                        totalPages = 1;
+                    } else {
+                        // Paginated response
+                        results = data.results || [];
+                        count = data.count || 0;
+                        page = data.page || 1;
+                        totalPages = data.total_pages || 1;
+                    }
+                    
+                    console.log('Processed notifications data:', {
+                        resultCount: results.length,
+                        totalCount: count,
+                        page: page,
+                        totalPages: totalPages
+                    });
+                    
+                    if (!results || results.length === 0) {
+                        noNotifications.classList.remove('d-none');
+                        return;
+                    }
+                    
+                    // Display notifications
+                    results.forEach(notification => {
+                        // Ensure notification has all required fields
+                        const notificationType = getNotificationType(notification);
+                        const status = notification.status || 'UNREAD';
+                        
+                        console.log('Processing notification:', {
+                            id: notification.id,
+                            type: notificationType,
+                            status: status,
+                            message: notification.message
+                        });
+                        
+                        const rendered = notificationTemplate
+                            .replace(/\${id}/g, notification.id)
+                            .replace(/\${status === 'UNREAD' \? 'unread border-start border-4 border-primary' : ''}/g, 
+                                status === 'UNREAD' ? 'unread border-start border-4 border-primary' : '')
+                            .replace(/\${typeLabel}/g, getTypeLabel(notificationType))
+                            .replace(/\${formattedDate}/g, formatDate(notification.date))
+                            .replace(/\${message}/g, notification.message)
+                            .replace(/\${status === 'READ' \? 'disabled' : ''}/g, status === 'READ' ? 'disabled' : '')
+                            .replace(/\${status === 'READ' \? 'Read' : 'Mark as Read'}/g, status === 'READ' ? 'Read' : 'Mark as Read')
+                            .replace(/\${status === 'UNREAD' \? 'bold' : 'normal'}/g, status === 'UNREAD' ? 'bold' : 'normal');
+                        
+                        // Append directly to notification list
+                        notificationList.insertAdjacentHTML('beforeend', rendered);
+                    });
+                    
+                    // Add event listeners to all buttons after rendering
+                    document.querySelectorAll('.btn-mark-read').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const card = this.closest('.notification-card');
+                            const notificationId = card.getAttribute('data-id');
+                            markAsRead(notificationId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.btn-delete').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const card = this.closest('.notification-card');
+                            const notificationId = card.getAttribute('data-id');
+                            deleteNotification(notificationId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.notification-card').forEach(card => {
+                        card.addEventListener('click', function() {
+                            const notificationId = this.getAttribute('data-id');
+                            const isUnread = this.classList.contains('unread');
+                            
+                            if (isUnread) {
+                                markAsRead(notificationId);
+                            }
+                            
+                            // You would need to get the related object info from somewhere
+                            // For now, we'll just leave this as is
+                        });
+                    });
+                    
+                    // Update pagination
+                    updatePagination({count, total_pages: totalPages});
+                })
+                .catch(error => {
+                    console.error('Error fetching notifications:', error);
+                    notificationsLoading.style.display = 'none';
+                    notificationList.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error loading notifications. Please try again later.
+                        </div>
+                    `;
+                });
+        }
+        
+        // Rest of the script remains the same...
+        // (mark as read, delete, pagination functions)
+
+        function updatePagination(data) {
+            pagination.innerHTML = '';
+            
+            const count = data.count || 0;
+            const totalPages = data.total_pages || Math.ceil(count / 10);
+            
+            if (count <= 10) {
+                return;
+            }
+            
+            const pageCount = totalPages;
+            
+            // Create simple but effective pagination
+            // First/Previous
+            pagination.innerHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="First" data-page="1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Previous" data-page="${currentPage - 1}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            `;
+            
+            // Determine which pages to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(pageCount, currentPage + 2);
+            
+            // Always show at least 5 pages if available
+            if (endPage - startPage < 4 && pageCount > 4) {
+                if (currentPage < 3) {
+                    endPage = Math.min(5, pageCount);
+                } else if (currentPage > pageCount - 2) {
+                    startPage = Math.max(1, pageCount - 4);
+                }
+            }
+            
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                pagination.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="1">1</a>
+                    </li>
+                `;
+                if (startPage > 2) {
+                    pagination.innerHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.innerHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Add last page and ellipsis if needed
+            if (endPage < pageCount) {
+                if (endPage < pageCount - 1) {
+                    pagination.innerHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+                pagination.innerHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${pageCount}">${pageCount}</a>
+                    </li>
+                `;
+            }
+            
+            // Next/Last
+            pagination.innerHTML += `
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Next" data-page="${currentPage + 1}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" aria-label="Last" data-page="${pageCount}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            `;
+            
+            // Add event listeners to all page links
+            document.querySelectorAll('.page-link[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const newPage = parseInt(this.getAttribute('data-page'));
+                    if (newPage !== currentPage && !isNaN(newPage) && newPage > 0 && newPage <= pageCount) {
+                        currentPage = newPage;
+                        fetchNotifications();
+                    }
+                });
+            });
+        }
+        
+        function markAsRead(notificationId) {
+            console.log(`Marking notification ${notificationId} as read`);
+            fetch(`/api/v1/notifications/${notificationId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Mark as read response:', data);
+                const card = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+                if (card) {
+                    card.classList.remove('unread');
+                    card.classList.remove('border-start');
+                    card.classList.remove('border-4');
+                    card.classList.remove('border-primary');
+                    
+                    const button = card.querySelector('.btn-mark-read');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
+                    }
+                    
+                    // Update any badges in the card
+                    const badge = card.querySelector('.badge');
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                } else {
+                    console.warn(`Could not find notification card with ID ${notificationId}`);
+                }
+            })
+            .catch(error => console.error('Error marking as read:', error));
+        }
+        
+        function deleteNotification(notificationId) {
+            if (!confirm('Are you sure you want to delete this notification?')) {
+                return;
+            }
+            
+            fetch(`/api/v1/notifications/${notificationId}/mark-deleted/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    const card = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+                    if (card) {
+                        card.remove();
+                    
+                        // Check if we need to show no notifications message
+                        if (notificationList.children.length === 0) {
+                            noNotifications.classList.remove('d-none');
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error deleting notification:', error));
+        }
+        
+        function navigateToObject(type, id) {
+            let url;
+            switch (type) {
+                case 'appointment':
+                    url = `/appointments/detail/${id}/`;
+                    break;
+                case 'prescription':
+                    url = `/prescriptions/detail/${id}/`;
+                    break;
+                case 'referral':
+                    url = `/referrals/detail/${id}/`;
+                    break;
+                default:
+                    return;
+            }
+            
+            window.location.href = url;
+        }
+        
+        function getCsrfToken() {
+            let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            if (!csrfToken) {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        csrfToken = value;
+                        break;
+                    }
+                }
+            }
+            
+            return csrfToken || '';
+        }
+        
+        // Event listeners
+        markAllReadBtn.addEventListener('click', function() {
+            fetch('/api/v1/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.querySelectorAll('.notification-card.unread').forEach(card => {
+                        card.classList.remove('unread', 'border-start', 'border-4', 'border-primary');
+                        const button = card.querySelector('.btn-mark-read');
+                        if (button) {
+                            button.disabled = true;
+                            button.innerHTML = '<i class="fas fa-check me-1"></i>Read';
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error marking all as read:', error));
+        });
+        
+        document.querySelectorAll('.filter-type').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.filter-type').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                typeFilter = this.getAttribute('data-type');
+                currentPage = 1;
+                fetchNotifications();
+            });
+        });
+        
+        document.querySelectorAll('.filter-status').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.filter-status').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                statusFilter = this.getAttribute('data-status');
+                currentPage = 1;
+                fetchNotifications();
+            });
+        });
+        
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = this.value.trim();
+                currentPage = 1;
+                fetchNotifications();
+            }, 500);
+        });
+        
+        // Initial load
+        fetchNotifications();
+    });
+</script>
+{% endblock %}
