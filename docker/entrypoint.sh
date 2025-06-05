@@ -14,6 +14,9 @@ done
 python manage.py migrate
 python manage.py collectstatic --noinput
 
+# Run setup_roles to create user groups and permissions
+python manage.py setup_roles
+
 # Check if environment variables are set properly
 if [ -z "$DJANGO_SUPERUSER_EMAIL" ] || [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; then
   echo "Warning: DJANGO_SUPERUSER_EMAIL or DJANGO_SUPERUSER_PASSWORD environment variables are not set. Skipping superuser creation."

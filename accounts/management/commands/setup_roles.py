@@ -18,7 +18,7 @@ class Command(BaseCommand):
                 AppointmentSlot: ['add', 'change', 'delete', 'view'],
                 Prescription: ['add', 'change', 'delete', 'view', 'list','search'],
                 Referral: ['add', 'change', 'delete', 'view', 'search', 'list'],
-                MedicalRecord: ['add', 'change', 'delete', 'view'],
+                MedicalRecord: ['add', 'change', 'delete', 'view', 'search', 'list'],
                 User: ['add', 'change', 'delete', 'view', 'block', 'list'],
                 Article: ['add', 'change', 'delete', 'view', 'list'],
                 Payment: ['add', 'change', 'delete', 'view'],
@@ -28,8 +28,8 @@ class Command(BaseCommand):
                 AppointmentSlot: ['add', 'change', 'delete', 'view'],
                 Prescription: ['add', 'change', 'delete', 'view', 'list','search'],
                 Referral: ['add', 'change', 'delete', 'view', 'search', 'list'],
-                MedicalRecord: ['add', 'change', 'delete', 'view'],
-                User: ['debugSpecialization', 'searchPatient'],
+                MedicalRecord: ['add', 'change', 'delete', 'view', 'search', 'list'],
+                User: ['searchPatient'],
                 Article: ['view'],
                 AppointmentNote: ['add', 'change', 'delete', 'view'],
             },
@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 AppointmentSlot: ['view'],
                 Prescription: ['view', 'list', 'search'],
                 Referral: ['view', 'search', 'list'],
-                MedicalRecord: ['view'],
+                MedicalRecord: ['view', 'search', 'list'],
                 Article: ['view'],
             }
         }

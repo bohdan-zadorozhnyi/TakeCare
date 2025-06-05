@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Medical Records{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Medical Records</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex gap-2 align-items-center">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text border-end-0 bg-white d-flex align-items-center" >
+                    <i class="fas fa-search text-muted" style="font-size: 0.75rem;"></i>
+                </span>
+                <input type="text" class="form-control form-control-sm border-start-0" id="recordSearch" placeholder="Search by condition...">
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            {% if user.role == 'DOCTOR' %}
+                <a href="{% url 'medical:create_medical_record' %}" class="btn btn-primary">Create New Record</a>
+            {% endif %}
+            <button class="btn btn-secondary btn-sm filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterMenu" aria-expanded="false" aria-controls="filterMenu">
+                <i class="fas fa-filter filter-icon"></i>
+                <i class="fas fa-times close-icon d-none"></i>
+                Filter
+            </button>
+        </div>
+    </div>
+
+     <div class="collapse mb-3" id="filterMenu">
+    <div class="card card-body">
+        <form method="get">
+            <div class="row g-3">
+                <!-- Search by Doctor/Patient -->
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search {% if user.role == 'DOCTOR' %}patient{% else %}doctor{% endif %}</label>
+                    <select class="form-select" id="search" name="search">
+                        {% if filters.search %}
+                            <option value="{{ filters.search }}" selected>{{ filters.search_name }}</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <!-- From Date -->
+                <div class="col-md-4">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" id="date_from" name="date_from" class="form-control bg-white" value="{{ filters.date_from }}">
+                </div>
+
+                <!-- To Date -->
+                <div class="col-md-4">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" id="date_to" name="date_to" class="form-control bg-white" value="{{ filters.date_to }}">
+                </div>
+
+                <!-- Condition -->
+                <div class="col-md-4">
+                    <label for="condition" class="form-label">Condition</label>
+                    <input type="text" id="condition" name="condition" class="form-control bg-white" value="{{ filters.condition }}">
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply</button>
+                    <a href="{% url 'medical:medical_record_list' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+    {% include 'medical/_medical_list.html' with title="My Medical Records"%}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Search input styling */
+        .input-group {
+            width: 250px;
+        }
+
+        .input-group-text {
+            padding: 0;
+            height: 31px;
+            width: 31px;
+            display: inline-flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        /* Select2 styling */
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            padding: 6px 12px !important;
+            font-size: 1rem !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            background-color: #fff !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 24px !important;
+            color: #495057 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+
+        .select2-dropdown {
+            border-color: #ced4da !important;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+           /* Filter toggle icon styles */
+        .filter-toggle[aria-expanded="true"] .filter-icon {
+            display: none;
+        }
+
+        .filter-toggle[aria-expanded="true"] .close-icon {
+            display: inline-block !important;
+        }
+
+        .filter-toggle[aria-expanded="false"] .filter-icon {
+            display: inline-block;
+        }
+
+        .filter-toggle[aria-expanded="false"] .close-icon {
+            display: none !important;
+        }
+
+
+        .list-group-item {
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .list-group-item .btn {
+            width: 100%;
+        }
+
+        .list-group-item .d-flex {
+            justify-content: space-between;
+        }
+
+        .list-group-item h5, .list-group-item h6 {
+            margin-bottom: 0.5rem;
+        }
+
+        .condition-text {
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .input-group {
+            width: 250px;
+        }
+
+        .input-group-text {
+            padding: 0;
+            height: 31px;
+            width: 31px;
+            display: inline-flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        #recordSearch {
+            background-color: #fff !important;
+            font-size: 0.875rem;
+            height: 31px;
+            padding: 0.25rem ;
+            border: 1px solid #ced4da;
+            box-shadow: none;
+        }
+
+        #recordSearch:focus {
+            background-color: #fff !important;
+            box-shadow: none !important;
+            border-color: #86b7fe !important;
+        }
+
+        #filterMenu .form-label {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        #filterMenu .form-control-sm,
+        #filterMenu .form-select-sm {
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            border-radius: 0.25rem;
+        }
+
+        /* Smooth collapse animation */
+        .collapse {
+            transition: height 0.35s ease;
+        }
+
+        .collapsing {
+            transition: height 0.35s ease;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 31px !important; /* Match #recordSearch height */
+            padding: 0 0.5rem !important;
+            font-size: 0.875rem !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 31px !important;
+        }
+
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#search').select2({
+                placeholder: 'Search for a {% if user.role == "DOCTOR" %}patient{% else %}doctor{% endif %}...',
+                allowClear: true,
+                ajax: {
+                    url: '{% url "medical:search_users" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term,
+                            role: '{% if user.role == "DOCTOR" %}PATIENT{% else %}DOCTOR{% endif %}'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2
+            });
+
+            document.getElementById('recordSearch').addEventListener('input', function () {
+                const term = this.value.toLowerCase();
+                document.querySelectorAll('#recordsList .list-group-item').forEach(item => {
+                    const itemText = item.innerText.toLowerCase();
+                    item.style.display = itemText.includes(term) ? '' : 'none';
+                });
+            });
+
+            const filterMenu = document.getElementById('filterMenu');
+            filterMenu.addEventListener('hidden.bs.collapse shown.bs.collapse', function () {
+                document.querySelector('.filter-toggle').blur();
+            });
+
+            let searchTimeout;
+            const recordsList = $('#recordsList');
+            const recordSearch = $('#recordSearch');
+
+            function renderMedicalRecord(record) {
+                const formattedDate = new Date(record.date).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                let name = '';
+                let avatarImg = '';
+
+                if (user.role === 'DOCTOR') {
+                    name = record.patient.name || '';
+                    avatarImg = record.patient.avatar_url
+                        ? `<img src="${record.patient.avatar_url}" alt="Patient Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">`
+                        : '';
+                } else if (user.role === 'PATIENT') {
+                    name = `Dr. ${record.doctor.name || ''}`;
+                    avatarImg = record.doctor.avatar_url
+                        ? `<img src="${record.doctor.avatar_url}" alt="Doctor Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px;">`
+                        : '';
+                }
+
+                const recordSummary = record.condition || 'No condition';
+                const recordTreatment = record.treatment || 'No treatment';
+
+                return `
+                    <tr class="d-flex flex-column flex-sm-row">
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            ${avatarImg}<span>${name}</span>
+                        </td>
+                        <td class="col-12 col-sm-3">
+                            <strong>Condition:</strong> ${recordSummary}
+                        </td>
+                        <td class="col-12 col-sm-3">
+                            <strong>Treatment:</strong> ${recordTreatment}
+                        </td>
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            ${formattedDate}
+                        </td>
+                        <td class="col-12 col-sm-2 d-flex align-items-center">
+                            <a href="/medical/${record.id}/" class="btn btn-sm bg-primary btn-outline-light w-100 w-sm-auto">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }
+
+
+            recordSearch.on('input', function() {
+            clearTimeout(searchTimeout);
+            const searchTerm = $(this).val().trim();
+
+            searchTimeout = setTimeout(function() {
+                $.get('{% url "medical:search_medical_record" %}', {
+                    term: searchTerm
+                })
+                .done(function(data) {
+                    recordsList.find('.list-group-item').addClass('hiding');
+                    setTimeout(function() {
+                        recordsList.empty();
+                        if (data.records.length > 0) {
+                            data.records.forEach(function(record) {
+                                recordsList.append(renderMedicalRecord(record));
+                            });
+
+                        } else {
+                            recordsList.html('<div class="alert alert-info">No medical records found.</div>');
+                        }
+                    }, 300);
+                });
+            }, 300);
+        });
+
+        })
+
+    </script>
+{% endblock %}
