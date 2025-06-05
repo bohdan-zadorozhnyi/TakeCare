@@ -17,6 +17,7 @@ from referrals.models import DoctorCategory
 from django.urls import reverse_lazy
 from django.utils import timezone
 from referrals.models import DoctorCategory
+from datetime import timedelta
 User = get_user_model()
 
 # Adding debug view for doctor specialization
@@ -166,6 +167,8 @@ def dashboard_view(request):
             patient=user,
             appointment_slot__date__gte=datetime.now()
         ).order_by('appointment_slot__date')
+        for appointment in upcoming_appointments:
+            appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
         active_prescriptions = Prescription.objects.filter(
             patient=user,
             expiration_date__gte=datetime.now()
@@ -177,7 +180,8 @@ def dashboard_view(request):
         })
     elif user.role == 'DOCTOR':
         appointments = Appointment.objects.filter(appointment_slot__doctor=user, appointment_slot__status="Booked")
-
+        for appointment in appointments:
+            appointment.appointment_slot.date = appointment.appointment_slot.date + timedelta(hours=2)
         return render(request, 'accounts/dashboard/doctor_dashboard.html', {
             'appointments': appointments,
             'today': today,
