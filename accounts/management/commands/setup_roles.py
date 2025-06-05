@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 Prescription: ['add', 'change', 'delete', 'view', 'list','search'],
                 Referral: ['add', 'change', 'delete', 'view', 'search', 'list'],
                 MedicalRecord: ['add', 'change', 'delete', 'view', 'search', 'list'],
-                User: ['debugSpecialization', 'searchPatient'],
+                User: ['searchPatient'],
                 Article: ['view'],
                 AppointmentNote: ['add', 'change', 'delete', 'view'],
             },

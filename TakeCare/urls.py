@@ -13,6 +13,7 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('prescriptions/', include('prescriptions.urls')),
     path('referrals/', include('referrals.urls')),
+    path('medical/', include('medical.urls')),
     path('calendar/', include('calendar_app.urls')),
     path('articles/', include('articles.urls')),
     path('notifications/', include('notifications.urls')),
