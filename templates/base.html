@@ -35,7 +35,7 @@
                 <div class="right-nav">
                     <ul class="navbar-nav ms-auto flex-row">
                         {% block right-nav %}
-                        <li><a href="#"> Report Issue <i class="fas fa-exclamation-circle"></i></a></li>
+                        <li><a href="{% url 'issues:report_issue' %}"> Report Issue <i class="fas fa-exclamation-circle"></i></a></li>
                         {% if request.user.is_authenticated %}
                         <li class="nav-item">
                             {% include 'notifications/notification_dropdown.html' %}

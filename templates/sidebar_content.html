@@ -13,9 +13,11 @@
                 <li><a href="{% url 'appointments:doctors_list' %}"><i class="fas fa-user-doctor"></i> Doctors</a></li>
                 <li><a href="{% url 'prescriptions:prescription_list' %}"><i class="fas fa-pills"></i> My Prescriptions</a></li>
                 <li><a href="{% url 'referrals:referral_list' %}"><i class="fas fa-file-medical-alt"></i> My Referrals</a></li>
+                <li><a href="{% url 'issues:my_issues' %}"><i class="fas fa-exclamation-circle"></i> My Issues</a></li>
             {% elif request.user.role == 'ADMIN' %}
                 <li><a href="{% url 'accounts:users_list' %}"><i class="fas fa-users-cog"></i> User Management</a></li>
                 <li><a href="{% url 'calendar_view' %}"><i class="fas fa-calendar-alt"></i> Calendar</a></li>
+                <li><a href="{% url 'issues:admin_issues' %}"><i class="fas fa-tasks"></i> Manage Issues</a></li>
                 <li><a href="#"><i class="fas fa-clipboard-list"></i> System Logs</a></li>
                 <li><a href="{% url 'articles:article_list' %}"><i class="fas fa-edit"></i> Home Management</a></li>
                 <li><a href="{% url 'payments:prices' %}"><i class="fas fa-money-bill-wave"></i> Payments Management</a></li>

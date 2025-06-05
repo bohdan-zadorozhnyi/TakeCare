@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Issue - {{ issue.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'issues:admin_issues' %}">Manage Issues</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Issue Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ issue.title }}</h5>
+                    <span class="ms-2">
+                        {% if issue.status == 'NEW' %}
+                            <span class="badge bg-info">New</span>
+                        {% elif issue.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-warning">In Progress</span>
+                        {% elif issue.status == 'RESOLVED' %}
+                            <span class="badge bg-success">Resolved</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <div class="avatar-circle bg-primary">
+                                <span>{{ issue.user.name|first }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ issue.user.name }}</h6>
+                            <small class="text-muted">{{ issue.date|date:"F d, Y, H:i" }}</small>
+                        </div>
+                    </div>
+
+                    <div class="issue-message p-3 bg-light rounded mb-4">
+                        {{ issue.message|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" class="card shadow mb-4">
+                {% csrf_token %}
+                <div class="card-header">
+                    <h5 class="mb-0">Admin Response</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="text-danger">{{ form.status.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.admin_notes.id_for_label }}" class="form-label">Internal Notes (not visible to user)</label>
+                        {{ form.admin_notes }}
+                        {% if form.admin_notes.errors %}
+                            <div class="text-danger">{{ form.admin_notes.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.admin_response.id_for_label }}" class="form-label">Response to User</label>
+                        {{ form.admin_response }}
+                        {% if form.admin_response.errors %}
+                            <div class="text-danger">{{ form.admin_response.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'issues:admin_issues' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+
+            <a href="{% url 'issues:admin_issues' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Issue List
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Name:</strong> {{ issue.user.name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Email:</strong> {{ issue.user.email }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Role:</strong> {{ issue.user.get_role_display }}
+                    </div>
+                    {% if issue.user.phone_number %}
+                    <div class="mb-3">
+                        <strong>Phone:</strong> {{ issue.user.phone_number }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Issue Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Status:</span>
+                        <span>
+                            {% if issue.status == 'NEW' %}
+                                <span class="badge bg-info">New</span>
+                            {% elif issue.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% elif issue.status == 'RESOLVED' %}
+                                <span class="badge bg-success">Resolved</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Reported on:</span>
+                        <span>{{ issue.date|date:"M d, Y" }}</span>
+                    </div>
+                    {% if issue.resolved_date %}
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span>Resolved on:</span>
+                            <span>{{ issue.resolved_date|date:"M d, Y" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}

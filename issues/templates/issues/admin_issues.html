@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Issues{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tasks me-2"></i>Manage Issues</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-light">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Filter Issues</h5>
+                </div>
+                <div class="col-md-auto">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'issues:admin_issues' %}" class="btn {% if not current_status %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            All
+                        </a>
+                        {% for status_code, status_label in status_choices %}
+                            <a href="{% url 'issues:admin_issues' %}?status={{ status_code }}" 
+                               class="btn {% if current_status == status_code %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                {{ status_label }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if issues %}
+        <div class="card shadow">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Reported By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in issues %}
+                            <tr>
+                                <td>{{ issue.title }}</td>
+                                <td>{{ issue.user.name }}</td>
+                                <td>{{ issue.date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if issue.status == 'NEW' %}
+                                        <span class="badge bg-info">New</span>
+                                    {% elif issue.status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-warning">In Progress</span>
+                                    {% elif issue.status == 'RESOLVED' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'issues:admin_issue_detail' issue.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Manage
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-clipboard-check fa-4x mb-3 text-muted"></i>
+                <h3>No Issues Found</h3>
+                <p class="text-muted">There are no issues matching your filter criteria.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

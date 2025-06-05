@@ -20,6 +20,22 @@ CRM for Doctor-Patient Relations
 
 ## Prerequisites
 
+### Environment Variables
+This project uses environment variables for configuration. To set up your local environment:
+
+1. Copy the `.env.template` file to `.env`:
+   ```
+   cp .env.template .env
+   ```
+
+2. Edit the `.env` file and fill in your own values for:
+   - Stripe API keys (required for payment processing)
+   - Database credentials
+   - Django secret key
+   - Other configuration options
+
+Note: The `.env` file contains sensitive information and is excluded from version control.
+
 ### For Docker Setup
 - Docker and Docker Compose
 - Git
