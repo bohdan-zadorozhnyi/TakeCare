@@ -114,8 +114,8 @@ if APPOINTMENTS_ENABLED:
         Send notification for appointment creation and updates
         """
         try:
-            # Format the date for the notification
-            appt_date = instance.start_time.strftime("%d %b %Y at %H:%M") if instance.start_time else "scheduled date"
+            # Format the date for the notification - using a more user-friendly format
+            appt_date = instance.start_time.strftime("%A, %d %B %Y at %H:%M") if instance.start_time else "scheduled date"
             
             # Determine if this is a create or update action
             action = "scheduled" if created else "updated"

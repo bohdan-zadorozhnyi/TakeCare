@@ -244,7 +244,23 @@
         // Utility functions
         function formatDate(dateStr) {
             const date = new Date(dateStr);
+            
+            // Check if this is an appointment notification to use special formatting
             return date.toLocaleString();
+        }
+        
+        // Enhanced date formatting for appointment notifications
+        function formatAppointmentDate(dateStr) {
+            const date = new Date(dateStr);
+            const options = { 
+                weekday: 'long',
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString(undefined, options);
         }
         
         function getTypeLabel(type) {
@@ -339,12 +355,20 @@
                             message: notification.message
                         });
                         
+                        // Format date based on notification type
+                        let formattedDate;
+                        if (notificationType === 'APPOINTMENT') {
+                            formattedDate = formatAppointmentDate(notification.date);
+                        } else {
+                            formattedDate = formatDate(notification.date);
+                        }
+                        
                         const rendered = notificationTemplate
                             .replace(/\${id}/g, notification.id)
                             .replace(/\${status === 'UNREAD' \? 'unread border-start border-4 border-primary' : ''}/g, 
                                 status === 'UNREAD' ? 'unread border-start border-4 border-primary' : '')
                             .replace(/\${typeLabel}/g, getTypeLabel(notificationType))
-                            .replace(/\${formattedDate}/g, formatDate(notification.date))
+                            .replace(/\${formattedDate}/g, formattedDate)
                             .replace(/\${message}/g, notification.message)
                             .replace(/\${status === 'READ' \? 'disabled' : ''}/g, status === 'READ' ? 'disabled' : '')
                             .replace(/\${status === 'READ' \? 'Read' : 'Mark as Read'}/g, status === 'READ' ? 'Read' : 'Mark as Read')
