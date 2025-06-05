@@ -115,12 +115,16 @@ class AdminCreateUserForm(CustomUserCreationForm):
             group, created = Group.objects.get_or_create(name=user.role)
             user.groups.add(group)
 
-            if user.role == 'DOCTOR':
-                DoctorProfile.objects.create(
+            if user.role == 'DOCTOR' and not hasattr(user, 'doctorprofile'):
+                license_uri = self.cleaned_data['license_uri']
+                if not license_uri:
+                    license_uri = f'https://medical-license.org/{user.id}'
+
+                DoctorProfile.objects.get_or_create(
                     user=user,
-                    license_uri=self.cleaned_data['license_uri'],
                     specialization=self.cleaned_data['specialization'],
-                    work_address=self.cleaned_data['work_address']
+                    work_address=self.cleaned_data['work_address'],
+                    license_uri=license_uri
                 )
             elif user.role == 'PATIENT':
                 PatientProfile.objects.create(user=user)

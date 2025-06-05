@@ -8,6 +8,7 @@ from referrals.models import Referral
 from accounts.models import User
 from medical.models import MedicalRecord
 from calendar_app.models import AppointmentNote
+from payments.models import Payment
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
@@ -20,6 +21,7 @@ class Command(BaseCommand):
                 MedicalRecord: ['add', 'change', 'delete', 'view'],
                 User: ['add', 'change', 'delete', 'view', 'block', 'list'],
                 Article: ['add', 'change', 'delete', 'view', 'list'],
+                Payment: ['add', 'change', 'delete', 'view'],
             },
             'DOCTOR': {
                 Appointment: ['change', 'delete', 'view'],
