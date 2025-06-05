@@ -14,7 +14,7 @@ def is_doctor(user):
     return user.is_authenticated and user.role == 'DOCTOR'
 
 @login_required
-#@permission_required("prescriptions.add_prescription", raise_exception=True)
+@permission_required("prescriptions.add_prescription", raise_exception=True)
 def create_prescription(request):
     if request.method == 'POST':
         form = PrescriptionForm(request.POST)
@@ -44,7 +44,7 @@ def create_prescription(request):
     })
 
 @login_required
-#@permission_required("prescriptions.list_prescription", raise_exception=True)
+@permission_required("prescriptions.list_prescription", raise_exception=True)
 def prescription_list(request):
     if request.user.role == 'DOCTOR':
         prescriptions = Prescription.objects.filter(doctor=request.user)
@@ -91,7 +91,7 @@ def prescription_list(request):
     })
 
 @login_required
-#@permission_required("prescriptions.view_prescription", raise_exception=True)
+@permission_required("prescriptions.view_prescription", raise_exception=True)
 def prescription_detail(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
     if request.user != prescription.doctor and request.user != prescription.patient:
@@ -100,7 +100,7 @@ def prescription_detail(request, pk):
     return render(request, 'prescriptions/prescription_detail.html', {'prescription': prescription})
 
 @login_required
-#@permission_required("accounts.searchPatient_user", raise_exception=True)
+@permission_required("accounts.searchPatient_user", raise_exception=True)
 def search_patients(request):
     search_term = request.GET.get('term', '')
     if len(search_term) < 2:
@@ -131,7 +131,7 @@ def search_users(request):
     return JsonResponse({'results': results})
 
 @login_required
-#@permission_required("prescriptions.search_prescription", raise_exception=True)
+@permission_required("prescriptions.search_prescription", raise_exception=True)
 def search_prescriptions(request):
     search_term = request.GET.get('term', '').strip()
     show_active = request.GET.get('active') == 'true'
@@ -173,7 +173,7 @@ def search_prescriptions(request):
     return JsonResponse({'prescriptions': results})
 
 @login_required
-#@permission_required("prescriptions.delete_prescription", raise_exception=True)
+@permission_required("prescriptions.delete_prescription", raise_exception=True)
 def delete_prescription(request, pk):
     if request.method != 'POST':
         return redirect('prescriptions:prescription_detail', pk=pk)

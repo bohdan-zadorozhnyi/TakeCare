@@ -97,7 +97,7 @@ CHANNEL_LAYERS = {
 DATABASES = { 
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'TakeCare'),
+        'NAME': os.environ.get('POSTGRES_DB', 'takecare'),
         'USER': os.environ.get('POSTGRES_USER', 'postgres'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '12345'),
         'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
