@@ -2,7 +2,7 @@ from django.utils import timezone
 from datetime import timedelta
 import stripe
 from django.conf import settings
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import get_user_model
 from django.views import View
@@ -107,7 +107,7 @@ def is_admin(user):
     return user.is_authenticated and user.role == 'ADMIN'
 
 @login_required
-@user_passes_test(is_admin)
+@permission_required('payments.view_payment', raise_exception=True)
 def view_prices(request):
     prices = SpecializationPrice.objects.all()
 
@@ -131,7 +131,7 @@ def view_prices(request):
     return render(request, 'payments/view_prices.html', context)
 
 @login_required
-@user_passes_test(is_admin)
+@permission_required('payments.change_payment', raise_exception=True)
 def edit_prices(request):
     if request.method == 'POST':
         formset = SpecializationPriceFormSet(request.POST)
@@ -146,7 +146,7 @@ def edit_prices(request):
     return render(request, 'payments/edit_prices.html', {'formset': formset})
 
 @login_required
-@user_passes_test(is_admin)
+@permission_required('payments.change_payment', raise_exception=True)
 def mark_as_paid(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
 
