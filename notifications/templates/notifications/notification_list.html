@@ -5,6 +5,45 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+
+<!-- Test Notification Modal -->
+<div class="modal fade" id="testNotificationModal" tabindex="-1" aria-labelledby="testNotificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testNotificationModalLabel">Test Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="test-notification-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notification-type-select" class="form-label">Notification Type</label>
+                        <select class="form-select" id="notification-type-select">
+                            <option value="SYSTEM">System</option>
+                            <option value="APPOINTMENT">Appointment</option>
+                            <option value="PRESCRIPTION">Prescription</option>
+                            <option value="REFERRAL">Referral</option>
+                            <option value="MEDICAL">Medical</option>
+                            <option value="MEDICAL_RECORD">Medical Record</option>
+                            <option value="ISSUE">Issue</option>
+                            <option value="MESSAGE">Message</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notification-message" class="form-label">Custom Message (optional)</label>
+                        <textarea class="form-control" id="notification-message" rows="3" placeholder="Leave blank for default test message"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="send-test-notification">Send Notification</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     /* Ensure proper notification container styling */
     .notifications-container {
@@ -115,6 +154,11 @@
             <button class="btn btn-primary" id="mark-all-read">
                 <i class="fas fa-check-double me-1"></i>Mark All Read
             </button>
+            
+            <!-- Test Notification Button - Only for development/testing -->
+            <button class="btn btn-outline-warning ms-2" id="test-notification-button" title="Send a test notification">
+                <i class="fas fa-vial me-1"></i>Test
+            </button>
         </div>
     </div>
     
@@ -217,7 +261,6 @@
         function getNotificationType(notification) {
             return notification.notification_type || notification.type;
         }
-        
         // Fetch and display notifications
         function fetchNotifications() {
             notificationsLoading.style.display = 'block';
@@ -555,8 +598,15 @@
         }
         
         function getCsrfToken() {
-            let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            // First try to get it from our form
+            let csrfToken = document.querySelector('#test-notification-form [name=csrfmiddlewaretoken]')?.value;
             
+            // Then try any other forms on the page
+            if (!csrfToken) {
+                csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            }
+            
+            // Finally check cookies
             if (!csrfToken) {
                 const cookies = document.cookie.split(';');
                 for (let cookie of cookies) {
@@ -625,6 +675,69 @@
                 currentPage = 1;
                 fetchNotifications();
             }, 500);
+        });
+        
+        // Test notification modal functionality
+        const testNotificationBtn = document.getElementById('test-notification-button');
+        const testNotificationModal = new bootstrap.Modal(document.getElementById('testNotificationModal'));
+        const sendTestNotificationBtn = document.getElementById('send-test-notification');
+        
+        testNotificationBtn.addEventListener('click', function() {
+            testNotificationModal.show();
+        });
+        
+        sendTestNotificationBtn.addEventListener('click', function() {
+            const notificationType = document.getElementById('notification-type-select').value;
+            const customMessage = document.getElementById('notification-message').value.trim();
+            
+            // Send test notification
+            fetch('/api/v1/notifications/test/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notification_type: notificationType,
+                    message: customMessage || 'This is a test notification'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Test notification sent:', data);
+                testNotificationModal.hide();
+                
+                // Show success alert
+                const alertHtml = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>Test notification sent successfully!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
+                
+                // Refresh notifications after a short delay
+                setTimeout(() => {
+                    fetchNotifications();
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error sending test notification:', error);
+                
+                // Show error alert
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>Error sending test notification. Please try again.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                document.querySelector('.notifications-container').insertAdjacentHTML('afterbegin', alertHtml);
+            });
         });
         
         // Initial load
